@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="pt-PT"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Correio Cósmico · Grill · Ronda 1</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Nunito:wght@400;600;700&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Tema cozy space (o mesmo da página da visão). Uma coluna de fichas; barra fixa com "Copiar respostas". */
+:root{--sky:#231a38;--panel:#fff6ea;--panel2:#ffe9d2;--ink:#2a2140;--soft:#6d5f86;--peach:#ff9f7a;--mint:#6fd6b4;--sun:#ffc857;--line:#e8d6c0;
+ --display:"Fredoka",system-ui,sans-serif;--body:"Nunito",system-ui,sans-serif;--mono:"JetBrains Mono",ui-monospace,monospace}
+*{box-sizing:border-box}
+body{margin:0;background:var(--sky);color:var(--panel);font-family:var(--body);font-size:15.5px;line-height:1.5;
+ background-image:radial-gradient(circle at 85% 0%,rgba(255,159,122,.25),transparent 40%);
+ padding:28px max(16px,env(safe-area-inset-right)) 130px max(16px,env(safe-area-inset-left))}
+main{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+h1{font-family:var(--display);font-weight:600;color:var(--sun);font-size:clamp(24px,5vw,34px);margin:0}
+.tag{font-family:var(--mono);font-size:12px;color:var(--mint);letter-spacing:.08em;text-transform:uppercase}
+header p{color:#e9def8;margin:6px 0 0;max-width:64ch}
+form{display:flex;flex-direction:column;gap:18px}
+fieldset{background:var(--panel);color:var(--ink);border:0;border-radius:16px;padding:16px 16px 14px;margin:0;display:flex;flex-direction:column;gap:10px;min-width:0;box-shadow:0 5px 0 rgba(0,0,0,.18)}
+legend{display:contents}
+.qh{display:flex;gap:10px;align-items:baseline}
+.qn{font-family:var(--display);color:var(--peach);font-size:18px;flex:none}
+.qt{font-family:var(--display);font-weight:600;font-size:17px}
+.ctx{margin:0;color:var(--soft);font-size:14.5px}
+.opts{display:flex;flex-direction:column;gap:7px}
+.opt{display:flex;gap:10px;align-items:flex-start;padding:9px 11px;border:2px solid var(--line);border-radius:11px;background:#fff;cursor:pointer}
+.opt:has(input:checked){border-color:var(--peach);background:#fff1ea}
+.opt input{accent-color:#e5734a;margin-top:4px;flex:none;width:18px;height:18px}
+.opt b{font-weight:700}
+.opt small{display:block;color:var(--soft);font-size:13.5px}
+.rec{font-family:var(--mono);font-size:10.5px;background:var(--mint);color:#123b2e;padding:1px 7px;border-radius:99px;margin-left:6px;white-space:nowrap}
+textarea{width:100%;min-height:46px;resize:vertical;border:2px solid var(--line);border-radius:11px;padding:8px 10px;font:inherit;font-size:14.5px;color:var(--ink);background:var(--panel2)}
+textarea:focus,.opt:focus-within,button:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
+.bar{position:fixed;left:0;right:0;bottom:0;background:rgba(35,26,56,.96);border-top:2px solid #4a3b72;
+ padding:12px max(16px,env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
+.bar .in{max-width:760px;margin:0 auto;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+button{font-family:var(--display);font-weight:600;font-size:16px;background:var(--peach);color:var(--ink);border:0;border-radius:12px;padding:11px 18px;cursor:pointer}
+#status{font-family:var(--mono);font-size:12px;color:var(--sun)}
+#out{display:none;width:100%;min-height:140px;font-family:var(--mono);font-size:12px}
+</style></head><body><main>
+<header>
+ <div class="tag">Grill · Ronda 1 · 05 nov 2026</div>
+ <h1>Correio Cósmico: decisões antes do código</h1>
+ <p>24 perguntas que não dependem umas das outras. A opção recomendada já vem marcada: só mudas o que não concordas e usas o campo aberto quando quiseres explicar. No fim, toca em <b>Copiar respostas</b> e cola no chat. As perguntas que dependem destas ficam para a ronda 2 (por exemplo: árvore de upgrades do mech, número de dias por planeta, tipos de encomenda).</p>
+</header>
+<form id="f">
+<fieldset data-q="Q1 Âmbito do primeiro protótipo (F1)">
+  <legend><div class="qh"><span class="qn">Q1</span><span class="qt">Âmbito do primeiro protótipo (F1)</span></div></legend>
+  <p class="ctx">O que tem de existir no primeiro APK jogável para sabermos se a base do jogo funciona?</p>
+  <div class="opts"><label class="opt"><input type="radio" name="q1" value="Só andar e saltar no planeta — Testa só a gravidade esférica e a câmara."><span><b>Só andar e saltar no planeta</b><small>Testa só a gravidade esférica e a câmara.</small></span></label><label class="opt"><input type="radio" name="q1" value="Planeta + rover + entregas contra o relógio — Responde à pergunta central: é divertido andar e conduzir num planeta pequeno no telemóvel?" checked><span><b>Planeta + rover + entregas contra o relógio</b><span class=rec>recomendado</span><small>Responde à pergunta central: é divertido andar e conduzir num planeta pequeno no telemóvel?</small></span></label><label class="opt"><input type="radio" name="q1" value="Mini-ciclo completo: entregas, upgrade, uma noite com defesa — Mais lento a chegar ao telemóvel; arrisca polir tudo pouco."><span><b>Mini-ciclo completo: entregas, upgrade, uma noite com defesa</b><small>Mais lento a chegar ao telemóvel; arrisca polir tudo pouco.</small></span></label></div>
+  <textarea name="q1x" placeholder="Resposta aberta (opcional): completa ou substitui a escolha"></textarea>
+</fieldset>
+<fieldset data-q="Q2 A pé ou de rover?">
+  <legend><div class="qh"><span class="qn">Q2</span><span class="qt">A pé ou de rover?</span></div></legend>
+  <p class="ctx">Como se move o jogador durante as entregas?</p>
+  <div class="opts"><label class="opt"><input type="radio" name="q2" value="Sempre de rover — Mais simples. O astronauta só aparece na base."><span><b>Sempre de rover</b><small>Mais simples. O astronauta só aparece na base.</small></span></label><label class="opt"><input type="radio" name="q2" value="A pé e de rover: sai do rover para entregar à porta e para zonas onde o rover não chega — Junta o platformer (Pequenos Planetas) com a condução (Correio Cósmico)." checked><span><b>A pé e de rover: sai do rover para entregar à porta e para zonas onde o rover não chega</b><span class=rec>recomendado</span><small>Junta o platformer (Pequenos Planetas) com a condução (Correio Cósmico).</small></span></label><label class="opt"><input type="radio" name="q2" value="Só a pé (platformer) — O rover fica decorativo ou desaparece."><span><b>Só a pé (platformer)</b><small>O rover fica decorativo ou desaparece.</small></span></label></div>
+  <textarea name="q2x" placeholder="Resposta aberta (opcional): completa ou substitui a escolha"></textarea>
+</fieldset>
+<fieldset data-q="Q3 Controlos táteis">
+  <legend><div class="qh"><span class="qn">Q3</span><span class="qt">Controlos táteis</span></div></legend>
+  <p class="ctx">Esquema de controlo em paisagem.</p>
+  <div class="opts"><label class="opt"><input type="radio" name="q3" value="Joystick virtual à esquerda; botões à direita (saltar/ação/sair do rover); arrastar o lado direito roda a câmara — O padrão dos jogos 3D mobile. A câmara volta sozinha para trás." checked><span><b>Joystick virtual à esquerda; botões à direita (saltar/ação/sair do rover); arrastar o lado direito roda a câmara</b><span class=rec>recomendado</span><small>O padrão dos jogos 3D mobile. A câmara volta sozinha para trás.</small></span></label><label class="opt"><input type="radio" name="q3" value="Tocar no destino para ir lá (point-and-click) — Muito cozy, mas mau para conduzir e para a defesa."><span><b>Tocar no destino para ir lá (point-and-click)</b><small>Muito cozy, mas mau para conduzir e para a defesa.</small></span></label><label class="opt"><input type="radio" name="q3" value="Joystick + inclinar o telemóvel para conduzir — Giroscópio como opção."><span><b>Joystick + inclinar o telemóvel para conduzir</b><small>Giroscópio como opção.</small></span></label></div>
+  <textarea name="q3x" placeholder="Resposta aberta (opcional): completa ou substitui a escolha"></textarea>
+</fieldset>
+<fieldset data-q="Q4 Câmara">
+  <legend><div class="qh"><span class="qn">Q4</span><span class="qt">Câmara</span></div></legend>
+  <p class="ctx">De onde vês o jogo?</p>
+  <div class="opts"><label class="opt"><input type="radio" name="q4" value="Terceira pessoa atrás do jogador/rover, &quot;cima&quot; = normal do planeta — Imersivo. Mostra pouco do planeta de cada vez." checked><span><b>Terceira pessoa atrás do jogador/rover, &quot;cima&quot; = normal do planeta</b><span class=rec>recomendado</span><small>Imersivo. Mostra pouco do planeta de cada vez.</small></span></label><label class="opt"><input type="radio" name="q4" value="Vista de órbita alta (vês meio planeta, estilo diorama) — Ótima para a base e a defesa; fraca para conduzir."><span><b>Vista de órbita alta (vês meio planeta, estilo diorama)</b><small>Ótima para a base e a defesa; fraca para conduzir.</small></span></label><label class="opt"><input type="radio" name="q4" value="Terceira pessoa a conduzir, órbita alta na base e à noite — Duas câmaras, mais trabalho."><span><b>Terceira pessoa a conduzir, órbita alta na base e à noite</b><small>Duas câmaras, mais trabalho.</small></span></label></div>
+  <textarea name="q4x" placeholder="Resposta aberta (opcional): completa ou substitui a escolha"></textarea>
+</fieldset>
+<fieldset data-q="Q5 Estrutura de níveis">
+  <legend><div class="qh"><span class="qn">Q5</span><span class="qt">Estrutura de níveis</span></div></legend>
+  <p class="ctx">O que é um &quot;nível&quot;?</p>
+  <div class="opts"><label class="opt"><input type="radio" name="q5" value="Cada planeta é um nível: vários dias lá, boss no fim, depois o mapa da galáxia abre o seguinte — &quot;Muitos níveis&quot; = muitos planetas gerados." checked><span><b>Cada planeta é um nível: vários dias lá, boss no fim, depois o mapa da galáxia abre o seguinte</b><span class=rec>recomendado</span><small>&quot;Muitos níveis&quot; = muitos planetas gerados.</small></span></label><label class="opt"><input type="radio" name="q5" value="Roguelite: cada run são vários planetas seguidos; ao morrer recomeças com upgrades permanentes"><span><b>Roguelite: cada run são vários planetas seguidos; ao morrer recomeças com upgrades permanentes</b></span></label><label class="opt"><input type="radio" name="q5" value="Galáxia aberta: podes voltar a planetas já feitos"><span><b>Galáxia aberta: podes voltar a planetas já feitos</b></span></label></div>
+  <textarea name="q5x" placeholder="Resposta aberta (opcional): completa ou substitui a escolha"></textarea>
+</fieldset>
+<fieldset data-q="Q6 O que acontece à base quando mudas de planeta?">
+  <legend><div class="qh"><span class="qn">Q6</span><span class="qt">O que acontece à base quando mudas de planeta?</span></div></legend>
+  <p class="ctx">Isto define a economia a longo prazo.</p>
+  <div class="opts"><label class="opt"><input type="radio" name="q6" value="Base nova em cada planeta, a começar do zero — Cada planeta é autónomo. Repete o early game."><span><b>Base nova em cada planeta, a começar do zero</b><small>Cada planeta é autónomo. Repete o early game.</small></span></label><label class="opt"><input type="radio" name="q6" value="Nave-mãe persistente (tecnologia, upgrades) + posto avançado novo em cada planeta (quinta, fábrica, defesa) — A pesquisa e os upgrades acumulam-se; o base building recomeça em ponto pequeno." checked><span><b>Nave-mãe persistente (tecnologia, upgrades) + posto avançado novo em cada planeta (quinta, fábrica, defesa)</b><span class=rec>recomendado</span><small>A pesquisa e os upgrades acumulam-se; o base building recomeça em ponto pequeno.</small></span></label><label class="opt"><input type="radio" name="q6" value="Uma só base num planeta-casa; os outros planetas são só para entregas e boss"><span><b>Uma só base num planeta-casa; os outros planetas são só para entregas e boss</b></span></label></div>
+  <textarea name="q6x" placeholder="Resposta aberta (opcional): completa ou substitui a escolha"></textarea>
+</fieldset>
+<fieldset data-q="Q7 Duração de um dia">
+  <legend><div class="qh"><span class="qn">Q7</span><span class="qt">Duração de um dia</span></div></legend>
+  <p class="ctx">Um ciclo completo (manhã, dia, noite). Pensado para sessões no telemóvel.</p>
+  <div class="opts"><label class="opt"><input type="radio" name="q7" value="~6 min (4 dia + 2 noite)"><span><b>~6 min (4 dia + 2 noite)</b></span></label><label class="opt"><input type="radio" name="q7" value="~10 min (7 dia + 3 noite) — Cabe numa pausa. Dá para 3–4 entregas e uma defesa." checked><span><b>~10 min (7 dia + 3 noite)</b><span class=rec>recomendado</span><small>Cabe numa pausa. Dá para 3–4 entregas e uma defesa.</small></span></label><label class="opt"><input type="radio" name="q7" value="~20 min"><span><b>~20 min</b></span></label><label class="opt"><input type="radio" name="q7" value="O dia só acaba quando decides ir dormir (sem relógio) — Mais cozy. As entregas continuam a ter tempo próprio."><span><b>O dia só acaba quando decides ir dormir (sem relógio)</b><small>Mais cozy. As entregas continuam a ter tempo próprio.</small></span></label></div>
+  <textarea name="q7x" placeholder="Resposta aberta (opcional): completa ou substitui a escolha"></textarea>
+</fieldset>
+<fieldset data-q="Q8 Defesa à noite">
+  <legend><div class="qh"><span class="qn">Q8</span><span class="qt">Defesa à noite</span></div></legend>
+  <p class="ctx">Quem defende a base?</p>
+  <div class="opts"><label class="opt"><input type="radio" name="q8" value="Pilotas um mech (ação direta) e as torres automáticas que construíste ajudam — Junta ação com o base building." checked><span><b>Pilotas um mech (ação direta) e as torres automáticas que construíste ajudam</b><span class=rec>recomendado</span><small>Junta ação com o base building.</small></span></label><label class="opt"><input type="radio" name="q8" value="Só torres: tower defense clássico, tu colocas e melhoras"><span><b>Só torres: tower defense clássico, tu colocas e melhoras</b></span></label><label class="opt"><input type="radio" name="q8" value="Só mechs: vários mechs, controlas um e os outros seguem ordens simples"><span><b>Só mechs: vários mechs, controlas um e os outros seguem ordens simples</b></span></label></div>
+  <textarea name="q8x" placeholder="Resposta aberta (opcional): completa ou substitui a escolha"></textarea>
+</fieldset>
+<fieldset data-q="Q9 Falhar (é um jogo cozy)">
+  <legend><div class="qh"><span class="qn">Q9</span><span class="qt">Falhar (é um jogo cozy)</span></div></legend>
+  <p class="ctx">O que custa falhar uma entrega ou perder uma noite?</p>
+  <div class="opts"><label class="opt"><input type="radio" name="q9" value="Sem game over: entrega falhada = sem pagamento; noite perdida = edifícios danificados que se reparam com recursos — Há consequência, mas nunca perdes o progresso." checked><span><b>Sem game over: entrega falhada = sem pagamento; noite perdida = edifícios danificados que se reparam com recursos</b><span class=rec>recomendado</span><small>Há consequência, mas nunca perdes o progresso.</small></span></label><label class="opt"><input type="radio" name="q9" value="Morrer na noite = recomeçar o planeta"><span><b>Morrer na noite = recomeçar o planeta</b></span></label><label class="opt"><input type="radio" name="q9" value="Sem consequências nenhumas"><span><b>Sem consequências nenhumas</b></span></label></div>
+  <textarea name="q9x" placeholder="Resposta aberta (opcional): completa ou substitui a escolha"></textarea>
+</fieldset>
+<fieldset data-q="Q10 Recursos">
+  <legend><div class="qh"><span class="qn">Q10</span><span class="qt">Recursos</span></div></legend>
+  <p class="ctx">Quantas &quot;moedas&quot; diferentes?</p>
+  <div class="opts"><label class="opt"><input type="radio" name="q10" value="Só créditos"><span><b>Só créditos</b></span></label><label class="opt"><input type="radio" name="q10" value="Créditos + 4 recursos: minério, cristal, colheitas, dados de pesquisa — Dá função a cada edifício sem complicar o ecrã." checked><span><b>Créditos + 4 recursos: minério, cristal, colheitas, dados de pesquisa</b><span class=rec>recomendado</span><small>Dá função a cada edifício sem complicar o ecrã.</small></span></label><label class="opt"><input type="radio" name="q10" value="Muitos recursos e cadeias de produção (estilo Factorio)"><span><b>Muitos recursos e cadeias de produção (estilo Factorio)</b></span></label></div>
+  <textarea name="q10x" placeholder="Resposta aberta (opcional): completa ou substitui a escolha"></textarea>
+</fieldset>
+<fieldset data-q="Q11 Profundidade da fábrica">
+  <legend><div class="qh"><span class="qn">Q11</span><span class="qt">Profundidade da fábrica</span></div></legend>
+  <p class="ctx">Como funciona a automação no telemóvel?</p>
+  <div class="opts"><label class="opt"><input type="radio" name="q11" value="Edifícios produzem por tempo e enchem um armazém; ligações simples (o mineiro alimenta o lab) sem tapetes — Fácil de ler no ecrã pequeno." checked><span><b>Edifícios produzem por tempo e enchem um armazém; ligações simples (o mineiro alimenta o lab) sem tapetes</b><span class=rec>recomendado</span><small>Fácil de ler no ecrã pequeno.</small></span></label><label class="opt"><input type="radio" name="q11" value="Tapetes rolantes a ligar máquinas"><span><b>Tapetes rolantes a ligar máquinas</b></span></label><label class="opt"><input type="radio" name="q11" value="Drones de logística transportam entre edifícios — Bonito de ver, mais trabalho."><span><b>Drones de logística transportam entre edifícios</b><small>Bonito de ver, mais trabalho.</small></span></label></div>
+  <textarea name="q11x" placeholder="Resposta aberta (opcional): completa ou substitui a escolha"></textarea>
+</fieldset>
+<fieldset data-q="Q12 Quinta">
+  <legend><div class="qh"><span class="qn">Q12</span><span class="qt">Quinta</span></div></legend>
+  <p class="ctx">Que peso tem a quinta?</p>
+  <div class="opts"><label class="opt"><input type="radio" name="q12" value="Leve: plantas de manhã, colhes ao fim do dia; as colheitas são entregas valiosas ou ingredientes do lab — Liga a manhã às entregas." checked><span><b>Leve: plantas de manhã, colhes ao fim do dia; as colheitas são entregas valiosas ou ingredientes do lab</b><span class=rec>recomendado</span><small>Liga a manhã às entregas.</small></span></label><label class="opt"><input type="radio" name="q12" value="Decorativa e cosmética"><span><b>Decorativa e cosmética</b></span></label><label class="opt"><input type="radio" name="q12" value="Profunda (estilo Stardew): regar, estações, qualidade"><span><b>Profunda (estilo Stardew): regar, estações, qualidade</b></span></label></div>
+  <textarea name="q12x" placeholder="Resposta aberta (opcional): completa ou substitui a escolha"></textarea>
+</fieldset>
+<fieldset data-q="Q13 Biomas dos primeiros planetas">
+  <legend><div class="qh"><span class="qn">Q13</span><span class="qt">Biomas dos primeiros planetas</span></div></legend>
+  <p class="ctx">Escolhe os que queres primeiro (podes escolher vários). Proponho Prado, Ácido e Lava.</p>
+  <div class="opts"><label class="opt"><input type="check" name="q13" value="🌿 Prado (sem debuff, tutorial)" checked><span><b>🌿 Prado (sem debuff, tutorial)</b><span class=rec>recomendado</span></span></label><label class="opt"><input type="check" name="q13" value="☣️ Ácido (rios tóxicos, bolhas de O₂)" checked><span><b>☣️ Ácido (rios tóxicos, bolhas de O₂)</b><span class=rec>recomendado</span></span></label><label class="opt"><input type="check" name="q13" value="🌋 Lava (calor abranda o rover)" checked><span><b>🌋 Lava (calor abranda o rover)</b><span class=rec>recomendado</span></span></label><label class="opt"><input type="check" name="q13" value="🌑 Escuridão (luz limitada)"><span><b>🌑 Escuridão (luz limitada)</b></span></label><label class="opt"><input type="check" name="q13" value="❄️ Gelo (escorregadio)"><span><b>❄️ Gelo (escorregadio)</b></span></label><label class="opt"><input type="check" name="q13" value="🌀 Tempestade (vento)"><span><b>🌀 Tempestade (vento)</b></span></label></div>
+  <textarea name="q13x" placeholder="Resposta aberta (opcional): completa ou substitui a escolha"></textarea>
+</fieldset>
+<fieldset data-q="Q14 Tamanho dos planetas">
+  <legend><div class="qh"><span class="qn">Q14</span><span class="qt">Tamanho dos planetas</span></div></legend>
+  <p class="ctx">Quanto tempo leva dar a volta?</p>
+  <div class="opts"><label class="opt"><input type="radio" name="q14" value="Pequeno: ~30 s de rover, ~1,5 min a pé — Lê-se como um diorama, leve no telemóvel." checked><span><b>Pequeno: ~30 s de rover, ~1,5 min a pé</b><span class=rec>recomendado</span><small>Lê-se como um diorama, leve no telemóvel.</small></span></label><label class="opt"><input type="radio" name="q14" value="Médio: ~1 min de rover"><span><b>Médio: ~1 min de rover</b></span></label><label class="opt"><input type="radio" name="q14" value="Cresce com o progresso: os primeiros pequenos, os últimos maiores"><span><b>Cresce com o progresso: os primeiros pequenos, os últimos maiores</b></span></label></div>
+  <textarea name="q14x" placeholder="Resposta aberta (opcional): completa ou substitui a escolha"></textarea>
+</fieldset>
+<fieldset data-q="Q15 Relógio das entregas">
+  <legend><div class="qh"><span class="qn">Q15</span><span class="qt">Relógio das entregas</span></div></legend>
+  <p class="ctx">&quot;Contra o relógio&quot; num jogo cozy?</p>
+  <div class="opts"><label class="opt"><input type="radio" name="q15" value="Relógio suave: entregar a tempo dá bónus; fora de tempo paga menos, mas paga — Mantém a urgência sem stress." checked><span><b>Relógio suave: entregar a tempo dá bónus; fora de tempo paga menos, mas paga</b><span class=rec>recomendado</span><small>Mantém a urgência sem stress.</small></span></label><label class="opt"><input type="radio" name="q15" value="Relógio rígido: se acabar, falhou"><span><b>Relógio rígido: se acabar, falhou</b></span></label><label class="opt"><input type="radio" name="q15" value="Sem relógio"><span><b>Sem relógio</b></span></label></div>
+  <textarea name="q15x" placeholder="Resposta aberta (opcional): completa ou substitui a escolha"></textarea>
+</fieldset>
+<fieldset data-q="Q16 Personagem">
+  <legend><div class="qh"><span class="qn">Q16</span><span class="qt">Personagem</span></div></legend>
+  <p class="ctx">Os 4 astronautas (abelha, flamingo, sapo, panda-vermelho).</p>
+  <div class="opts"><label class="opt"><input type="radio" name="q16" value="Escolhes um no início; é só visual" checked><span><b>Escolhes um no início; é só visual</b><span class=rec>recomendado</span></span></label><label class="opt"><input type="radio" name="q16" value="Cada um tem uma pequena vantagem (velocidade, carga, …)"><span><b>Cada um tem uma pequena vantagem (velocidade, carga, …)</b></span></label><label class="opt"><input type="radio" name="q16" value="Trocas entre eles como tripulação"><span><b>Trocas entre eles como tripulação</b></span></label></div>
+  <textarea name="q16x" placeholder="Resposta aberta (opcional): completa ou substitui a escolha"></textarea>
+</fieldset>
+<fieldset data-q="Q17 Look do cel-shading">
+  <legend><div class="qh"><span class="qn">Q17</span><span class="qt">Look do cel-shading</span></div></legend>
+  <p class="ctx">Estilo do contorno e das sombras.</p>
+  <div class="opts"><label class="opt"><input type="radio" name="q17" value="2 tons + contorno preto grosso (banda desenhada)"><span><b>2 tons + contorno preto grosso (banda desenhada)</b></span></label><label class="opt"><input type="radio" name="q17" value="3 tons + contorno fino escuro da cor do objeto + rim light suave — Fica cozy e não fica pesado com os modelos cartoon do kit." checked><span><b>3 tons + contorno fino escuro da cor do objeto + rim light suave</b><span class=rec>recomendado</span><small>Fica cozy e não fica pesado com os modelos cartoon do kit.</small></span></label><label class="opt"><input type="radio" name="q17" value="Só rampa de tons, sem contorno — Mais barato."><span><b>Só rampa de tons, sem contorno</b><small>Mais barato.</small></span></label></div>
+  <textarea name="q17x" placeholder="Resposta aberta (opcional): completa ou substitui a escolha"></textarea>
+</fieldset>
+<fieldset data-q="Q18 Renderer e alvo de performance">
+  <legend><div class="qh"><span class="qn">Q18</span><span class="qt">Renderer e alvo de performance</span></div></legend>
+  <p class="ctx">Em que telemóvel testas e que renderer usamos?</p>
+  <div class="opts"><label class="opt"><input type="radio" name="q18" value="Compatibility (OpenGL ES 3), alvo de 60 fps num Android médio — Corre em mais aparelhos. O cel-shading não precisa de Vulkan." checked><span><b>Compatibility (OpenGL ES 3), alvo de 60 fps num Android médio</b><span class=rec>recomendado</span><small>Corre em mais aparelhos. O cel-shading não precisa de Vulkan.</small></span></label><label class="opt"><input type="radio" name="q18" value="Mobile (Vulkan) — Melhor iluminação; falha em alguns aparelhos."><span><b>Mobile (Vulkan)</b><small>Melhor iluminação; falha em alguns aparelhos.</small></span></label><label class="opt"><input type="radio" name="q18" value="Alvo de 30 fps, mais efeitos"><span><b>Alvo de 30 fps, mais efeitos</b></span></label></div>
+  <textarea name="q18x" placeholder="Resposta aberta (opcional): completa ou substitui a escolha"></textarea>
+</fieldset>
+<fieldset data-q="Q19 Orientação do ecrã">
+  <legend><div class="qh"><span class="qn">Q19</span><span class="qt">Orientação do ecrã</span></div></legend>
+  
+  <div class="opts"><label class="opt"><input type="radio" name="q19" value="Paisagem — Melhor para conduzir e para o joystick + botões." checked><span><b>Paisagem</b><span class=rec>recomendado</span><small>Melhor para conduzir e para o joystick + botões.</small></span></label><label class="opt"><input type="radio" name="q19" value="Retrato — Jogável com uma mão; fraco para a câmara 3D."><span><b>Retrato</b><small>Jogável com uma mão; fraco para a câmara 3D.</small></span></label></div>
+  <textarea name="q19x" placeholder="Resposta aberta (opcional): completa ou substitui a escolha"></textarea>
+</fieldset>
+<fieldset data-q="Q20 Packs de criaturas e bosses">
+  <legend><div class="qh"><span class="qn">Q20</span><span class="qt">Packs de criaturas e bosses</span></div></legend>
+  <p class="ctx">Até chegarem os teus packs:</p>
+  <div class="opts"><label class="opt"><input type="radio" name="q20" value="Uso os 4 inimigos do kit como provisórios; troco quando os packs chegarem (formato glTF/FBX com animações) — Não bloqueia a F2." checked><span><b>Uso os 4 inimigos do kit como provisórios; troco quando os packs chegarem (formato glTF/FBX com animações)</b><span class=rec>recomendado</span><small>Não bloqueia a F2.</small></span></label><label class="opt"><input type="radio" name="q20" value="Espero pelos packs antes de fazer criaturas"><span><b>Espero pelos packs antes de fazer criaturas</b></span></label></div>
+  <textarea name="q20x" placeholder="Resposta aberta (opcional): completa ou substitui a escolha"></textarea>
+</fieldset>
+<fieldset data-q="Q21 Nome do jogo">
+  <legend><div class="qh"><span class="qn">Q21</span><span class="qt">Nome do jogo</span></div></legend>
+  
+  <div class="opts"><label class="opt"><input type="radio" name="q21" value="&quot;Correio Cósmico&quot; (provisório)" checked><span><b>&quot;Correio Cósmico&quot; (provisório)</b><span class=rec>recomendado</span></span></label><label class="opt"><input type="radio" name="q21" value="Outro nome (escreve abaixo)"><span><b>Outro nome (escreve abaixo)</b></span></label></div>
+  <textarea name="q21x" placeholder="Resposta aberta (opcional): completa ou substitui a escolha"></textarea>
+</fieldset>
+<fieldset data-q="Q22 Modelo de negócio">
+  <legend><div class="qh"><span class="qn">Q22</span><span class="qt">Modelo de negócio</span></div></legend>
+  <p class="ctx">Muda algumas decisões de design (ritmo, recompensas).</p>
+  <div class="opts"><label class="opt"><input type="radio" name="q22" value="Sem monetização por agora: jogo pago ou gratuito, decidimos mais tarde — Design limpo, sem timers artificiais." checked><span><b>Sem monetização por agora: jogo pago ou gratuito, decidimos mais tarde</b><span class=rec>recomendado</span><small>Design limpo, sem timers artificiais.</small></span></label><label class="opt"><input type="radio" name="q22" value="Free-to-play com anúncios opcionais (recompensas)"><span><b>Free-to-play com anúncios opcionais (recompensas)</b></span></label><label class="opt"><input type="radio" name="q22" value="Free-to-play com compras (cosméticos)"><span><b>Free-to-play com compras (cosméticos)</b></span></label></div>
+  <textarea name="q22x" placeholder="Resposta aberta (opcional): completa ou substitui a escolha"></textarea>
+</fieldset>
+<fieldset data-q="Q23 Fluxo de trabalho no repo novo">
+  <legend><div class="qh"><span class="qn">Q23</span><span class="qt">Fluxo de trabalho no repo novo</span></div></legend>
+  <p class="ctx">Igual ao Deriva Estelar?</p>
+  <div class="opts"><label class="opt"><input type="radio" name="q23" value="Sim: issues por tarefa e milestone por fase, ramo + PR por fase com merge sem esperar, APK local, release debug por fase e quando houver correções" checked><span><b>Sim: issues por tarefa e milestone por fase, ramo + PR por fase com merge sem esperar, APK local, release debug por fase e quando houver correções</b><span class=rec>recomendado</span></span></label><label class="opt"><input type="radio" name="q23" value="Igual, mas o bullycow também está neste repo e revê o visual"><span><b>Igual, mas o bullycow também está neste repo e revê o visual</b></span></label><label class="opt"><input type="radio" name="q23" value="Outro (escreve abaixo)"><span><b>Outro (escreve abaixo)</b></span></label></div>
+  <textarea name="q23x" placeholder="Resposta aberta (opcional): completa ou substitui a escolha"></textarea>
+</fieldset>
+<fieldset data-q="Q24 Multijogador">
+  <legend><div class="qh"><span class="qn">Q24</span><span class="qt">Multijogador</span></div></legend>
+  
+  <div class="opts"><label class="opt"><input type="radio" name="q24" value="Não: só um jogador" checked><span><b>Não: só um jogador</b><span class=rec>recomendado</span></span></label><label class="opt"><input type="radio" name="q24" value="Co-op mais tarde (deixar a porta aberta no código) — Custa estrutura desde o início."><span><b>Co-op mais tarde (deixar a porta aberta no código)</b><small>Custa estrutura desde o início.</small></span></label></div>
+  <textarea name="q24x" placeholder="Resposta aberta (opcional): completa ou substitui a escolha"></textarea>
+</fieldset>
+</form>
+<textarea id="out" readonly aria-label="Respostas para copiar"></textarea>
+</main>
+<div class="bar"><div class="in"><button type="button" id="copy">Copiar respostas</button><span id="status" role="status"></span></div></div>
+<script>
+function build(){
+  const lines=["Grill Correio Cósmico, ronda 1:"];
+  document.querySelectorAll("fieldset").forEach((fs,i)=>{
+    const n=i+1, title=fs.dataset.q;
+    const picked=[...fs.querySelectorAll("input:checked")].map(x=>x.value);
+    const free=fs.querySelector("textarea").value.trim();
+    const recs=[...fs.querySelectorAll("input")].filter(x=>x.defaultChecked).map(x=>x.value);
+    const same=picked.length===recs.length&&picked.every((v,k)=>v===recs[k]);
+    let s=title+": "+(picked.length?picked.join(" + "):"(nada escolhido)");
+    if(same&&picked.length) s+=" [recomendado]";
+    if(free) s+=" | Nota: "+free;
+    lines.push(s);
+  });
+  return lines.join("\n");
+}
+document.getElementById("copy").addEventListener("click",async()=>{
+  const t=build(), st=document.getElementById("status"), out=document.getElementById("out");
+  try{await navigator.clipboard.writeText(t);st.textContent="Copiado ✔ cola no chat";out.style.display="none";}
+  catch(e){out.value=t;out.style.display="block";out.focus();out.select();st.textContent="Não deu para copiar automaticamente: seleciona o texto abaixo e copia";}
+});
+</script>
+</body></html>
