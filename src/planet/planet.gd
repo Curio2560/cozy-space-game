@@ -57,10 +57,12 @@ func prop_instance_count() -> int:
 var roads_mesh: MeshInstance3D
 const ROAD_LIFT := 0.1
 const ROAD_ACROSS := [-1.0, -0.55, 0.0, 0.55, 1.0]
-const ROAD_SHADE := [0.74, 0.9, 1.0, 0.9, 0.74]
+const ROAD_SHADER := preload("res://shaders/road.gdshader")
+static var _road_mat: ShaderMaterial
 
 ## Estradas: uma faixa por estrada (5 vértices de largura) que segue o relevo, ligeiramente
-## acima do chão, com bermas mais escuras. Tudo numa só malha.
+## acima do chão. A textura (cascalho, marcas de rodas, bermas irregulares) vem do shader
+## de estrada. Tudo numa só malha.
 func _build_roads() -> void:
 	if data.roads.is_empty():
 		return
@@ -68,13 +70,18 @@ func _build_roads() -> void:
 	var verts := PackedVector3Array()
 	var norms := PackedVector3Array()
 	var cols := PackedColorArray()
+	var uvs := PackedVector2Array()
 	var idx := PackedInt32Array()
 	var w := ROAD_ACROSS.size()
 	for road in data.roads:
 		var pts: PackedVector3Array = road.points
 		var hw: float = road.width * 0.5
 		var base := verts.size()
+		var along := 0.0
+		var flag := 1.0 if road.main else 0.0 # marcas de rodas só nas principais
 		for i in pts.size():
+			if i > 0:
+				along += data.arc_m(pts[i - 1], pts[i])
 			var p := pts[i]
 			var t := pts[mini(i + 1, pts.size() - 1)] - pts[maxi(i - 1, 0)]
 			t = (t - p * t.dot(p)).normalized()
@@ -83,8 +90,8 @@ func _build_roads() -> void:
 				var q: Vector3 = (p + side * (float(ROAD_ACROSS[k]) * hw / data.radius)).normalized()
 				verts.append(data.surface_point(q) + q * ROAD_LIFT)
 				norms.append(data.normal_at(q))
-				var sh: float = ROAD_SHADE[k]
-				cols.append(Color(col.r * sh, col.g * sh, col.b * sh))
+				cols.append(Color(col.r, col.g, col.b, flag))
+				uvs.append(Vector2((float(ROAD_ACROSS[k]) + 1.0) * 0.5, along))
 		for i in pts.size() - 1:
 			for k in w - 1:
 				var a := base + i * w + k
@@ -101,13 +108,17 @@ func _build_roads() -> void:
 	arrays[Mesh.ARRAY_VERTEX] = verts
 	arrays[Mesh.ARRAY_NORMAL] = norms
 	arrays[Mesh.ARRAY_COLOR] = cols
+	arrays[Mesh.ARRAY_TEX_UV] = uvs
 	arrays[Mesh.ARRAY_INDEX] = idx
 	var mesh := ArrayMesh.new()
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	if _road_mat == null:
+		_road_mat = ShaderMaterial.new()
+		_road_mat.shader = ROAD_SHADER
 	roads_mesh = MeshInstance3D.new()
 	roads_mesh.name = "Roads"
 	roads_mesh.mesh = mesh
-	roads_mesh.material_override = CelShading.terrain_vertex_color()
+	roads_mesh.material_override = _road_mat
 	roads_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(roads_mesh)
 

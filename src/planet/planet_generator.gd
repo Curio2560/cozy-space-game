@@ -144,27 +144,109 @@ const ROAD_STEP_M := 2.0
 
 ## Rede de estradas: principais do posto avançado a cada posto e entre postos (com curvas);
 ## secundárias mais estreitas que saem das principais (para o covil, clareiras, becos).
-static func _place_roads(d: PlanetData, rng: RandomNumberGenerator) -> void:
-	var main_edges: Array = []
+const PATH_WIDTH := 2.0
+const SIDE_ROADS := 12
+const PATHS := 8
+const CONNECTORS := 3
+## Meia diagonal (m) das estruturas, para as estradas pararem à porta e as contornarem.
+const STRUCT_RADIUS := {"post": 2.2, "outpost": 5.6, "lair": 2.4}
+
+## Estruturas do planeta: [[direção, raio (m)], …].
+static func structures(d: PlanetData) -> Array:
+	var out := []
 	for p in d.posts:
-		main_edges.append([d.outpost_dir, p])
+		out.append([p, STRUCT_RADIUS.post])
+	out.append([d.outpost_dir, STRUCT_RADIUS.outpost])
+	out.append([d.lair_dir, STRUCT_RADIUS.lair])
+	return out
+
+## Rede de estradas:
+## - principais (base → cada posto, posto → posto) com curvas, a acabar à porta das estruturas;
+## - secundárias que saem das principais, caminhos que saem das secundárias, e ligações entre
+##   estradas principais diferentes; uma secundária vai até ao covil.
+## Nenhuma estrada passa por cima de uma estrutura.
+static func _place_roads(d: PlanetData, rng: RandomNumberGenerator) -> void:
+	for p in d.posts:
+		d.add_road(_road(d, d.outpost_dir, p, rng, 7.0, MAIN_ROAD_WIDTH, true, true), MAIN_ROAD_WIDTH, true)
 	for i in d.posts.size():
-		main_edges.append([d.posts[i], d.posts[(i + 1) % d.posts.size()]])
-	for e in main_edges:
-		d.add_road(road_path(d, e[0], e[1], rng, 7.0), MAIN_ROAD_WIDTH, true)
-	# Secundárias: uma até ao covil e algumas que partem de pontos das principais.
-	var main_count := d.roads.size()
-	var start := _nearest_road_point(d, d.lair_dir)
-	d.add_road(road_path(d, start, d.lair_dir, rng, 4.0), SIDE_ROAD_WIDTH, false)
-	for i in 5:
-		var road: Dictionary = d.roads[rng.randi() % main_count]
-		var pts: PackedVector3Array = road.points
-		var from: Vector3 = pts[rng.randi_range(int(pts.size() * 0.25), int(pts.size() * 0.75))]
-		var tangent := (pts[mini(pts.size() - 1, pts.find(from) + 1)] - from).normalized()
-		var side := from.cross(tangent).normalized() * (1.0 if rng.randf() < 0.5 else -1.0)
-		var length := rng.randf_range(25.0, 55.0) / d.radius
-		var to := (from + (side + tangent * rng.randf_range(-0.5, 0.5)).normalized() * tan(length)).normalized()
-		d.add_road(road_path(d, from, to, rng, 3.5), SIDE_ROAD_WIDTH, false)
+		d.add_road(_road(d, d.posts[i], d.posts[(i + 1) % d.posts.size()], rng, 7.0, MAIN_ROAD_WIDTH, true, true), MAIN_ROAD_WIDTH, true)
+	var mains := d.roads.duplicate()
+	d.add_road(_road(d, _nearest_road_point(d, d.lair_dir), d.lair_dir, rng, 4.0, SIDE_ROAD_WIDTH, false, true), SIDE_ROAD_WIDTH, false)
+	for i in SIDE_ROADS:
+		_add_branch(d, mains, rng, 25.0, 70.0, SIDE_ROAD_WIDTH)
+	var sides := d.roads.filter(func(r: Dictionary) -> bool: return not r.main)
+	for i in PATHS:
+		_add_branch(d, sides, rng, 15.0, 35.0, PATH_WIDTH)
+	for i in CONNECTORS:
+		var ra: Dictionary = mains[rng.randi() % mains.size()]
+		var rb: Dictionary = mains[rng.randi() % mains.size()]
+		if ra == rb:
+			continue
+		var pa: Vector3 = _mid_point(ra.points, rng)
+		var pb: Vector3 = _mid_point(rb.points, rng)
+		if d.arc_m(pa, pb) > 15.0 and d.arc_m(pa, pb) < 90.0:
+			d.add_road(_road(d, pa, pb, rng, 6.0, SIDE_ROAD_WIDTH, false, false), SIDE_ROAD_WIDTH, false)
+
+static func _mid_point(pts: PackedVector3Array, rng: RandomNumberGenerator) -> Vector3:
+	return pts[rng.randi_range(int(pts.size() * 0.2), int(pts.size() * 0.8))]
+
+## Caminho que sai de um ponto de uma das `parents` para o lado, com `min_m`–`max_m` de comprimento.
+static func _add_branch(d: PlanetData, parents: Array, rng: RandomNumberGenerator, min_m: float, max_m: float, width: float) -> void:
+	if parents.is_empty():
+		return
+	var road: Dictionary = parents[rng.randi() % parents.size()]
+	var pts: PackedVector3Array = road.points
+	if pts.size() < 6:
+		return
+	var i := rng.randi_range(int(pts.size() * 0.2), int(pts.size() * 0.8))
+	var from := pts[i]
+	var tangent := (pts[mini(pts.size() - 1, i + 1)] - pts[maxi(0, i - 1)]).normalized()
+	var side := from.cross(tangent).normalized() * (1.0 if rng.randf() < 0.5 else -1.0)
+	var length := rng.randf_range(min_m, max_m) / d.radius
+	var to := (from + (side + tangent * rng.randf_range(-0.6, 0.6)).normalized() * tan(length)).normalized()
+	var path := _road(d, from, to, rng, 3.5, width, false, false)
+	if path.size() >= 3:
+		d.add_road(path, width, false)
+
+## Estrada de `a` a `b`: caminho com curvas, desviado das estruturas pelo meio, e cortado à porta
+## das estruturas nas pontas (`trim_a`/`trim_b`).
+static func _road(d: PlanetData, a: Vector3, b: Vector3, rng: RandomNumberGenerator, wiggle_m: float, width: float, trim_a: bool, trim_b: bool) -> PackedVector3Array:
+	var path := road_path(d, a, b, rng, wiggle_m)
+	var structs := structures(d)
+	var hw := width * 0.5
+	# Desviar de estruturas que não são as pontas.
+	for i in path.size():
+		var p := path[i]
+		for st in structs:
+			var sd: Vector3 = st[0]
+			if sd.angle_to(a) < 0.001 or sd.angle_to(b) < 0.001:
+				continue
+			var need: float = (st[1] + hw + 1.5) / d.radius
+			var ang := p.angle_to(sd)
+			if ang < need:
+				var away := (p - sd * p.dot(sd))
+				if away.length() < 0.0001:
+					away = sd.cross(Vector3.UP if absf(sd.y) < 0.9 else Vector3.RIGHT)
+				p = (sd + away.normalized() * tan(need)).normalized() # empurra para fora
+		path[i] = p
+	# Cortar à porta das estruturas nas pontas.
+	var out := PackedVector3Array()
+	var stop_a := _door_distance(d, a) if trim_a else 0.0
+	var stop_b := _door_distance(d, b) if trim_b else 0.0
+	for p in path:
+		if stop_a > 0.0 and d.arc_m(p, a) < stop_a:
+			continue
+		if stop_b > 0.0 and d.arc_m(p, b) < stop_b:
+			continue
+		out.append(p)
+	return out
+
+## Distância (m) do centro de uma estrutura até onde a estrada acaba (a "porta").
+static func _door_distance(d: PlanetData, dir: Vector3) -> float:
+	for st in structures(d):
+		if (st[0] as Vector3).angle_to(dir) < 0.001:
+			return st[1] + 1.3
+	return 0.0
 
 static func _nearest_road_point(d: PlanetData, dir: Vector3) -> Vector3:
 	var best := Vector3.ZERO

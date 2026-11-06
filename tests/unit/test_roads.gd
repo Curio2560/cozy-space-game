@@ -11,12 +11,18 @@ func _ends(r: Dictionary) -> Array:
 	var pts: PackedVector3Array = r.points
 	return [pts[0], pts[pts.size() - 1]]
 
+## As pontas das estradas ficam à porta (até ~DOOR_SLACK m do raio da estrutura + 1,3 m).
+const DOOR_SLACK := 4.5
+
+func _near(a: Vector3, b: Vector3) -> bool:
+	return d.arc_m(a, b) < PlanetGenerator._door_distance(d, b) + DOOR_SLACK
+
 func _connects(a: Vector3, b: Vector3) -> bool:
 	for r in d.roads:
 		if not r.main:
 			continue
 		var e := _ends(r)
-		if (e[0].angle_to(a) < 0.01 and e[1].angle_to(b) < 0.01) or (e[0].angle_to(b) < 0.01 and e[1].angle_to(a) < 0.01):
+		if (_near(e[0], a) and _near(e[1], b)) or (_near(e[0], b) and _near(e[1], a)):
 			return true
 	return false
 
@@ -31,8 +37,20 @@ func test_secondary_roads_are_narrower_and_one_reaches_the_lair() -> void:
 	assert_gte(side.size(), 4)
 	for r in side:
 		assert_lt(r.width, PlanetGenerator.MAIN_ROAD_WIDTH)
-	var to_lair := side.any(func(r: Dictionary) -> bool: return (_ends(r)[1] as Vector3).angle_to(d.lair_dir) < 0.01)
+	var to_lair := side.any(func(r: Dictionary) -> bool: return _near(_ends(r)[1], d.lair_dir))
 	assert_true(to_lair, "devia haver uma estrada secundária até ao covil")
+
+func test_no_road_over_any_structure() -> void:
+	for r in d.roads:
+		var hw: float = r.width * 0.5
+		for p: Vector3 in r.points:
+			for st in PlanetGenerator.structures(d):
+				assert_gt(d.arc_m(p, st[0]), st[1] + hw * 0.5, "estrada por cima de uma estrutura")
+
+func test_many_branching_roads() -> void:
+	assert_gte(d.roads.size(), 20, "devia haver muitos caminhos")
+	var paths := d.roads.filter(func(r: Dictionary) -> bool: return r.width <= PlanetGenerator.PATH_WIDTH)
+	assert_gte(paths.size(), 4, "devia haver caminhos pequenos")
 
 func test_roads_are_continuous() -> void:
 	for r in d.roads:
