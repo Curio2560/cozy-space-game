@@ -9,7 +9,7 @@ const OUTPOST_CLEAR_M := 14.0
 const LAIR_CLEAR_M := 10.0
 const MAX_SLOPE_DEG := 28.0
 
-## Biomas: lista de tipos de decoração. count = quantos tentar colocar num planeta de raio 60
+## Biomas: lista de tipos de decoração (repetir um tipo em `kinds` aumenta o seu peso). count = quantos tentar colocar num planeta de raio 60
 ## (escala com a área); size = altura em m [min, max]; clear = raio livre em m.
 const BIOMES := {
 	"prado": {
@@ -17,11 +17,11 @@ const BIOMES := {
 		"height_amp": 1.8,
 		"noise_freq": 0.03,
 		"props": [
-			{"kinds": ["natureza/Tree_Blob_1", "natureza/Tree_Blob_2", "natureza/Tree_Blob_3"], "count": 95, "size": [3.2, 4.6], "clear": 2.2, "outline": true, "collider": 0.11},
-			{"kinds": ["natureza/Bush_1", "natureza/Bush_2", "natureza/Bush_3"], "count": 130, "size": [0.7, 1.2], "clear": 1.0, "outline": true},
+			{"kinds": ["natureza/Tree_Blob_1", "natureza/Tree_Blob_2", "natureza/Tree_Blob_3", "natureza/Tree_Blob_3", "natureza/Tree_Blob_3"], "count": 95, "size": [3.2, 4.6], "clear": 2.2, "outline": true, "collider": 0.11},
+			{"kinds": ["natureza/Bush_1", "natureza/Bush_2", "natureza/Bush_3", "natureza/Bush_3", "natureza/Bush_3"], "count": 130, "size": [0.7, 1.2], "clear": 1.0, "outline": true},
 			{"kinds": ["natureza/Rock_Large_1", "natureza/Rock_Large_2", "natureza/Rock_Large_3"], "count": 40, "size": [1.2, 2.2], "clear": 1.8, "outline": true, "collider": 0.45},
 			{"kinds": ["natureza/Rock_1", "natureza/Rock_2", "natureza/Rock_3", "natureza/Rock_4"], "count": 50, "size": [0.35, 0.7], "clear": 0.6, "outline": true},
-			{"kinds": ["natureza/Plant_1", "natureza/Plant_2", "natureza/Plant_3"], "count": 80, "size": [0.5, 0.9], "clear": 0.6, "outline": true},
+			{"kinds": ["natureza/Plant_1", "natureza/Plant_2", "natureza/Plant_2", "natureza/Plant_1", "natureza/Plant_3"], "count": 80, "size": [0.5, 0.9], "clear": 0.6, "outline": true},
 			{"kinds": ["natureza/Grass_1", "natureza/Grass_2", "natureza/Grass_3"], "count": 450, "size": [0.25, 0.45], "clear": 0.3, "outline": false},
 		],
 	},

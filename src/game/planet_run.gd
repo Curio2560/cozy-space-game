@@ -60,6 +60,8 @@ func _ready() -> void:
 		deliveries.session.tick(12.0)
 		_vehicle_btn = JumpBuffer.new()
 		enter_rover()
+	if "perf" in args:
+		_perf_log()
 	if "drive" in args:
 		await get_tree().create_timer(0.5).timeout
 		enter_rover()
@@ -213,12 +215,21 @@ func _build_ui() -> void:
 	_hint.add_theme_constant_override("outline_size", 8)
 	hud.add_child(_hint)
 
+## Mede draw calls e triângulos durante uns segundos (capturas no PC).
+func _perf_log() -> void:
+	for i in 6:
+		await get_tree().create_timer(1.0).timeout
+		print("perf ", "condução " if driving else "a pé ", DebugMenu.stats_text())
+
 func _update_touch_visibility() -> void:
 	if is_instance_valid(touch):
 		touch.visible = DisplayServer.is_touchscreen_available() or DebugMenu.force_touch
 
 func _register_debug() -> void:
+	DebugMenu.add_label(self, func() -> String: return "seed %d · %d ¢" % [seed_value, wallet.credits()])
 	DebugMenu.add_button(self, "DBG_NEW_SEED", func() -> void: start(randi() % 100000))
+	DebugMenu.add_button(self, "DBG_GOTO_OUTPOST", func() -> void:
+		spawn_near(planet.data.outpost_dir, planet.data.posts[0], 9.0))
 	for i in 3:
 		DebugMenu.add_button(self, tr("DBG_GOTO_POST") + " %d" % (i + 1), func() -> void:
 			spawn_near(planet.data.posts[i], planet.data.outpost_dir, 7.0))

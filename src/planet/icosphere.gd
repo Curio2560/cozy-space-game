@@ -35,9 +35,21 @@ static func build(level: int) -> Array:
 	_cache[level] = [pv, idx]
 	return _cache[level]
 
-## As 12 direções dos vértices do icosaedro (centros das regiões de culling).
-static func region_dirs() -> PackedVector3Array:
-	return (build(0)[0] as PackedVector3Array)
+## Direções dos vértices da icosfera de nível `level` (centros das regiões de culling):
+## nível 0 = 12, nível 1 = 42, nível 2 = 162.
+static func region_dirs(level := 1) -> PackedVector3Array:
+	return (build(level)[0] as PackedVector3Array)
+
+## Meio-ângulo máximo de uma região (distância angular de um ponto ao centro mais próximo).
+static func region_angle(level := 1) -> float:
+	var dirs := region_dirs(level)
+	var worst := 0.0
+	for p in PlanetGenerator.fibonacci_dirs(3000):
+		var best := PI
+		for d in dirs:
+			best = minf(best, p.angle_to(d))
+		worst = maxf(worst, best)
+	return worst * 1.02
 
 static func _mid(a: int, b: int, verts: Array[Vector3], cache: Dictionary) -> int:
 	var key := Vector2i(mini(a, b), maxi(a, b))

@@ -1,13 +1,14 @@
 class_name Planet
 extends Node3D
 ## Constrói a cena de um planeta a partir de PlanetData: terreno (icosfera deformada) com
-## colisão, decoração em MultiMesh agrupada por 12 regiões (culling por hemisfério),
+## colisão, decoração em MultiMesh agrupada por 42 regiões (culling por hemisfério),
 ## colisores simples para árvores e rochas grandes, e marcadores dos postos.
 
 signal built
 
 const ICO_LEVEL := 5
-const REGION_ANGLE := 0.66 # meio-ângulo máximo de uma região (vértice do icosaedro -> centro da face ≈ 37°)
+const REGION_LEVEL := 1 # 42 regiões
+static var region_angle := -1.0 # calculado uma vez (Icosphere.region_angle)
 const POST_MODEL := "base/House_Single"
 const OUTPOST_MODEL := "base/Base_Large"
 const LAIR_MODEL := "natureza/Rock_Large_3"
@@ -18,13 +19,21 @@ var terrain: MeshInstance3D
 var body: StaticBody3D
 var _regions: Array[Node3D] = []
 var _region_dirs: PackedVector3Array
+## Margem angular para objetos altos ainda visíveis para lá do horizonte.
+var _tall_margin := 0.2
 
 func build(d: PlanetData) -> void:
 	data = d
 	for c in get_children():
 		c.free()
 	_regions.clear()
-	_region_dirs = Icosphere.region_dirs()
+	_region_dirs = Icosphere.region_dirs(REGION_LEVEL)
+	if region_angle < 0.0:
+		region_angle = Icosphere.region_angle(REGION_LEVEL)
+	var tallest := 0.0
+	for p in d.placements:
+		tallest = maxf(tallest, p.size)
+	_tall_margin = acos(d.radius / (d.radius + d.height_amp * 2.0 + tallest))
 	body = StaticBody3D.new()
 	body.name = "Body"
 	add_child(body)
@@ -54,7 +63,7 @@ func _process(_delta: float) -> void:
 
 func update_culling(cam_local: Vector3) -> void:
 	for i in _regions.size():
-		_regions[i].visible = PlanetCulling.region_visible(_region_dirs[i], cam_local, data.radius, REGION_ANGLE)
+		_regions[i].visible = PlanetCulling.region_visible(_region_dirs[i], cam_local, data.radius - data.height_amp, region_angle, _tall_margin)
 
 func _build_terrain() -> void:
 	var ico := Icosphere.build(ICO_LEVEL)

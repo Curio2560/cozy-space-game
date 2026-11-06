@@ -37,7 +37,34 @@ func test_culling_hides_far_side_and_shows_near_side() -> void:
 	planet.update_culling(Vector3(0, 0, 120))
 	var visible := planet.visible_region_count()
 	assert_gt(visible, 2)
-	assert_lt(visible, 12, "o lado de trás devia estar escondido")
+	assert_lt(visible, planet.get_children().filter(func(c: Node) -> bool: return c.name.begins_with("Region")).size(), "o lado de trás devia estar escondido")
+
+func test_regions_cover_the_whole_sphere() -> void:
+	# Qualquer ponto da esfera está dentro do ângulo de alguma região.
+	var dirs := Icosphere.region_dirs(Planet.REGION_LEVEL)
+	assert_eq(dirs.size(), 42)
+	for p in PlanetGenerator.fibonacci_dirs(500):
+		var best := PI
+		for d in dirs:
+			best = minf(best, p.angle_to(d))
+		assert_lte(best, Planet.region_angle)
+
+func test_tall_props_near_horizon_are_not_culled() -> void:
+	# Câmara a 4 m da superfície; árvore de 4,6 m a 30 m de arco (para lá do horizonte do chão).
+	var r := planet.data.radius
+	var cam := Vector3(0, 0, r + 4.0)
+	var tree_dir := Vector3(0, 0, 1).rotated(Vector3.UP, 30.0 / r)
+	var tree_top := tree_dir * (r + 4.6)
+	var horizon_ground := acos(r / (r + 4.0))
+	assert_gt(tree_dir.angle_to(Vector3(0, 0, 1)), horizon_ground, "a árvore está mesmo para lá do horizonte do chão")
+	assert_lt(tree_top.distance_to(cam), 40.0)
+	planet.update_culling(cam)
+	var dirs := Icosphere.region_dirs(Planet.REGION_LEVEL)
+	var best := 0
+	for i in dirs.size():
+		if tree_dir.dot(dirs[i]) > tree_dir.dot(dirs[best]):
+			best = i
+	assert_true(planet.get_node("Region%d" % best).visible, "a região da árvore devia estar visível")
 
 func test_region_visibility_math() -> void:
 	var cam := Vector3(0, 0, 100.0)
