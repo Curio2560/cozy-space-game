@@ -23,3 +23,11 @@ func test_boot_has_button_to_showcase_scene() -> void:
 	add_child_autofree(boot)
 	assert_not_null(boot.get_node_or_null("%Showcase"))
 	assert_true(ResourceLoader.exists(boot.SHOWCASE), "a cena da vitrine não existe")
+
+func test_android_launcher_icons_exist() -> void:
+	var cfg := ConfigFile.new()
+	cfg.load("res://export_presets.cfg")
+	for key in ["main_192x192", "adaptive_foreground_432x432", "adaptive_background_432x432", "adaptive_monochrome_432x432"]:
+		var path := str(cfg.get_value("preset.0.options", "launcher_icons/" + key, ""))
+		assert_ne(path, "", "ícone %s não definido" % key)
+		assert_true(ResourceLoader.exists(path), "ícone %s não existe: %s" % [key, path])

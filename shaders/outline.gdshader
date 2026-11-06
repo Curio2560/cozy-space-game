@@ -4,8 +4,8 @@ shader_type spatial;
 render_mode unshaded, cull_front, depth_draw_opaque, shadows_disabled;
 
 uniform sampler2D albedo_tex : source_color, filter_nearest, repeat_disable;
-uniform float width : hint_range(0.0, 0.2) = 0.018; // metros, à escala do mundo
-uniform float darkness : hint_range(0.0, 1.0) = 0.32;
+uniform float width : hint_range(0.0, 0.2) = 0.032; // metros, à escala do mundo
+uniform float darkness : hint_range(0.0, 1.0) = 0.22;
 // true quando a malha foi preparada por CelShading.outline_ready_mesh (normal suave na tangente).
 uniform bool use_tangent_normals = false;
 

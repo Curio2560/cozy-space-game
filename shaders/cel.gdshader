@@ -8,14 +8,14 @@ uniform vec4 albedo_tint : source_color = vec4(1.0);
 // Limiares da rampa (em N·L) e luminosidade dos dois tons de sombra.
 uniform float band_lit : hint_range(-1.0, 1.0) = 0.35;
 uniform float band_mid : hint_range(-1.0, 1.0) = -0.05;
-uniform float tone_mid : hint_range(0.0, 1.0) = 0.62;
-uniform float tone_dark : hint_range(0.0, 1.0) = 0.36;
+uniform float tone_mid : hint_range(0.0, 1.0) = 0.5;
+uniform float tone_dark : hint_range(0.0, 1.0) = 0.24;
 uniform float band_softness : hint_range(0.0, 0.2) = 0.03;
 uniform float spec_size : hint_range(0.0, 1.0) = 0.006;
 uniform float spec_strength : hint_range(0.0, 1.0) = 0.15;
 uniform vec4 rim_color : source_color = vec4(1.0, 0.93, 0.85, 1.0);
-uniform float rim_width : hint_range(0.0, 1.0) = 0.28;
-uniform float rim_strength : hint_range(0.0, 1.0) = 0.35;
+uniform float rim_width : hint_range(0.0, 1.0) = 0.36;
+uniform float rim_strength : hint_range(0.0, 1.0) = 0.7;
 
 void fragment() {
 	vec4 c = texture(albedo_tex, UV) * albedo_tint;
