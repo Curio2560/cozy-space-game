@@ -35,15 +35,23 @@ static var _single_cache: Dictionary = {}
 
 ## Para modelos do kit com uma só malha (natureza, pickups): a malha, a sua transformação
 ## relativa à raiz da cena, o material e a caixa envolvente no espaço da raiz. Em cache.
+## Caminhos "nature/X" são modelos .obj do pack de natureza (cores por material, várias
+## superfícies): devolve também "palette": true para serem pintados pela paleta do bioma.
 static func single_mesh(kit_path: String) -> Dictionary:
 	if _single_cache.has(kit_path):
 		return _single_cache[kit_path]
+	if kit_path.begins_with("nature/"):
+		var mesh: Mesh = load("res://assets/" + kit_path + ".obj")
+		assert(mesh != null, "modelo em falta: %s" % kit_path)
+		var nat := {"mesh": mesh, "xform": Transform3D.IDENTITY, "material": null, "aabb": mesh.get_aabb(), "palette": true}
+		_single_cache[kit_path] = nat
+		return nat
 	var root: Node3D = (load("res://assets/kit/" + kit_path + ".gltf") as PackedScene).instantiate()
 	var mis := _meshes(root)
 	assert(mis.size() == 1, "%s tem %d malhas" % [kit_path, mis.size()])
 	var mi := mis[0]
 	var xf := _relative(mi, root)
-	var info := {"mesh": mi.mesh, "xform": xf, "material": mi.get_active_material(0), "aabb": xf * mi.get_aabb()}
+	var info := {"mesh": mi.mesh, "xform": xf, "material": mi.get_active_material(0), "aabb": xf * mi.get_aabb(), "palette": false}
 	root.free()
 	_single_cache[kit_path] = info
 	return info

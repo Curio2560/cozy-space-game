@@ -21,4 +21,5 @@ Precisa dos export templates 4.7.2, do Android SDK e do keystore debug configura
 
 ## Créditos
 
-- Ultimate Platformer Pack, Quaternius (CC0 1.0).
+- Ultimate Platformer Pack, Quaternius (CC0 1.0) — `assets/kit`.
+- Ultimate Nature Pack, Quaternius (CC0 1.0) — `assets/nature`.
