@@ -43,3 +43,32 @@ func test_planet_uses_modular_buildings() -> void:
 	var house: Node3D = run.planet.get_node("Post0")
 	assert_not_null(house.get_node_or_null("Mesh"), "a casa do colono devia ser um edifício montado")
 	assert_not_null(run.planet.get_node("Outpost").get_node_or_null("Mesh"))
+
+func test_build_mode_closes_debug_and_shows_bar_and_ghost() -> void:
+	var b: ModuleBuilder = run.builder
+	if not DebugMenu.is_open():
+		DebugMenu.toggle()
+	b.enter_mode()
+	assert_false(DebugMenu.is_open(), "o painel DBG fecha para se ver onde se constrói")
+	assert_true(b._bar.visible)
+	assert_true(b._ghost.visible)
+	var before := b.selected
+	b.cycle(1)
+	assert_ne(b.selected, before)
+	b.place()
+	assert_gt(b.placed.size(), 0)
+	b.exit_mode()
+	assert_false(b._bar.visible)
+
+func test_first_piece_lands_in_front_of_player_on_the_surface() -> void:
+	var b: ModuleBuilder = run.builder
+	b.selected = "Wall_1"
+	b.place()
+	var anchor: Vector3 = b._anchor.global_position
+	var p: Vector3 = run.player.global_position
+	assert_lt(anchor.distance_to(p), ModuleBuilder.AHEAD + 3.0, "a primeira peça fica à frente do jogador")
+	var up: Vector3 = (anchor - run.planet.global_position).normalized()
+	assert_gt(b._anchor.global_basis.y.normalized().dot(up), 0.99, "assente no chão, de pé")
+	var d: PlanetData = run.planet.data
+	var local: Vector3 = run.planet.to_local(anchor)
+	assert_almost_eq(local.length(), d.radius + d.height_at(local.normalized()), 0.2)

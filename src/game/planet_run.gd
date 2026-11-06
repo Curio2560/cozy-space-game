@@ -91,11 +91,15 @@ func _ready() -> void:
 	_register_debug()
 	builder.setup(self)
 	var args := OS.get_cmdline_user_args() # argumentos só para capturas de ecrã no PC
-	if "dbgbuild" in args: # capturas: separador Construir com uma casa colocada
+	if "dbgbuild" in args: # capturas: modo construção com uma casa colocada
+		builder.enter_mode()
 		builder.selected = "★ Casa do colono"
+		builder._refresh_ghost()
 		builder.place()
-		DebugMenu.toggle()
-		DebugMenu.show_tab("DBG_TAB_BUILD")
+		builder.selected = "Props_Pod"
+		builder.rotate_90()
+		builder._refresh_ghost()
+		player.place_at(player.global_position + (-camera.global_basis.z) * -3.0)
 	if "pause" in args:
 		pause_menu.open()
 	if "board" in args:

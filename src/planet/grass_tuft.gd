@@ -6,7 +6,7 @@ extends RefCounted
 
 static var _cache: Dictionary = {}
 
-static func mesh(color: Color, blades := 6) -> ArrayMesh:
+static func mesh(color: Color, blades := 4) -> ArrayMesh:
 	var key := color.to_html() + str(blades)
 	if _cache.has(key):
 		return _cache[key]

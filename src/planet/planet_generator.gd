@@ -20,7 +20,7 @@ const BIOMES := {
 	"prado": {
 		"dirt": 140,
 		"ground": Color("8fd3a0"),
-		"turf": {"density": 2.4, "size": [0.35, 0.8]},
+		"turf": {"density": 1.9, "size": [0.38, 0.85]},
 		"creatures": 16,
 		"sky": {"bg": Color("2b2146"), "ambient": Color("b9a8e8"), "sun": Color("fff1dc"),
 			"nebula_a": Color("5b3f94"), "nebula_b": Color("ff9f7a"),
@@ -42,14 +42,14 @@ const BIOMES := {
 		"props": [
 			{"kinds": ["nature/BirchTree_1", "nature/BirchTree_2", "nature/BirchTree_3", "nature/BirchTree_4", "nature/BirchTree_5",
 				"nature/BirchTree_Autumn_1", "nature/CommonTree_Autumn_3", "natureza/Tree_Blob_3"],
-				"count": 460, "size": [3.4, 5.2], "clear": 2.0, "outline": true, "collider": 0.06, "cluster": 0.55},
+				"count": 380, "size": [3.4, 5.2], "clear": 2.0, "outline": true, "collider": 0.06, "cluster": 0.55},
 			{"kinds": ["nature/Bush_1", "nature/Bush_2", "nature/BushBerries_1", "nature/BushBerries_2", "natureza/Bush_3"],
-				"count": 480, "size": [0.7, 1.2], "clear": 1.0, "outline": true, "cluster": 0.4},
+				"count": 380, "size": [0.7, 1.2], "clear": 1.0, "outline": false, "cluster": 0.4},
 			{"kinds": ["rocks/SM_Rocks_01", "rocks/SM_Rocks_02", "rocks/SM_Rocks_03", "rocks/SM_Rocks_04", "rocks/SM_Rocks_05", "rocks/SM_Rocks_06", "rocks/SM_Rocks_07", "rocks/SM_Rocks_08", "rocks/SM_Rocks_09", "rocks/SM_Rocks_10", "rocks/SM_Rocks_11"], "count": 20, "size": [2.2, 4.5], "clear": 2.2, "outline": true, "collider": 0.4, "cluster": 0.3},
 			{"kinds": ["rocks/SM_Rocks_01", "rocks/SM_Rocks_02", "rocks/SM_Rocks_03", "rocks/SM_Rocks_04", "rocks/SM_Rocks_05", "rocks/SM_Rocks_06", "rocks/SM_Rocks_07", "rocks/SM_Rocks_08", "rocks/SM_Rocks_09", "rocks/SM_Rocks_10", "rocks/SM_Rocks_11"], "count": 70, "size": [0.6, 1.8], "clear": 1.0, "outline": true},
 			{"kinds": ["rocks/SM_Rocks_01", "rocks/SM_Rocks_02", "rocks/SM_Rocks_03", "rocks/SM_Rocks_04", "rocks/SM_Rocks_05", "rocks/SM_Rocks_06", "rocks/SM_Rocks_07", "rocks/SM_Rocks_08", "rocks/SM_Rocks_09", "rocks/SM_Rocks_10", "rocks/SM_Rocks_11"], "count": 180, "size": [0.25, 1.1], "clear": 0.45, "outline": true, "pile": [3, 7], "pile_radius": 2.6},
-			{"kinds": ["natureza/Plant_1", "natureza/Plant_2", "natureza/Plant_2", "natureza/Plant_1", "natureza/Plant_3"], "count": 260, "size": [0.5, 0.9], "clear": 0.6, "outline": true, "cluster": 0.3},
-			{"kinds": ["mdvl/mdvl_nature_grass_01", "mdvl/mdvl_nature_grass_01", "natureza/Grass_2"], "count": 900, "size": [0.3, 0.65], "clear": 0.22, "outline": false, "cluster": 0.3},
+			{"kinds": ["natureza/Plant_1", "natureza/Plant_2", "natureza/Plant_2", "natureza/Plant_1", "natureza/Plant_3"], "count": 180, "size": [0.5, 0.9], "clear": 0.6, "outline": true, "cluster": 0.3},
+			{"kinds": ["mdvl/mdvl_nature_grass_01", "mdvl/mdvl_nature_grass_01", "natureza/Grass_2"], "count": 250, "size": [0.3, 0.65], "clear": 0.22, "outline": false, "cluster": 0.3},
 		],
 	},
 	"acido": {
@@ -83,7 +83,7 @@ const BIOMES := {
 			{"kinds": ["rocks/SM_Rocks_01", "rocks/SM_Rocks_02", "rocks/SM_Rocks_03", "rocks/SM_Rocks_04", "rocks/SM_Rocks_05", "rocks/SM_Rocks_06", "rocks/SM_Rocks_07", "rocks/SM_Rocks_08", "rocks/SM_Rocks_09", "rocks/SM_Rocks_10", "rocks/SM_Rocks_11"], "count": 30, "size": [2.2, 4.5], "clear": 2.2, "outline": true, "collider": 0.4, "cluster": 0.3},
 			{"kinds": ["rocks/SM_Rocks_01", "rocks/SM_Rocks_02", "rocks/SM_Rocks_03", "rocks/SM_Rocks_04", "rocks/SM_Rocks_05", "rocks/SM_Rocks_06", "rocks/SM_Rocks_07", "rocks/SM_Rocks_08", "rocks/SM_Rocks_09", "rocks/SM_Rocks_10", "rocks/SM_Rocks_11"], "count": 90, "size": [0.6, 1.8], "clear": 1.0, "outline": true},
 			{"kinds": ["rocks/SM_Rocks_01", "rocks/SM_Rocks_02", "rocks/SM_Rocks_03", "rocks/SM_Rocks_04", "rocks/SM_Rocks_05", "rocks/SM_Rocks_06", "rocks/SM_Rocks_07", "rocks/SM_Rocks_08", "rocks/SM_Rocks_09", "rocks/SM_Rocks_10", "rocks/SM_Rocks_11"], "count": 220, "size": [0.25, 1.1], "clear": 0.45, "outline": true, "pile": [3, 7], "pile_radius": 2.6},
-			{"kinds": ["mdvl/mdvl_nature_grass_01"], "count": 1200, "size": [0.3, 0.65], "clear": 0.22, "outline": false, "cluster": 0.3},
+			{"kinds": ["mdvl/mdvl_nature_grass_01"], "count": 300, "size": [0.3, 0.65], "clear": 0.22, "outline": false, "cluster": 0.3},
 		],
 	},
 	"lava": {

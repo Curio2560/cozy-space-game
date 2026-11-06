@@ -99,3 +99,6 @@ HUD_CONDITION,condition %d%%,estado %d%%
 TOAST_LAIR_OPEN,The lair is open!,O covil abriu!
 "TOAST_FRIEND","Friendship with %s: level %d!","Amizade com %s: nível %d!"
 TOAST_FRAGILE,Careful! Fragile delivery,Cuidado! A encomenda é frágil
+BUILD_ENTER,Enter build mode,Entrar no modo construção
+BUILD_EXIT,Exit,Sair
+BUILD_COPY_SHORT,Copy,Copiar

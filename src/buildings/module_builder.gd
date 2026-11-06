@@ -19,6 +19,10 @@ var _ghost: MeshInstance3D
 var _nodes: Array[Node3D] = []
 var _list: ItemList
 var _info: Label
+## Modo construção: barra própria em baixo, ao centro (fora do painel DBG, que tapava a vista).
+var building := false
+var _bar: Control
+var _bar_name: Label
 var _palette := BuildingKit.BASE_PALETTE
 
 func setup(p_run: Node3D) -> void:
@@ -26,11 +30,22 @@ func setup(p_run: Node3D) -> void:
 	if not DebugMenu.enabled:
 		return
 	_ghost = MeshInstance3D.new()
-	_ghost.transparency = 0.45
-	_ghost.material_override = CelShading.vertex_color_material(false)
+	# Fantasma semitransparente (material próprio: a transparência por objeto não funciona no
+	# renderer Compatibility).
+	var gm := StandardMaterial3D.new()
+	gm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	gm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	gm.vertex_color_use_as_albedo = true
+	gm.albedo_color = Color(1.0, 1.0, 1.0, 0.45)
+	gm.no_depth_test = true
+	_ghost.material_override = gm
 	_ghost.visible = false
 	add_child(_ghost)
 	var tab := "DBG_TAB_BUILD"
+	var enter := _btn("BUILD_ENTER", enter_mode)
+	enter.custom_minimum_size = Vector2(0, 80)
+	enter.add_theme_font_size_override("font_size", 28)
+	DebugMenu.add_control(self, enter, tab)
 	_info = Label.new()
 	_info.add_theme_font_size_override("font_size", 20)
 	_info.autowrap_mode = TextServer.AUTOWRAP_WORD
@@ -55,6 +70,77 @@ func setup(p_run: Node3D) -> void:
 		selected = _list.get_item_text(i)
 		_refresh_ghost())
 	DebugMenu.add_control(self, _list, tab)
+	_refresh_ghost()
+	_make_bar()
+
+## Barra do modo construção: em baixo ao centro, entre o joystick e os botões de ação.
+func _make_bar() -> void:
+	var layer := CanvasLayer.new()
+	layer.layer = 40
+	add_child(layer)
+	_bar = PanelContainer.new()
+	_bar.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
+	_bar.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	_bar.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	_bar.offset_bottom = -12
+	_bar.visible = false
+	layer.add_child(_bar)
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 8)
+	_bar.add_child(col)
+	var row1 := HBoxContainer.new()
+	row1.add_theme_constant_override("separation", 8)
+	row1.add_child(_small("◀", func() -> void: cycle(-1)))
+	_bar_name = Label.new()
+	_bar_name.custom_minimum_size = Vector2(260, 0)
+	_bar_name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_bar_name.add_theme_font_size_override("font_size", 22)
+	row1.add_child(_bar_name)
+	row1.add_child(_small("▶", func() -> void: cycle(1)))
+	col.add_child(row1)
+	var row2 := HBoxContainer.new()
+	row2.add_theme_constant_override("separation", 8)
+	var place_btn := _small("BUILD_PLACE", place)
+	place_btn.custom_minimum_size = Vector2(130, 64)
+	row2.add_child(place_btn)
+	row2.add_child(_small("⟳", rotate_90))
+	row2.add_child(_small("▲", func() -> void: storey += 1))
+	row2.add_child(_small("▼", func() -> void: storey = maxi(storey - 1, 0)))
+	row2.add_child(_small("↶", undo))
+	row2.add_child(_small("BUILD_COPY_SHORT", copy_layout))
+	row2.add_child(_small("BUILD_EXIT", exit_mode))
+	col.add_child(row2)
+
+func _small(key: String, action: Callable) -> Button:
+	var b := Button.new()
+	b.text = key
+	b.custom_minimum_size = Vector2(64, 64)
+	b.add_theme_font_size_override("font_size", 22)
+	b.pressed.connect(action)
+	return b
+
+## Entra no modo construção: fecha o painel DBG, mostra a barra e a pré-visualização.
+func enter_mode() -> void:
+	building = true
+	if DebugMenu.is_open():
+		DebugMenu.toggle()
+	if _bar:
+		_bar.visible = true
+	if _ghost:
+		_ghost.visible = true
+
+func exit_mode() -> void:
+	building = false
+	if _bar:
+		_bar.visible = false
+	if _ghost:
+		_ghost.visible = false
+
+## Escolhe o módulo anterior/seguinte (montagens prontas primeiro).
+func cycle(step: int) -> void:
+	var items: Array = PREFABS.keys() + BuildingKit.modules()
+	var i := items.find(selected)
+	selected = items[(i + step + items.size()) % items.size()]
 	_refresh_ghost()
 
 func _btn(key: String, action: Callable) -> Button:
@@ -106,10 +192,13 @@ func cursor_local() -> Vector3:
 
 func place() -> void:
 	if _anchor == null:
+		# Calcular o referencial ANTES de criar a âncora (senão _frame() devolvia a própria âncora
+		# ainda na origem — o centro do planeta — e as peças iam parar lá dentro).
+		var frame := _frame()
 		_anchor = Node3D.new()
 		_anchor.name = "Assembly"
 		add_child(_anchor)
-		_anchor.global_transform = _frame()
+		_anchor.global_transform = frame
 	var at := cursor_local()
 	for part in _selected_parts():
 		var pp: Vector3 = Basis(Vector3.UP, deg_to_rad(rotation_deg)) * (part.p as Vector3) + at
@@ -151,6 +240,8 @@ func copy_layout() -> void:
 func _process(_delta: float) -> void:
 	if _info:
 		_info.text = tr("BUILD_INFO") % [selected, int(rotation_deg), storey, placed.size()]
+	if _bar_name and _bar and _bar.visible:
+		_bar_name.text = tr("BUILD_INFO") % [selected, int(rotation_deg), storey, placed.size()]
 	if _ghost and _ghost.visible and run:
 		var f := _frame()
 		_ghost.global_transform = f * Transform3D(Basis(Vector3.UP, deg_to_rad(rotation_deg)), cursor_local())

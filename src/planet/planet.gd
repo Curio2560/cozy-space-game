@@ -308,7 +308,7 @@ func _build_terrain() -> void:
 
 const TERRAIN_SHADER := preload("res://shaders/terrain_grass.gdshader")
 ## Distância (m) até onde se desenha a relva procedimental (mais longe: a relva pintada no chão).
-const TURF_VISIBLE_M := 48.0
+const TURF_VISIBLE_M := 34.0
 
 ## Chão com relva pintada (manchas e traços) nas cores do bioma.
 func _terrain_material() -> ShaderMaterial:
