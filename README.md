@@ -19,7 +19,7 @@ noturna com mechs. Godot 4.7.2 · renderer Compatibility · paisagem · cel-shad
 | `assets/terrain/` | Terreno modular (penhascos, colinas, montanhas) — relevo carimbado nos planetas |
 | `assets/sky/` | Planetas animados do céu (SBS Tiny Planet Pack, CC0) |
 | `assets/BinbunVFX_Vol2/` | Explosões (Binbun3D, CC0) — explosão do rover |
-| `assets/monsters/` | Quaternius **Ultimate Monsters** — 26 criaturas (16 com animações em glTF) |
+| `assets/monsters/` | Quaternius **Ultimate Monsters** — 50 criaturas animadas (big, blob, flying) |
 | `assets/icon/` | Ícone da app (gerado por `tools/`) |
 | `entrada/` | **Onde pôr assets novos** (ver `entrada/LEIA-ME.md`) |
 | `src/` | Código: `planet/` (geração), `player/`, `vehicle/`, `camera/`, `delivery/`, `economy/`, `render/` (cel-shading), `input/`, `ui/`, `debug/`, `game/`, `dev/` |

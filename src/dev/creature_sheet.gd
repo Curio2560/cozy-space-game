@@ -3,6 +3,7 @@ extends Node3D
 ## `-- biome=acido` mostra o tom de outro bioma.
 
 var _players: Array[AnimationPlayer] = []
+var _creatures: Array[Node] = []
 var _t := 0.0
 
 func _ready() -> void:
@@ -26,30 +27,31 @@ func _ready() -> void:
 	var ground := MeshInstance3D.new()
 	ground.mesh = PlaneMesh.new()
 	(ground.mesh as PlaneMesh).size = Vector2(40, 22)
-	ground.position = Vector3(7, 0, 4)
+	ground.position = Vector3(8, 0, 6)
 	ground.material_override = CelShading.terrain(PlanetGenerator.BIOMES[biome].ground)
 	add_child(ground)
 	var ids := CreatureCatalog.ids()
 	for i in ids.size():
 		var c := CreatureCatalog.instantiate(ids[i], biome)
-		c.position = Vector3((i % 9) * 2.0, 0, (i / 9) * 3.2)
+		c.position = Vector3((i % 10) * 1.8, 0, (i / 10) * 2.6)
 		c.rotation.y = 0.35
 		add_child(c)
 		var ap := CreatureCatalog.animation_player(c)
 		if ap:
 			_players.append(ap)
+			_creatures.append(c)
 	var cam := Camera3D.new()
 	cam.fov = 42
 	add_child(cam)
-	cam.position = Vector3(8, 8.5, 17)
-	cam.look_at(Vector3(8, 0.6, 3))
+	cam.position = Vector3(8.2, 11.0, 22.0)
+	cam.look_at(Vector3(8.2, 0.6, 5.5))
 
 func _process(delta: float) -> void:
 	_t += delta
-	var anims := ["Idle", "Walk", "Wave", "Punch"]
-	var a: String = anims[int(_t / 1.5) % anims.size()]
+	var roles := ["idle", "move", "attack", "run"]
+	var role: String = roles[int(_t / 1.5) % roles.size()]
 	for i in _players.size():
-		var ap := _players[i]
-		var want: String = a if i % 2 == 0 else "Idle"
-		if ap.current_animation != want and ap.has_animation(want):
-			ap.play(want, 0.2)
+		var c: Node = _creatures[i]
+		var want := CreatureCatalog.anim(c, role if i % 2 == 0 else "idle")
+		if want != "" and _players[i].current_animation != want:
+			_players[i].play(want, 0.2)

@@ -2,36 +2,45 @@ extends GutTest
 ## Catálogo de criaturas: todas carregam em cel-shading; as animadas têm as animações
 ## de que o jogo precisa; o tom muda com o bioma.
 
-const NEEDED := ["Idle", "Walk", "Run", "Punch", "HitReact", "Death"]
+const ROLES := ["idle", "move", "run", "attack", "hit", "death"]
+## Exceções conhecidas do pack: o Demon voador só traz Flying_Idle.
+const FEW_ANIMS := ["flying/Demon"]
 
 func test_every_creature_instantiates_with_cel_shading() -> void:
 	for id in CreatureCatalog.ids():
 		var c := CreatureCatalog.instantiate(id)
 		add_child_autofree(c)
 		var meshes := c.find_children("*", "MeshInstance3D", true, false)
-		if c.get_child(0) is MeshInstance3D:
-			meshes.append(c.get_child(0))
 		assert_gt(meshes.size(), 0, "%s sem malha" % id)
 		var m := (meshes[0] as MeshInstance3D).get_active_material(0) as ShaderMaterial
 		assert_not_null(m, "%s sem material cel" % id)
 		var box := KitUtil.local_aabb(c)
-		assert_almost_eq(box.size.y, float(CreatureCatalog.CREATURES[id].height), 0.05, id)
+		assert_almost_eq(box.size.y, CreatureCatalog.height(id), 0.05, id)
+		assert_almost_eq(box.position.y, CreatureCatalog.hover(id), 0.05, "%s: pés no chão (ou a pairar)" % id)
 
-func test_animated_creatures_have_the_animations_the_game_needs() -> void:
+func test_fifty_creatures_in_three_families() -> void:
+	var ids := CreatureCatalog.ids()
+	assert_eq(ids.size(), 50)
+	for fam in ["big", "blob", "flying"]:
+		assert_gt(ids.filter(func(i: String) -> bool: return i.begins_with(fam + "/")).size(), 10, fam)
+
+func test_every_creature_has_an_animation_for_every_role() -> void:
 	for id in CreatureCatalog.ids():
-		if not CreatureCatalog.CREATURES[id].animated:
-			continue
 		var c := CreatureCatalog.instantiate(id)
 		add_child_autofree(c)
 		var ap := CreatureCatalog.animation_player(c)
 		assert_not_null(ap, id)
-		for a in NEEDED:
-			assert_true(ap.has_animation(a), "%s sem a animação %s" % [id, a])
-		assert_eq(ap.current_animation, "Idle", "%s devia começar em Idle" % id)
+		var fam: Dictionary = CreatureCatalog.FAMILIES[CreatureCatalog.family(id)].anims
+		for role in ROLES:
+			var n := CreatureCatalog.anim(c, role)
+			assert_ne(n, "", "%s sem animação para %s" % [id, role])
+			if id not in FEW_ANIMS:
+				assert_eq(n, fam[role], "%s: %s devia ser %s" % [id, role, fam[role]])
+		assert_true(ap.is_playing(), "%s devia começar a animar" % id)
 
 func test_creature_colour_follows_biome() -> void:
-	var a := CreatureCatalog.instantiate("Dino", "prado")
-	var b := CreatureCatalog.instantiate("Dino", "lava")
+	var a := CreatureCatalog.instantiate("big/Dino", "prado")
+	var b := CreatureCatalog.instantiate("big/Dino", "lava")
 	add_child_autofree(a)
 	add_child_autofree(b)
 	var ma := (a.find_children("*", "MeshInstance3D", true, false)[0] as MeshInstance3D).get_active_material(0) as ShaderMaterial
