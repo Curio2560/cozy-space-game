@@ -11,13 +11,14 @@ static var _cache: Dictionary = {} # chave da paleta -> ShaderMaterial
 static var _mesh_cache: Dictionary = {} # Mesh original -> ArrayMesh com normais suaves na tangente
 
 ## Substitui os materiais de todas as MeshInstance3D sob `root`. Devolve quantas superfícies mudou.
-static func apply(root: Node) -> int:
+## `tint` multiplica a cor (p. ex. o tom do bioma nas criaturas).
+static func apply(root: Node, tint := Color.WHITE) -> int:
 	var count := 0
 	for mi in _mesh_instances(root):
 		mi.mesh = outline_ready_mesh(mi.mesh)
 		for i in mi.mesh.get_surface_count():
 			var src := mi.get_active_material(i)
-			mi.set_surface_override_material(i, material_for(src, true))
+			mi.set_surface_override_material(i, material_for(src, true, tint))
 			count += 1
 	return count
 
