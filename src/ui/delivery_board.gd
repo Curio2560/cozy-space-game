@@ -13,20 +13,13 @@ func _ready() -> void:
 	custom_minimum_size = Vector2(720, 0)
 	grow_horizontal = Control.GROW_DIRECTION_BOTH
 	grow_vertical = Control.GROW_DIRECTION_BOTH
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color("fff6ea")
-	sb.set_corner_radius_all(18)
-	sb.set_content_margin_all(22)
-	sb.border_color = Color("2a2140")
-	sb.set_border_width_all(4)
-	add_theme_stylebox_override("panel", sb)
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 14)
 	add_child(v)
 	var title := Label.new()
 	title.text = "BOARD_TITLE"
 	title.add_theme_font_size_override("font_size", 34)
-	title.add_theme_color_override("font_color", Color("2a2140"))
+	title.add_theme_color_override("font_color", NeonTheme.CYAN)
 	v.add_child(title)
 	_list = VBoxContainer.new()
 	_list.add_theme_constant_override("separation", 10)
@@ -45,7 +38,7 @@ func refresh() -> void:
 		var busy := Label.new()
 		busy.text = "BOARD_BUSY"
 		busy.add_theme_font_size_override("font_size", 24)
-		busy.add_theme_color_override("font_color", Color("6d5f86"))
+		busy.add_theme_color_override("font_color", Color(NeonTheme.TEXT, 0.7))
 		_list.add_child(busy)
 	for o in session.offers:
 		var row := HBoxContainer.new()
@@ -54,7 +47,7 @@ func refresh() -> void:
 		info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		info.text = "%s → %s   ·   %d ¢   ·   %s" % [session.colonist_name(o.from_post), session.colonist_name(o.to_post), o.base_pay, DeliveryHud.format_time(o.time_limit)]
 		info.add_theme_font_size_override("font_size", 26)
-		info.add_theme_color_override("font_color", Color("2a2140"))
+		info.add_theme_color_override("font_color", NeonTheme.TEXT)
 		row.add_child(info)
 		var b := Button.new()
 		b.text = "BOARD_ACCEPT"

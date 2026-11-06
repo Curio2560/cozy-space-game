@@ -179,6 +179,18 @@ func _update_world(delta: float) -> void:
 		var lift := 2.2 if run.driving else 2.1
 		_crate.global_transform = Transform3D(c.global_basis.orthonormalized(), c.global_position + up * lift)
 
+## Posição global para onde o jogador tem de ir agora (entrega, caixa, ladrão), ou null.
+func target_world_position() -> Variant:
+	if session == null or session.active == null:
+		return null
+	var o := session.active
+	if o.state == DeliveryOrder.State.STOLEN and is_instance_valid(thief):
+		return thief.global_position
+	if o.state == DeliveryOrder.State.DROPPED:
+		return o.drop_position
+	var t := session.target_post()
+	return post_position(t) if t >= 0 else null
+
 func _update_hud() -> void:
 	var o := session.active
 	hud.arrow.visible = o != null

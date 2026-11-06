@@ -13,8 +13,8 @@ const BUTTONS := [
 const STICK_ZONE := 0.45 # fração da largura do ecrã reservada ao joystick
 const COLOR_BASE := Color(1, 0.965, 0.918, 0.22)
 const COLOR_KNOB := Color(1, 0.965, 0.918, 0.75)
-const COLOR_BTN := Color(1, 0.62, 0.48, 0.55)
-const COLOR_BTN_DOWN := Color(1, 0.78, 0.34, 0.9)
+const COLOR_BTN := Color(0.05, 0.035, 0.11, 0.6) # estilo néon (NeonTheme)
+const COLOR_BTN_DOWN := Color(1.0, 0.18, 0.58, 0.55)
 
 var stick := VirtualStick.new()
 var _stick_finger := -1
@@ -140,8 +140,8 @@ func _draw() -> void:
 		var center := button_rect_center(i)
 		var r := button_radius(i)
 		draw_circle(center, r, COLOR_BTN_DOWN if b[0] in down else COLOR_BTN)
-		draw_arc(center, r, 0, TAU, 48, Color(0.16, 0.12, 0.25, 0.8), 3.0, true)
+		draw_arc(center, r, 0, TAU, 48, NeonTheme.CYAN if b[0] in down else NeonTheme.PINK, 3.0, true)
 		var label := tr(b[1])
 		var fs := maxi(int(r * 0.42), 8)
 		var w := _font.get_string_size(label, HORIZONTAL_ALIGNMENT_CENTER, -1, fs).x
-		draw_string(_font, center + Vector2(-w * 0.5, fs * 0.35), label, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color(0.16, 0.12, 0.25))
+		draw_string(_font, center + Vector2(-w * 0.5, fs * 0.35), label, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, NeonTheme.TEXT)

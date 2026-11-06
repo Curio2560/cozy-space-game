@@ -45,3 +45,5 @@ e em `export_presets.cfg`; um teste garante que coincidem.
 - SBS – Tiny Planet Pack — Screaming Brain Studios (CC0).
 - Relva `mdvl_nature_grass_01`, **Free Pack – Modular Terrain** e **Free Pack – Rocks Stylized** — Sketchfab
   (downloads gratuitos; autor e licença exata a confirmar na página de cada modelo).
+- Fonte **Matcha Style** — Khurasan Studio (grátis para uso pessoal e comercial) — `assets/fonts`.
+- Sci-Fi Game UI FREE — SunGraphica (licença a confirmar); Simple Space — Kenney (CC0) — `assets/ui`.

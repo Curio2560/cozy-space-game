@@ -64,3 +64,8 @@ TOAST_RECOVERED,Box recovered!,Caixa recuperada!
 "HUD_DROPPED","Pick up the box · %d m · %s","Apanha a caixa · %d m · %s"
 DBG_CREATURES,Creatures,Criaturas
 DBG_CREATURE_HERE,Bring a creature here,Trazer uma criatura para aqui
+PAUSE_TITLE,PAUSE,PAUSA
+PAUSE_RESUME,Resume,Continuar
+PAUSE_NEW_PLANET,New planet,Novo planeta
+PAUSE_LANGUAGE,Language: English,Idioma: Português
+PAUSE_EXIT,Exit,Sair

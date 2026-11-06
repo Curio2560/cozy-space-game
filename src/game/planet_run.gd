@@ -87,6 +87,8 @@ func _ready() -> void:
 	start(seed_value)
 	_register_debug()
 	var args := OS.get_cmdline_user_args() # argumentos só para capturas de ecrã no PC
+	if "pause" in args:
+		pause_menu.open()
 	if "board" in args:
 		deliveries.open_board()
 	if "order" in args:
@@ -501,6 +503,12 @@ func _process(_delta: float) -> void:
 	sun.look_at_from_position(Vector3.ZERO, light_dir, u if absf(light_dir.dot(u)) < 0.99 else side)
 
 var _hud_layer: CanvasLayer
+var pause_menu: PauseMenu
+var minimap: Minimap
+
+## Nó que o jogador está a controlar (rover ou astronauta).
+func carrier_node() -> Node3D:
+	return rover if driving else player
 
 func _build_ui() -> void:
 	var hud := CanvasLayer.new()
@@ -513,13 +521,31 @@ func _build_ui() -> void:
 	if "touch" in OS.get_cmdline_user_args():
 		DebugMenu.force_touch = true
 		_update_touch_visibility()
-	var back := Button.new()
-	back.text = "UI_BACK"
-	back.add_theme_font_size_override("font_size", 26)
-	back.position = Vector2(24, 16)
-	back.custom_minimum_size = Vector2(160, 64)
-	back.pressed.connect(func() -> void: get_tree().change_scene_to_file("res://scenes/ui/boot.tscn"))
-	hud.add_child(back)
+	var pause_btn := Button.new()
+	pause_btn.name = "PauseButton"
+	pause_btn.icon = NeonTheme.icon(NeonTheme.ICON_PAUSE)
+	pause_btn.expand_icon = true
+	pause_btn.position = Vector2(20, 14)
+	pause_btn.custom_minimum_size = Vector2(68, 68)
+	pause_btn.size = Vector2(68, 68)
+	pause_btn.pressed.connect(func() -> void: pause_menu.open())
+	hud.add_child(pause_btn)
+	minimap = Minimap.new()
+	minimap.run = self
+	hud.add_child(minimap)
+	minimap.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	minimap.offset_left = -Minimap.SIZE - 20.0
+	minimap.offset_right = -20.0
+	minimap.offset_top = 76.0
+	minimap.offset_bottom = 76.0 + Minimap.SIZE
+	var pause_layer := CanvasLayer.new()
+	pause_layer.layer = 60
+	pause_layer.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(pause_layer)
+	pause_menu = PauseMenu.new()
+	pause_layer.add_child(pause_menu)
+	pause_menu.new_planet.connect(func() -> void: start(randi() % 100000))
+	pause_menu.quit_to_menu.connect(func() -> void: get_tree().change_scene_to_file("res://scenes/ui/boot.tscn"))
 	var fade_layer := CanvasLayer.new()
 	fade_layer.layer = 50
 	add_child(fade_layer)

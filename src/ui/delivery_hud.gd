@@ -17,7 +17,7 @@ func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	credits_label = _label(30, Color("ffc857"))
-	credits_label.position = Vector2(200, 24)
+	credits_label.position = Vector2(104, 26)
 	add_child(credits_label)
 	var box := VBoxContainer.new()
 	box.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
