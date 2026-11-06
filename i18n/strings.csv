@@ -1,0 +1,13 @@
+keys,en,pt
+BOOT_SHOWCASE,Showcase (cel-shading),Vitrine (cel-shading)
+BOOT_CONTROLS,Controls test,Teste de controlos
+BOOT_LANGUAGE,Language: English,Idioma: Português
+UI_BACK,Back,Voltar
+BTN_JUMP,Jump,Saltar
+BTN_ACTION,Action,Ação
+BTN_VEHICLE,Rover,Rover
+DBG_TITLE,Debug,Debug
+DBG_TOUCH,Show touch controls,Mostrar controlos táteis
+DBG_SPEED,Speed,Velocidade
+DBG_JUMP,Jump strength,Força do salto
+DBG_RESET,Reset position,Repor posição

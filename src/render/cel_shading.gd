@@ -91,6 +91,26 @@ static func _smoothed_normal_tangents(verts: PackedVector3Array, normals: Packed
 static func _pos_key(p: Vector3) -> Vector3i:
 	return Vector3i(roundi(p.x * 10000.0), roundi(p.y * 10000.0), roundi(p.z * 10000.0))
 
+## Material cel-shaded de uma só cor (chão, protótipos). Partilhado por cor.
+static func flat(c: Color) -> ShaderMaterial:
+	var img := Image.create(1, 1, false, Image.FORMAT_RGBA8)
+	img.fill(c)
+	var src := StandardMaterial3D.new()
+	src.albedo_texture = ImageTexture.create_from_image(img)
+	return material_for(src)
+
+## Material de terreno (chão, superfície do planeta): sem rim light nem brilho, que em
+## superfícies grandes vistas de lado fazem o horizonte brilhar.
+static func terrain(c: Color) -> ShaderMaterial:
+	var key := "terrain|" + c.to_html()
+	if _cache.has(key):
+		return _cache[key]
+	var m := flat(c).duplicate() as ShaderMaterial
+	m.set_shader_parameter("rim_strength", 0.0)
+	m.set_shader_parameter("spec_strength", 0.0)
+	_cache[key] = m
+	return m
+
 static func cached_material_count() -> int:
 	return _cache.size()
 

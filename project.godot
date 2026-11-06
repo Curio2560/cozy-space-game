@@ -4,7 +4,7 @@ config_version=5
 [application]
 
 config/name="Correio Cósmico"
-config/version="0.0.2"
+config/version="0.0.3"
 run/main_scene="res://scenes/ui/boot.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://assets/icon/icon_512.png"
@@ -26,3 +26,18 @@ enabled=PackedStringArray("res://addons/gut/plugin.cfg")
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
 textures/vram_compression/import_etc2_astc=true
+
+[autoload]
+
+Settings="*res://src/core/settings.gd"
+InputHub="*res://src/input/input_hub.gd"
+DebugMenu="*res://src/debug/debug_menu.gd"
+
+[internationalization]
+
+locale/translations=PackedStringArray("res://i18n/strings.en.translation", "res://i18n/strings.pt.translation")
+locale/fallback="en"
+
+[input_devices]
+
+pointing/emulate_mouse_from_touch=true

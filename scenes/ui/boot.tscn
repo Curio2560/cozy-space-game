@@ -30,6 +30,7 @@ anchor_bottom = 0.5
 grow_horizontal = 2
 grow_vertical = 2
 alignment = 1
+theme_override_constants/separation = 16
 
 [node name="Title" type="Label" parent="Center"]
 unique_name_in_owner = true
@@ -51,4 +52,20 @@ custom_minimum_size = Vector2(280, 72)
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 30
-text = "Vitrine (cel-shading)"
+text = "BOOT_SHOWCASE"
+
+[node name="Controls" type="Button" parent="Center"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(280, 72)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 30
+text = "BOOT_CONTROLS"
+
+[node name="Language" type="Button" parent="Center"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(280, 64)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 24
+text = "BOOT_LANGUAGE"

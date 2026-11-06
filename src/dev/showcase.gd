@@ -24,7 +24,6 @@ const ITEMS := [
 
 @export var spin_speed := 0.35
 var _spinners: Array[Node3D] = []
-var _fps: Label
 
 func _ready() -> void:
 	var plain := "plain" in OS.get_cmdline_user_args()
@@ -47,20 +46,15 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	for s in _spinners:
 		s.rotate_y(spin_speed * delta)
-	_fps.text = "%d fps" % Engine.get_frames_per_second()
 
-## FPS provisório (até existir o menu DBG, issue #4) e botão para voltar.
+## Botão para voltar (os FPS estão no menu DBG).
 func _build_hud() -> void:
 	var hud := CanvasLayer.new()
 	add_child(hud)
-	_fps = Label.new()
-	_fps.position = Vector2(24, 16)
-	_fps.add_theme_font_size_override("font_size", 28)
-	hud.add_child(_fps)
 	var back := Button.new()
-	back.text = "Voltar"
+	back.text = "UI_BACK"
 	back.add_theme_font_size_override("font_size", 26)
-	back.position = Vector2(24, 64)
+	back.position = Vector2(24, 16)
 	back.custom_minimum_size = Vector2(160, 64)
 	back.pressed.connect(func() -> void: get_tree().change_scene_to_file("res://scenes/ui/boot.tscn"))
 	hud.add_child(back)
@@ -102,11 +96,7 @@ func _make_ground() -> MeshInstance3D:
 	cyl.radial_segments = 48
 	mi.mesh = cyl
 	mi.position.y = -0.1
-	var img := Image.create(1, 1, false, Image.FORMAT_RGBA8)
-	img.fill(Color("8fd3a0"))
-	var src := StandardMaterial3D.new()
-	src.albedo_texture = ImageTexture.create_from_image(img)
-	mi.material_override = CelShading.material_for(src)
+	mi.material_override = CelShading.terrain(Color("8fd3a0"))
 	return mi
 
 func _play(model: Node, anim: String) -> void:
