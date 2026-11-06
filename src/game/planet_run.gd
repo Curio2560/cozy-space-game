@@ -28,6 +28,7 @@ var _hint: Label
 var wallet := Wallet.new()
 var bars: StatusBars
 var respawning := false
+var vitals := PlayerVitals.new()
 var explosion: RoverExplosion
 var deliveries: DeliveryController
 
@@ -68,6 +69,11 @@ func _ready() -> void:
 	bars.add_bar("rover", "BAR_ROVER", Color("ff9f5a"))
 	rover.health_changed.connect(func(v: float, m: float) -> void: bars.set_value("rover", v, m))
 	bars.set_value("rover", rover.health, rover.max_health)
+	bars.add_bar("health", "BAR_HEALTH", Color("ff6b8a"))
+	bars.add_bar("o2", "BAR_O2", Color("6fd6ff"))
+	vitals.changed.connect(_update_vital_bars)
+	vitals.fainted.connect(_on_player_fainted)
+	_update_vital_bars()
 	start(seed_value)
 	_register_debug()
 	var args := OS.get_cmdline_user_args() # argumentos só para capturas de ecrã no PC
@@ -216,19 +222,54 @@ func _on_rover_destroyed() -> void:
 	await _real_seconds(WRECK_TIME - SLOWMO_TIME)
 	if not is_inside_tree():
 		return
+	await _respawn_at_base()
+
+## Escurece, põe o jogador (a pé, com vida e O₂ cheios) junto à base com o rover novo ao lado,
+## e clareia. Usado depois da explosão do rover e do desmaio.
+func _respawn_at_base() -> void:
 	await _fade(1.0)
 	if driving:
 		driving = false
 		rover.driven = false
 		player.process_mode = Node.PROCESS_MODE_INHERIT
 		player.visible = true
-		player.controllable = true
 		player.collision_layer = 2
+	player.revive()
+	vitals.reset()
 	spawn_near(planet.data.outpost_dir, planet.data.posts[0], 9.0)
 	rover.restore()
 	_park_rover_near_player()
 	await _fade(0.0)
 	respawning = false
+
+const FAINT_TIME := 2.2 # segundos a ver o astronauta caído antes de escurecer
+
+## Desmaio (vida a 0, p. ex. sem O₂): cai, a encomenda falha, acorda na base.
+func _on_player_fainted() -> void:
+	if respawning:
+		return
+	respawning = true
+	player.faint()
+	deliveries.hud.toast(tr("TOAST_FAINTED"))
+	if deliveries.session and deliveries.session.fail_active():
+		deliveries.hud.toast(tr("TOAST_FAINTED") + "\n" + tr("TOAST_ORDER_LOST"))
+	await _real_seconds(FAINT_TIME)
+	if not is_inside_tree():
+		return
+	await _respawn_at_base()
+
+## Taxa de gasto de O₂ onde o jogador está (a pé). Os perigos dos biomas (#20) somam-lhe.
+func o2_drain_here() -> float:
+	return float(PlanetGenerator.BIOMES[biome].get("o2_drain", 0.0)) + extra_o2_drain
+
+## Gasto extra definido pelos perigos ou pelo DBG.
+var extra_o2_drain := 0.0
+
+func _update_vital_bars() -> void:
+	bars.set_value("health", vitals.health, PlayerVitals.MAX_HEALTH)
+	bars.set_value("o2", vitals.o2, PlayerVitals.MAX_O2)
+	bars.show_bar("health", vitals.health < PlayerVitals.MAX_HEALTH)
+	bars.show_bar("o2", vitals.o2_drain > 0.0 or vitals.o2 < PlayerVitals.MAX_O2)
 
 func _real_seconds(t: float) -> void:
 	await get_tree().create_timer(t, true, false, true).timeout
@@ -251,6 +292,10 @@ func _physics_process(delta: float) -> void:
 	if rover.alive and rover.health < rover.max_health and rover_near_base() and rover.linear_velocity.length() < 1.0:
 		rover.repair(REPAIR_RATE * delta)
 	bars.show_bar("rover", driving or rover.health < rover.max_health)
+	if not respawning:
+		# A cabine do rover protege: lá dentro o O₂ não se gasta.
+		vitals.o2_drain = 0.0 if driving else o2_drain_here()
+		vitals.tick(delta)
 	if respawning:
 		_hint.text = ""
 		return
@@ -386,6 +431,8 @@ func _register_debug() -> void:
 	DebugMenu.add_button(self, "DBG_ADD_CREDITS", func() -> void: wallet.add(Wallet.CREDITS, 500))
 	DebugMenu.add_slider(self, "DBG_SKY_BRIGHT", 0.3, 2.0, 0.05, 1.0, func(v: float) -> void: _sky_mat.set_shader_parameter("brightness", v))
 	DebugMenu.add_slider(self, "DBG_SKY_NEBULA", 0.0, 1.0, 0.05, 0.55, func(v: float) -> void: _sky_mat.set_shader_parameter("nebula_strength", v))
+	DebugMenu.add_button(self, "DBG_HURT", func() -> void: vitals.damage(30.0))
+	DebugMenu.add_toggle(self, "DBG_O2_DRAIN", false, func(on: bool) -> void: extra_o2_drain = 12.0 if on else 0.0)
 	DebugMenu.add_button(self, "DBG_ROVER_DAMAGE", func() -> void: rover.take_damage(40.0))
 	DebugMenu.add_slider(self, "DBG_ROVER_BOUNCE", 80.0, 600.0, 10.0, rover.spring_damp, func(v: float) -> void: rover.spring_damp = v)
 	DebugMenu.add_slider(self, "DBG_ROVER_SPIN", 0.0, 4.0, 0.1, rover.spin_damp, func(v: float) -> void: rover.spin_damp = v)

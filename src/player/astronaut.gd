@@ -31,6 +31,8 @@ var controllable := true
 var _anim: AnimationPlayer
 var _jump := JumpBuffer.new()
 var _anim_name := ""
+## Desmaiado: sem input e sem trocar de animação (fica caído).
+var downed := false
 
 func _ready() -> void:
 	floor_max_angle = deg_to_rad(50.0)
@@ -93,7 +95,22 @@ func _physics_process(delta: float) -> void:
 	facing = (facing - u * facing.dot(u)).normalized()
 	var local := global_basis.inverse() * facing
 	visual.rotation.y = atan2(local.x, local.z)
-	_update_anim(hor.length())
+	if not downed:
+		_update_anim(hor.length())
+
+## Desmaio: animação de cair e fica sem controlo até `revive()`.
+func faint() -> void:
+	downed = true
+	controllable = false
+	if _anim and _anim.has_animation("Death"):
+		_anim_name = "Death"
+		_anim.play("Death", 0.1)
+
+func revive() -> void:
+	downed = false
+	controllable = true
+	_anim_name = ""
+	_play("Idle")
 
 ## Direção de movimento no plano tangente, relativa à vista (câmara).
 func move_direction(input: Vector2, u: Vector3) -> Vector3:

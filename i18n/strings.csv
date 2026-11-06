@@ -51,3 +51,8 @@ DBG_ROVER_AIR,Rover air alignment,Alinhamento no ar
 DBG_SKY_BRIGHT,Sky brightness,Brilho do céu
 DBG_SKY_NEBULA,Nebula strength,Intensidade da nebulosa
 TOAST_ROVER_EXPLODED,The rover exploded!,O rover explodiu!
+BAR_HEALTH,Health,Vida
+BAR_O2,O₂,O₂
+TOAST_FAINTED,You fainted!,Desmaiaste!
+DBG_HURT,Hurt astronaut (30),Ferir o astronauta (30)
+DBG_O2_DRAIN,Drain O₂ (test),Gastar O₂ (teste)
