@@ -62,3 +62,17 @@ func test_game_font_is_matcha_with_fallback_for_symbols() -> void:
 	var mf := NeonTheme.font()
 	assert_true(mf.has_char("ç".unicode_at(0)) and mf.has_char("ã".unicode_at(0)), "acentos portugueses")
 	assert_gt(mf.fallbacks.size(), 0, "fonte de reserva para → · ₂")
+
+func test_minimap_ignores_far_side_of_planet() -> void:
+	var mm: Minimap = run.minimap
+	var far: Vector3 = run.planet.global_position - (run.player.global_position - run.planet.global_position)
+	assert_false(mm.near(far), "o outro lado do planeta não entra no minimapa")
+	assert_true(mm.near(run.player.global_position + Vector3(0.1, 0, 0)))
+
+func test_minimap_far_target_on_edge_in_arrow_direction() -> void:
+	var mm: Minimap = run.minimap
+	var p: Node3D = run.player
+	var far: Vector3 = run.planet.global_position - (p.global_position - run.planet.global_position) * 0.98 + run.camera.global_basis.x * 5.0
+	var tp := mm._target_point(far)
+	var centre := Vector2(Minimap.SIZE, Minimap.SIZE) * 0.5
+	assert_almost_eq(tp.distance_to(centre), Minimap.SIZE * 0.5 - 16.0, 1.0, "fica na borda")

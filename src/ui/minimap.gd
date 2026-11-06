@@ -42,6 +42,14 @@ func to_map(world: Vector3) -> Vector2:
 	var k := (SIZE * 0.5) / RANGE
 	return Vector2(v.dot(right), -v.dot(fwd)) * k + Vector2(SIZE, SIZE) * 0.5
 
+## Um ponto só entra no mapa se estiver perto: pontos do outro lado do planeta projetavam-se
+## para perto do centro e apareciam como estradas e marcadores fantasma.
+func near(world: Vector3) -> bool:
+	var c: Node3D = run.carrier_node()
+	var up: Vector3 = (c.global_position - run.planet.global_position).normalized()
+	var v := world - c.global_position
+	return v.length() < RANGE * 1.3 and v.dot(up) > -RANGE * 0.5
+
 func _inside(p: Vector2) -> bool:
 	return p.distance_to(Vector2(SIZE, SIZE) * 0.5) < SIZE * 0.5 - 6.0
 
@@ -72,7 +80,11 @@ func _draw() -> void:
 		var prev := Vector2.INF
 		var w: float = clampf(float(road.width) * (SIZE * 0.5) / RANGE, 2.0, 8.0)
 		for i in pts.size():
-			var mp := to_map(planet.to_global(d.surface_point(pts[i])))
+			var wp := planet.to_global(d.surface_point(pts[i]))
+			if not near(wp):
+				prev = Vector2.INF
+				continue
+			var mp := to_map(wp)
 			if prev != Vector2.INF and (_inside(mp) or _inside(prev)):
 				draw_line(prev, mp, road_col, w, true)
 			prev = mp
@@ -85,6 +97,8 @@ func _draw() -> void:
 	for cr in run.creatures:
 		if not is_instance_valid(cr):
 			continue
+		if not near(cr.global_position):
+			continue
 		var mp := to_map(cr.global_position)
 		if _inside(mp):
 			var hostile: bool = cr._hostile() or cr.carrying # vermelho só quando há perigo (com encomenda)
@@ -96,9 +110,7 @@ func _draw() -> void:
 	last_target_pos = Vector2.INF
 	var t = run.deliveries.target_world_position() if run.deliveries else null
 	if t != null:
-		var tp := to_map(t)
-		if not _inside(tp):
-			tp = _clamp_edge(tp)
+		var tp := _target_point(t)
 		last_target_pos = tp
 		var pulse := 0.75 + 0.25 * sin(Time.get_ticks_msec() * 0.008)
 		_icon(TEX_TARGET, tp, 24.0 * pulse, 0.0, Color(1.0, 0.8, 0.3))
@@ -107,15 +119,29 @@ func _draw() -> void:
 	draw_arc(c, SIZE * 0.5 - 2.0, 0.0, TAU, 64, NeonTheme.PINK, 3.0, true)
 	draw_arc(c, SIZE * 0.5 - 8.0, 0.0, TAU, 64, Color(NeonTheme.CYAN, 0.35), 1.0, true)
 
+## Posição do destino no mapa; se estiver longe (ou do outro lado do planeta) fica na borda, na
+## direção certa (a mesma conta da seta do HUD).
+func _target_point(world: Vector3) -> Vector2:
+	if near(world):
+		var tp := to_map(world)
+		if _inside(tp):
+			return tp
+	var c: Node3D = run.carrier_node()
+	var up: Vector3 = (c.global_position - run.planet.global_position).normalized()
+	var ang := NavArrow.angle_to_target(c.global_position, up, run.camera.global_basis, world)
+	var r := SIZE * 0.5 - 16.0
+	return Vector2(SIZE, SIZE) * 0.5 + Vector2(sin(ang), -cos(ang)) * r
+
 ## Calcula as posições do desenho sem desenhar (testes).
 func _draw_for_test() -> void:
 	last_target_pos = Vector2.INF
 	var t = run.deliveries.target_world_position() if run.deliveries else null
 	if t != null:
-		var tp := to_map(t)
-		last_target_pos = tp if _inside(tp) else _clamp_edge(tp)
+		last_target_pos = _target_point(t)
 
 func _marker(tex: Texture2D, world: Vector3, px: float, clamp_edge: bool, tint := Color.WHITE) -> void:
+	if not clamp_edge and not near(world):
+		return
 	var mp := to_map(world)
 	if not _inside(mp):
 		if not clamp_edge:
