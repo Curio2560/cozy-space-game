@@ -3,8 +3,9 @@ extends Node3D
 ## Criatura que vive à superfície do planeta (sem física: anda sobre a função de altura).
 ##
 ## Inteligência:
-## - Personalidade: AGGRESSIVE (persegue e ataca), THIEF (só se interessa por quem leva uma
-##   caixa, e rouba-a), CURIOUS (aproxima-se, fica a ver, não ataca), TIMID (foge de quem chega).
+## - Só ganham agro quando o alvo leva uma encomenda. Sem caixa ninguém ataca.
+## - Personalidade: AGGRESSIVE (com caixa: persegue e ataca), THIEF (com caixa: persegue e rouba),
+##   CURIOUS (aproxima-se, fica a ver, não ataca), TIMID (foge de quem chega).
 ## - Território: passeia à volta de casa; desiste de perseguir se se afastar demasiado.
 ## - Ataque avisado: pára e prepara o golpe (WINDUP); só acerta se o alvo ainda estiver perto.
 ## - Contorna árvores, pedregulhos e estruturas; afasta-se das outras criaturas.
@@ -29,8 +30,8 @@ const LEASH_M := 38.0 # persegue no máximo até esta distância de casa
 const WATCH_DISTANCE := 4.5 # os curiosos ficam a esta distância
 const SEPARATION_M := 2.2
 
-## Até onde cada personalidade repara no alvo (de dia).
-const NOTICE := {Personality.AGGRESSIVE: 8.0, Personality.THIEF: 12.0, Personality.CURIOUS: 10.0, Personality.TIMID: 7.0}
+## Até onde cada personalidade repara no alvo (de dia, com encomenda para os hostis).
+const NOTICE := {Personality.AGGRESSIVE: 10.0, Personality.THIEF: 13.0, Personality.CURIOUS: 10.0, Personality.TIMID: 7.0}
 const STEAL := {Personality.AGGRESSIVE: 0.15, Personality.THIEF: 0.85, Personality.CURIOUS: 0.0, Personality.TIMID: 0.0}
 
 var id: String
@@ -168,7 +169,7 @@ func _physics_process(delta: float) -> void:
 				_react_to_target()
 		Mode.CHASE:
 			_steer_towards(to_t, delta, 6.0)
-			if dist > _notice_range() * 2.0 or from_home > LEASH_M or not _still_interested():
+			if dist > _notice_range() * 2.0 or from_home > LEASH_M or not _hostile():
 				mode = Mode.RETURN
 			elif dist < ATTACK_RANGE and _cooldown <= 0.0:
 				mode = Mode.WINDUP
@@ -179,7 +180,7 @@ func _physics_process(delta: float) -> void:
 			_timer -= delta
 			if _timer <= 0.0:
 				_cooldown = COOLDOWN
-				if dist < HIT_RANGE:
+				if dist < HIT_RANGE and _hostile():
 					attacked.emit(self)
 				if not carrying:
 					mode = Mode.RETURN if personality != Personality.AGGRESSIVE else Mode.WANDER
@@ -215,7 +216,7 @@ func _physics_process(delta: float) -> void:
 			_steer_towards(home, delta, 3.0)
 			if from_home < TERRITORY_M * 0.5:
 				mode = Mode.WANDER
-			elif _cooldown <= 0.0 and dist < _notice_range() * 0.7 and personality == Personality.AGGRESSIVE:
+			elif _cooldown <= 0.0 and dist < _notice_range() * 0.7 and _hostile():
 				mode = Mode.CHASE
 	_move(delta, speed())
 	_update_anim()
@@ -223,10 +224,8 @@ func _physics_process(delta: float) -> void:
 ## O que fazer quando repara no alvo, conforme a personalidade.
 func _react_to_target() -> void:
 	match personality:
-		Personality.AGGRESSIVE:
-			mode = Mode.CHASE
-		Personality.THIEF:
-			if _still_interested():
+		Personality.AGGRESSIVE, Personality.THIEF:
+			if _hostile():
 				mode = Mode.CHASE
 		Personality.CURIOUS:
 			mode = Mode.WATCH
@@ -234,16 +233,16 @@ func _react_to_target() -> void:
 			mode = Mode.FLEE
 			_timer = 2.0
 
-func _still_interested() -> bool:
-	if personality != Personality.THIEF:
-		return true
+## O alvo leva uma encomenda?
+func _target_has_crate() -> bool:
 	return target_has_crate.is_valid() and target_has_crate.call()
 
+## Só as personalidades hostis, e só quando o alvo leva uma encomenda.
+func _hostile() -> bool:
+	return personality in [Personality.AGGRESSIVE, Personality.THIEF] and _target_has_crate()
+
 func _notice_range() -> float:
-	var r: float = NOTICE[personality]
-	if personality == Personality.THIEF and _still_interested():
-		r *= 1.4
-	return r
+	return NOTICE[personality]
 
 ## O rover vem depressa na direção da criatura?
 func _rover_incoming(t: Node3D, dist: float) -> bool:

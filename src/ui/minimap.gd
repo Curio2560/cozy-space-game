@@ -87,7 +87,7 @@ func _draw() -> void:
 			continue
 		var mp := to_map(cr.global_position)
 		if _inside(mp):
-			var hostile: bool = cr.personality == Creature.Personality.AGGRESSIVE or cr.carrying
+			var hostile: bool = cr._hostile() or cr.carrying # vermelho só quando há perigo (com encomenda)
 			_icon(TEX_CREATURE, mp, 14.0, 0.0, Color(1.0, 0.35, 0.35) if hostile else Color(0.75, 0.75, 0.8))
 	# Rover (quando o jogador vai a pé).
 	if not run.driving:

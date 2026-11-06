@@ -29,7 +29,15 @@ func test_creatures_stay_on_the_surface_while_moving() -> void:
 	var local: Vector3 = run.planet.to_local(c.global_position)
 	assert_almost_eq(local.length(), d.radius + d.height_at(local.normalized()), 0.05)
 
-func test_aggressive_chases_and_attacks_nearby_player() -> void:
+func _carry_order() -> DeliveryOrder:
+	var dc: DeliveryController = run.deliveries
+	var o: DeliveryOrder = dc.session.offers[0]
+	dc.accept(o)
+	dc.session.pick_up()
+	return o
+
+func test_aggressive_chases_and_attacks_player_with_a_package() -> void:
+	_carry_order()
 	var c: Creature = run.creatures[0]
 	c.set_personality(Creature.Personality.AGGRESSIVE)
 	watch_signals(c)
@@ -104,6 +112,26 @@ func test_curious_creatures_watch_without_attacking() -> void:
 	assert_signal_not_emitted(c, "attacked", "o curioso não ataca")
 	assert_lt(c.global_position.distance_to(run.player.global_position), 8.5, "o curioso aproxima-se para ver")
 
+func test_aggressive_ignores_player_without_a_package() -> void:
+	var c: Creature = run.creatures[0]
+	c.set_personality(Creature.Personality.AGGRESSIVE)
+	watch_signals(c)
+	_bring(c, 3.0)
+	await wait_seconds(4.0)
+	assert_signal_not_emitted(c, "attacked", "sem encomenda os monstros não atacam")
+	assert_eq(run.vitals.health, PlayerVitals.MAX_HEALTH)
+
+func test_gives_up_when_package_is_delivered() -> void:
+	var o := _carry_order()
+	var c: Creature = run.creatures[0]
+	c.set_personality(Creature.Personality.AGGRESSIVE)
+	_bring(c, 6.0)
+	await wait_seconds(0.8)
+	assert_eq(c.mode, Creature.Mode.CHASE, "com caixa devia perseguir")
+	run.deliveries.session.fail_active() # deixa de levar a caixa
+	await wait_seconds(0.5)
+	assert_ne(c.mode, Creature.Mode.CHASE, "sem caixa devia desistir")
+
 func test_thief_ignores_player_without_a_crate() -> void:
 	var c: Creature = run.creatures[0]
 	c.set_personality(Creature.Personality.THIEF)
@@ -113,6 +141,7 @@ func test_thief_ignores_player_without_a_crate() -> void:
 	assert_signal_not_emitted(c, "attacked", "sem caixa o ladrão não se interessa")
 
 func test_windup_misses_if_player_gets_away() -> void:
+	_carry_order()
 	var c: Creature = run.creatures[0]
 	c.set_personality(Creature.Personality.AGGRESSIVE)
 	watch_signals(c)
