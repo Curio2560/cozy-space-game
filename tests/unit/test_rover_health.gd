@@ -48,6 +48,9 @@ func test_explosion_fails_order_and_respawns_at_base() -> void:
 	# Durante a explosão vê-se o carro: visível, carbonizado, câmara mais afastada, câmara lenta.
 	assert_true(run.rover.visible, "o carro devia continuar à vista a explodir")
 	assert_true(run.rover.is_charred())
+	assert_not_null(run.explosion, "devia haver uma explosão")
+	assert_eq(run.explosion.debris.size(), 4, "as 4 rodas deviam soltar-se")
+	assert_false(run.rover.wheels_attached())
 	assert_lt(Engine.time_scale, 1.0, "devia começar em câmara lenta")
 	assert_eq(run.camera.distance, run.CAM_WRECK.distance)
 	await wait_seconds(2.0)
@@ -57,6 +60,7 @@ func test_explosion_fails_order_and_respawns_at_base() -> void:
 	assert_eq(Engine.time_scale, 1.0, "a câmara lenta devia ter acabado")
 	assert_almost_eq(run._fade_rect.color.a, 0.0, 0.01, "o ecrã devia voltar a clarear")
 	assert_false(run.rover.is_charred(), "o rover novo não vem carbonizado")
+	assert_true(run.rover.wheels_attached(), "o rover novo vem com as rodas")
 	assert_false(run.respawning)
 	assert_false(run.driving, "devia renascer a pé")
 	assert_true(run.player.visible)

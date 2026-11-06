@@ -219,7 +219,23 @@ func restore() -> void:
 	visible = true
 	freeze = false
 	_set_charred(false)
+	for w in _wheel_nodes:
+		if w:
+			w.visible = true
 	health_changed.emit(health, max_health)
+
+## Esconde as rodas e devolve [[MeshInstance3D da roda, transformação global], …] para a
+## explosão as soltar como peças. `restore()` volta a mostrá-las.
+func detach_wheels() -> Array:
+	var out := []
+	for w in _wheel_nodes:
+		if w and w.visible:
+			out.append([w, w.global_transform])
+			w.visible = false
+	return out
+
+func wheels_attached() -> bool:
+	return _wheel_nodes.all(func(w: Node3D) -> bool: return w == null or w.visible)
 
 static var _char_mat: StandardMaterial3D
 

@@ -5,13 +5,12 @@ extends Node3D
 const ENTER_DISTANCE := 5.0
 const REPAIR_RADIUS := 16.0 # junto ao posto avançado
 const REPAIR_RATE := 20.0 # vida por segundo, parado junto à base
-const WRECK_TIME := 4.2 # segundos (reais) a ver os destroços antes de escurecer
+const WRECK_TIME := 6.5 # segundos (reais) a ver a explosão e os destroços antes de escurecer
 const FADE_TIME := 0.5
-const SLOWMO := 0.4 # câmara lenta no início da explosão
-const SLOWMO_TIME := 0.9
+const SLOWMO := 0.35 # câmara lenta no início da explosão
+const SLOWMO_TIME := 1.6
 const RESPAWN_DELAY := WRECK_TIME + FADE_TIME * 2.0 # tempo total até voltar a jogar
-const CAM_WRECK := {"distance": 13.0, "pitch": -0.55, "focus_height": 1.0, "auto_return_delay": 999.0}
-const EXPLOSION := "res://assets/BinbunVFX_Vol2/ExplosionFX/effects/ground/vfx_ground_explosion_01.tscn"
+const CAM_WRECK := {"distance": 15.0, "pitch": -0.42, "focus_height": 2.0, "auto_return_delay": 999.0}
 const CAM_FOOT := {"distance": 6.5, "pitch": -0.42, "focus_height": 1.2, "auto_return_delay": 1.6}
 const CAM_ROVER := {"distance": 9.5, "pitch": -0.36, "focus_height": 1.6, "auto_return_delay": 0.35}
 
@@ -29,6 +28,7 @@ var _hint: Label
 var wallet := Wallet.new()
 var bars: StatusBars
 var respawning := false
+var explosion: RoverExplosion
 var deliveries: DeliveryController
 
 func _ready() -> void:
@@ -199,7 +199,9 @@ func _apply_camera(profile: Dictionary) -> void:
 ## A encomenda em curso falha.
 func _on_rover_destroyed() -> void:
 	respawning = true
-	spawn_explosion(rover.global_position, rover.planet_up())
+	explosion = RoverExplosion.new()
+	add_child(explosion)
+	explosion.start(rover.global_position, rover.planet_up(), planet.global_position, rover)
 	rover.wreck()
 	if driving:
 		camera.set_target(rover, rover.forward())
@@ -241,15 +243,6 @@ func _fade(to_alpha: float) -> void:
 
 func _exit_tree() -> void:
 	Engine.time_scale = 1.0
-
-func spawn_explosion(pos: Vector3, up: Vector3) -> Node3D:
-	var fx: Node3D = (load(EXPLOSION) as PackedScene).instantiate()
-	add_child(fx)
-	fx.global_transform = Transform3D(SphereMath.basis_from_up(up).scaled(Vector3.ONE * 2.2), pos)
-	if fx.has_method("play"):
-		fx.call("play")
-	get_tree().create_timer(5.0).timeout.connect(fx.queue_free)
-	return fx
 
 func rover_near_base() -> bool:
 	return rover.global_position.distance_to(planet.to_global(planet.data.surface_point(planet.data.outpost_dir))) < REPAIR_RADIUS
