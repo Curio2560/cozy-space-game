@@ -3,6 +3,18 @@ extends GutTest
 
 var run: Node3D
 
+## Leva o jogador e o rover para o meio de uma estrada principal, com o rover alinhado com ela
+## (conduzir em frente segue a estrada, sem árvores pelo caminho).
+func _open_road() -> void:
+	var d: PlanetData = run.planet.data
+	var pts: PackedVector3Array = d.roads[0].points
+	var i := pts.size() / 3
+	run.teleport(pts[i])
+	await wait_physics_frames(10)
+	var along: Vector3 = run.planet.global_basis * (pts[i + 4] - pts[i])
+	run.rover.place_at(run.planet.to_global(d.surface_point(pts[i + 2]) + pts[i + 2] * 1.0), along)
+	await wait_physics_frames(40)
+
 func before_each() -> void:
 	run = (load("res://scenes/game/planet_run.tscn") as PackedScene).instantiate()
 	add_child_autofree(run)
@@ -30,6 +42,7 @@ func test_rover_rests_on_its_wheels() -> void:
 	assert_lt(rover.linear_velocity.length(), 0.5, "devia estar parado")
 
 func test_enter_drive_and_exit() -> void:
+	await _open_road()
 	assert_true(run.can_enter_rover(), "o rover devia estar ao alcance no início")
 	await _tap_vehicle()
 	assert_true(run.driving)
@@ -50,6 +63,7 @@ func test_enter_drive_and_exit() -> void:
 	assert_lt(run.player.global_position.distance_to(run.rover.global_position), 5.0)
 
 func test_rover_turns_when_steering() -> void:
+	await _open_road()
 	await _tap_vehicle()
 	var f0: Vector3 = run.rover.forward()
 	Input.action_press("move_forward", 1.0)

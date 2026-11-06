@@ -3,6 +3,18 @@ extends GutTest
 
 var run: Node3D
 
+## Leva o jogador e o rover para o meio de uma estrada principal, com o rover alinhado com ela
+## (conduzir em frente segue a estrada, sem árvores pelo caminho).
+func _open_road() -> void:
+	var d: PlanetData = run.planet.data
+	var pts: PackedVector3Array = d.roads[0].points
+	var i := pts.size() / 3
+	run.teleport(pts[i])
+	await wait_physics_frames(10)
+	var along: Vector3 = run.planet.global_basis * (pts[i + 4] - pts[i])
+	run.rover.place_at(run.planet.to_global(d.surface_point(pts[i + 2]) + pts[i + 2] * 1.0), along)
+	await wait_physics_frames(40)
+
 func before_each() -> void:
 	run = (load("res://scenes/game/planet_run.tscn") as PackedScene).instantiate()
 	add_child_autofree(run)
@@ -12,6 +24,7 @@ func after_each() -> void:
 	Input.action_release("move_forward")
 
 func test_driving_raises_dust_and_standing_still_does_not() -> void:
+	await _open_road()
 	assert_false(run.dust.emitting)
 	run.enter_rover()
 	Input.action_press("move_forward", 1.0)
