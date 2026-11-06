@@ -20,3 +20,9 @@ BOOT_PLAY,Play (prototype),Jogar (protótipo)
 DBG_GOTO_POST,Go to post,Ir ao posto
 DBG_GRAVITY,Gravity,Gravidade
 DBG_CAM_DIST,Camera distance,Distância da câmara
+HINT_ENTER_ROVER,Tap Rover to drive,Toca em Rover para conduzir
+HINT_EXIT_ROVER,Tap Rover to get out,Toca em Rover para sair
+DBG_ROVER_SPEED,Rover top speed,Velocidade máx. do rover
+DBG_ROVER_TURN,Rover steering,Direção do rover
+DBG_ROVER_SPRING,Rover suspension,Suspensão do rover
+DBG_ROVER_HERE,Bring rover here,Trazer o rover para aqui
