@@ -38,6 +38,7 @@ func build(d: PlanetData) -> void:
 	body.name = "Body"
 	add_child(body)
 	_build_terrain()
+	_build_roads()
 	_build_props()
 	_build_turf()
 	_build_spots()
@@ -52,6 +53,63 @@ func prop_instance_count() -> int:
 				continue
 			n += (mmi as MultiMeshInstance3D).multimesh.instance_count
 	return n
+
+var roads_mesh: MeshInstance3D
+const ROAD_LIFT := 0.1
+const ROAD_ACROSS := [-1.0, -0.55, 0.0, 0.55, 1.0]
+const ROAD_SHADE := [0.74, 0.9, 1.0, 0.9, 0.74]
+
+## Estradas: uma faixa por estrada (5 vértices de largura) que segue o relevo, ligeiramente
+## acima do chão, com bermas mais escuras. Tudo numa só malha.
+func _build_roads() -> void:
+	if data.roads.is_empty():
+		return
+	var col: Color = PlanetGenerator.BIOMES[data.biome].palette.get("Road", Color("d9c49b"))
+	var verts := PackedVector3Array()
+	var norms := PackedVector3Array()
+	var cols := PackedColorArray()
+	var idx := PackedInt32Array()
+	var w := ROAD_ACROSS.size()
+	for road in data.roads:
+		var pts: PackedVector3Array = road.points
+		var hw: float = road.width * 0.5
+		var base := verts.size()
+		for i in pts.size():
+			var p := pts[i]
+			var t := pts[mini(i + 1, pts.size() - 1)] - pts[maxi(i - 1, 0)]
+			t = (t - p * t.dot(p)).normalized()
+			var side := p.cross(t).normalized()
+			for k in w:
+				var q: Vector3 = (p + side * (float(ROAD_ACROSS[k]) * hw / data.radius)).normalized()
+				verts.append(data.surface_point(q) + q * ROAD_LIFT)
+				norms.append(data.normal_at(q))
+				var sh: float = ROAD_SHADE[k]
+				cols.append(Color(col.r * sh, col.g * sh, col.b * sh))
+		for i in pts.size() - 1:
+			for k in w - 1:
+				var a := base + i * w + k
+				var b := a + w
+				# O Godot usa sentido horário para a face da frente: escolher a ordem em que a
+				# normal (regra da mão direita) aponta para DENTRO do planeta.
+				var n := (verts[b] - verts[a]).cross(verts[a + 1] - verts[a])
+				if n.dot(verts[a]) < 0.0:
+					idx.append_array([a, b, a + 1, a + 1, b, b + 1])
+				else:
+					idx.append_array([a, a + 1, b, a + 1, b + 1, b])
+	var arrays := []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = verts
+	arrays[Mesh.ARRAY_NORMAL] = norms
+	arrays[Mesh.ARRAY_COLOR] = cols
+	arrays[Mesh.ARRAY_INDEX] = idx
+	var mesh := ArrayMesh.new()
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	roads_mesh = MeshInstance3D.new()
+	roads_mesh.name = "Roads"
+	roads_mesh.mesh = mesh
+	roads_mesh.material_override = CelShading.terrain_vertex_color()
+	roads_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(roads_mesh)
 
 func turf_instance_count() -> int:
 	return _turf_count

@@ -11,6 +11,39 @@ var noise: FastNoiseLite
 ## [{kind: String (caminho no kit), dir: Vector3, yaw: float, size: float (altura em m),
 ##   clear: float (raio livre em m), outline: bool, collider: float (raio do colisor / altura; 0 = sem)}]
 var placements: Array[Dictionary] = []
+## Estradas: [{points: PackedVector3Array (direções ao longo do eixo), width: float (m), main: bool}]
+var roads: Array[Dictionary] = []
+var _road_grid := {} # célula -> [[ponto (m), meia largura]]
+const ROAD_CELL := 6.0
+
+## Distância (m) do ponto `dir` à berma da estrada mais próxima (negativa = em cima da estrada).
+## Devolve INF se não houver estrada por perto.
+func road_clearance(dir: Vector3) -> float:
+	var p := dir.normalized() * radius
+	var k := Vector3i((p / ROAD_CELL).floor())
+	var best := INF
+	for x in range(-1, 2):
+		for y in range(-1, 2):
+			for z in range(-1, 2):
+				var cell = _road_grid.get(k + Vector3i(x, y, z))
+				if cell == null:
+					continue
+				for e in cell:
+					best = minf(best, p.distance_to(e[0]) - e[1])
+	return best
+
+func _index_road(points: PackedVector3Array, width: float) -> void:
+	for d in points:
+		var p := d * radius
+		var k := Vector3i((p / ROAD_CELL).floor())
+		if not _road_grid.has(k):
+			_road_grid[k] = []
+		_road_grid[k].append([p, width * 0.5])
+
+func add_road(points: PackedVector3Array, width: float, main: bool) -> void:
+	roads.append({"points": points, "width": width, "main": main})
+	_index_road(points, width)
+
 ## Relva procedimental (tufos leves): direção, tamanho e rotação de cada tufo.
 var turf_dirs := PackedVector3Array()
 var turf_sizes := PackedFloat32Array()

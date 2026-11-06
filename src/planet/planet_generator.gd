@@ -35,7 +35,7 @@ const BIOMES := {
 			"Wood": Color("a8735a"), "LightWood": Color("c99a74"), "White": Color("efe9dc"),
 			"Black": Color("3a3346"), "Orange": Color("ff9f5a"), "LightOrange": Color("ffc07a"),
 			"Berry": Color("e8546e"), "Pink": Color("ff9ecf"), "Snow": Color("f4f8ff"),
-			"Grass": Color("5fb873"), "Rock": Color("c4bccf"),
+			"Grass": Color("5fb873"), "Rock": Color("c4bccf"), "Road": Color("e2cfa2"),
 		},
 		"props": [
 			{"kinds": ["nature/BirchTree_1", "nature/BirchTree_2", "nature/BirchTree_3", "nature/BirchTree_4", "nature/BirchTree_5",
@@ -67,7 +67,7 @@ const BIOMES := {
 			"Wood": Color("5d4a78"), "LightWood": Color("7a64a0"), "White": Color("d6e8c4"),
 			"Black": Color("2c2438"), "Orange": Color("e8e44a"), "LightOrange": Color("cdf27a"),
 			"Berry": Color("c44ae6"), "Pink": Color("e07af0"), "Snow": Color("e8ffd0"),
-			"Grass": Color("a6d64a"), "Rock": Color("5c4c80"),
+			"Grass": Color("a6d64a"), "Rock": Color("5c4c80"), "Road": Color("5a4c78"),
 		},
 		"props": [
 			{"kinds": ["nature/CommonTree_Dead_1", "nature/CommonTree_Dead_2", "nature/CommonTree_Dead_3", "nature/CommonTree_Dead_4", "nature/CommonTree_Dead_5",
@@ -98,7 +98,7 @@ const BIOMES := {
 			"Wood": Color("3a2a30"), "LightWood": Color("5a3e40"), "White": Color("8a6e6a"),
 			"Black": Color("1e1418"), "Orange": Color("ffc04a"), "LightOrange": Color("ffd27a"),
 			"Berry": Color("ffe04a"), "Pink": Color("ff7a4a"), "Snow": Color("c8a8a0"),
-			"Grass": Color("b0604a"), "Rock": Color("b8968c"),
+			"Grass": Color("b0604a"), "Rock": Color("b8968c"), "Road": Color("3e2e32"),
 		},
 		"props": [
 			{"kinds": ["nature/Cactus_1", "nature/Cactus_2", "nature/Cactus_3", "nature/Cactus_4", "nature/Cactus_5", "nature/CactusFlower_1", "nature/CactusFlowers_2"],
@@ -130,9 +130,69 @@ static func generate(p_seed: int, biome := "prado", radius := DEFAULT_RADIUS) ->
 	var spin := Basis.from_euler(Vector3(rng.randf() * TAU, rng.randf() * TAU, rng.randf() * TAU))
 
 	_place_spots(d, rng, spin)
+	_place_roads(d, rng)
 	_place_props(d, b, rng, spin)
 	_place_turf(d, b, p_seed)
 	return d
+
+const MAIN_ROAD_WIDTH := 4.5
+const SIDE_ROAD_WIDTH := 2.6
+const ROAD_STEP_M := 2.0
+
+## Rede de estradas: principais do posto avançado a cada posto e entre postos (com curvas);
+## secundárias mais estreitas que saem das principais (para o covil, clareiras, becos).
+static func _place_roads(d: PlanetData, rng: RandomNumberGenerator) -> void:
+	var main_edges: Array = []
+	for p in d.posts:
+		main_edges.append([d.outpost_dir, p])
+	for i in d.posts.size():
+		main_edges.append([d.posts[i], d.posts[(i + 1) % d.posts.size()]])
+	for e in main_edges:
+		d.add_road(road_path(d, e[0], e[1], rng, 7.0), MAIN_ROAD_WIDTH, true)
+	# Secundárias: uma até ao covil e algumas que partem de pontos das principais.
+	var main_count := d.roads.size()
+	var start := _nearest_road_point(d, d.lair_dir)
+	d.add_road(road_path(d, start, d.lair_dir, rng, 4.0), SIDE_ROAD_WIDTH, false)
+	for i in 5:
+		var road: Dictionary = d.roads[rng.randi() % main_count]
+		var pts: PackedVector3Array = road.points
+		var from: Vector3 = pts[rng.randi_range(int(pts.size() * 0.25), int(pts.size() * 0.75))]
+		var tangent := (pts[mini(pts.size() - 1, pts.find(from) + 1)] - from).normalized()
+		var side := from.cross(tangent).normalized() * (1.0 if rng.randf() < 0.5 else -1.0)
+		var length := rng.randf_range(25.0, 55.0) / d.radius
+		var to := (from + (side + tangent * rng.randf_range(-0.5, 0.5)).normalized() * tan(length)).normalized()
+		d.add_road(road_path(d, from, to, rng, 3.5), SIDE_ROAD_WIDTH, false)
+
+static func _nearest_road_point(d: PlanetData, dir: Vector3) -> Vector3:
+	var best := Vector3.ZERO
+	var best_a := INF
+	for r in d.roads:
+		for p: Vector3 in r.points:
+			var a := p.angle_to(dir)
+			if a < best_a:
+				best_a = a
+				best = p
+	return best
+
+## Caminho de `a` a `b` pelo círculo máximo, com curvas laterais (sinusoide com fase e
+## frequência aleatórias, nula nas pontas), amostrado de ROAD_STEP_M em ROAD_STEP_M metros.
+static func road_path(d: PlanetData, a: Vector3, b: Vector3, rng: RandomNumberGenerator, wiggle_m: float) -> PackedVector3Array:
+	var out := PackedVector3Array()
+	var arc := a.angle_to(b) * d.radius
+	var n := maxi(2, int(arc / ROAD_STEP_M))
+	var axis := a.cross(b).normalized()
+	if axis.length() < 0.5:
+		axis = a.cross(Vector3.UP if absf(a.y) < 0.9 else Vector3.RIGHT).normalized()
+	var freq := rng.randf_range(1.0, 2.5)
+	var phase := rng.randf() * TAU
+	var amp := wiggle_m / d.radius
+	for i in n + 1:
+		var t := float(i) / n
+		var p := a.slerp(b, t).normalized()
+		var off := sin(t * PI) * sin(t * TAU * freq + phase) * amp
+		# `axis` é perpendicular ao plano do caminho: somá-lo desvia o ponto para o lado.
+		out.append((p + axis * off).normalized())
+	return out
 
 ## Relva procedimental: muitos tufos baratos, uniformes, fora das zonas livres (postos etc.).
 ## Sem verificação de sobreposição (é relva).
@@ -151,7 +211,7 @@ static func _place_turf(d: PlanetData, b: Dictionary, p_seed: int) -> void:
 			if dir.dot(sp[0]) > sp[1]:
 				blocked = true
 				break
-		if blocked:
+		if blocked or d.road_clearance(dir) < 0.2:
 			continue
 		d.turf_dirs.append(dir)
 		d.turf_sizes.append(rng.randf_range(t.size[0], t.size[1]))
@@ -216,6 +276,8 @@ static func _place_props(d: PlanetData, b: Dictionary, rng: RandomNumberGenerato
 				break
 			var clear: float = group.clear
 			if _in_spot(d, c, clear) or grid.blocked(c, clear):
+				continue
+			if d.road_clearance(c) < clear:
 				continue
 			if d.slope_deg(c) > MAX_SLOPE_DEG:
 				continue

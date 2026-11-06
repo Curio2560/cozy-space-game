@@ -278,6 +278,20 @@ static func terrain(c: Color) -> ShaderMaterial:
 	_cache[key] = m
 	return m
 
+## Material de terreno com cor por vértice (estradas): sem rim, sem brilho, bandas nítidas.
+static func terrain_vertex_color() -> ShaderMaterial:
+	var key := "terrain_vcolor"
+	if _cache.has(key):
+		return _cache[key]
+	var m := ShaderMaterial.new()
+	m.shader = CEL_SHADER
+	m.set_shader_parameter("use_vertex_color", true)
+	m.set_shader_parameter("rim_strength", 0.0)
+	m.set_shader_parameter("spec_strength", 0.0)
+	m.set_shader_parameter("band_softness", 0.004)
+	_cache[key] = m
+	return m
+
 static func cached_material_count() -> int:
 	return _cache.size()
 
