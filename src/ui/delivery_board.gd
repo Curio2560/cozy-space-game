@@ -6,6 +6,7 @@ signal accepted(order: DeliveryOrder)
 signal closed
 
 var session: DeliverySession
+const KIND_COLORS := {"urgent": Color("d8452f"), "fragile": Color("3b7fc4"), "perishable": Color("3a9a5b"), "important": Color("8a4fd6"), "special": Color("c77a12")}
 var _list: VBoxContainer
 
 func _ready() -> void:
@@ -47,9 +48,9 @@ func refresh() -> void:
 		row.add_theme_constant_override("separation", 12)
 		var info := Label.new()
 		info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		info.text = "%s → %s   ·   %d ¢   ·   %s" % [session.colonist_name(o.from_post), session.colonist_name(o.to_post), o.base_pay, DeliveryHud.format_time(o.time_limit)]
+		info.text = "[%s]  %s → %s   ·   %d ¢   ·   %s" % [tr("KIND_" + o.kind.to_upper()), session.colonist_name(o.from_post), session.colonist_name(o.to_post), o.base_pay, DeliveryHud.format_time(o.time_limit)]
 		info.add_theme_font_size_override("font_size", 26)
-		info.add_theme_color_override("font_color", CozyTheme.INK)
+		info.add_theme_color_override("font_color", KIND_COLORS.get(o.kind, CozyTheme.INK))
 		row.add_child(info)
 		var b := Button.new()
 		b.text = "BOARD_ACCEPT"

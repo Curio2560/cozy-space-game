@@ -85,3 +85,17 @@ BUILD_COPY,Copy layout,Copiar montagem
 BUILD_GHOST,Show preview,Mostrar pré-visualização
 "BUILD_INFO","%s · %d° · floor %d · %d pieces","%s · %d° · andar %d · %d peças"
 BUILD_COPIED,Layout copied (%d pieces),Montagem copiada (%d peças)
+KIND_NORMAL,Normal,Normal
+KIND_URGENT,Urgent,Urgente
+KIND_FRAGILE,Fragile,Frágil
+KIND_PERISHABLE,Perishable,Perecível
+KIND_IMPORTANT,Important,Importante
+KIND_SPECIAL,Special,Especial
+FRIEND_LEVEL,lv,nv
+"HUD_KEYCARDS","KeyCards %d/%d","KeyCards %d/%d"
+HUD_FRESH,fresh %d%%,frescura %d%%
+HUD_CONDITION,condition %d%%,estado %d%%
+"TOAST_KEYCARD","KeyCard! (%d/%d)","KeyCard! (%d/%d)"
+TOAST_LAIR_OPEN,The lair is open!,O covil abriu!
+"TOAST_FRIEND","Friendship with %s: level %d!","Amizade com %s: nível %d!"
+TOAST_FRAGILE,Careful! Fragile delivery,Cuidado! A encomenda é frágil

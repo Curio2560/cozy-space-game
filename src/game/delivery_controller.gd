@@ -68,12 +68,17 @@ func start_planet(data: PlanetData) -> void:
 		dist.append(row)
 	session = DeliverySession.new(wallet, dist, data.seed)
 	board.session = session
+	session.keycard_gained.connect(_on_keycard)
+	session.friendship_up.connect(_on_friendship)
+	if not run.rover.bumped.is_connected(_on_rover_bump):
+		run.rover.bumped.connect(_on_rover_bump)
+	_update_keycards()
 	for l in _labels:
 		l.queue_free()
 	_labels.clear()
 	for i in n:
 		var l := Label3D.new()
-		l.text = session.colonist_name(i)
+		l.text = _colonist_title(i)
 		l.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 		l.font_size = 96
 		l.pixel_size = 0.012
@@ -85,6 +90,33 @@ func start_planet(data: PlanetData) -> void:
 		l.global_position = post_position(i) + data.posts[i] * 4.6
 		_labels.append(l)
 	close_board()
+
+func _colonist_title(i: int) -> String:
+	return "%s · %s %d" % [session.colonist_name(i), tr("FRIEND_LEVEL"), session.friendship_level(i)]
+
+func _on_keycard(total: int) -> void:
+	hud.toast(tr("TOAST_KEYCARD") % [total, DeliverySession.KEYCARDS_PER_PLANET])
+	if session.lair_open():
+		await get_tree().create_timer(2.6).timeout
+		hud.toast(tr("TOAST_LAIR_OPEN"))
+	_update_keycards()
+
+func _on_friendship(post: int, level: int) -> void:
+	_labels[post].text = _colonist_title(post)
+	hud.toast(tr("TOAST_FRIEND") % [session.colonist_name(post), level])
+
+var _bump_hint_cd := 0.0
+
+func _on_rover_bump(strength: float) -> void:
+	if session and session.carrying() and session.active.kind == "fragile" and run.driving:
+		session.bump_active(strength)
+		if _bump_hint_cd <= 0.0:
+			_bump_hint_cd = 3.0
+			hud.toast(tr("TOAST_FRAGILE"))
+
+func _update_keycards() -> void:
+	if hud and session:
+		hud.keycards_label.text = tr("HUD_KEYCARDS") % [session.keycards, DeliverySession.KEYCARDS_PER_PLANET]
 
 func post_position(i: int) -> Vector3:
 	var d: PlanetData = run.planet.data
@@ -138,6 +170,7 @@ func _physics_process(delta: float) -> void:
 	if _action.consume() and not board_open and near_board():
 		open_board()
 	session.tick(delta)
+	_bump_hint_cd = maxf(_bump_hint_cd - delta, 0.0)
 	var pos := carrier().global_position
 	var o := session.active
 	if o and o.state == DeliveryOrder.State.ACCEPTED and pos.distance_to(post_position(o.from_post)) < PICKUP_RADIUS:
@@ -214,7 +247,13 @@ func _update_hud() -> void:
 	elif o.state == DeliveryOrder.State.ACCEPTED:
 		hud.order_label.text = tr("HUD_PICKUP") % [session.colonist_name(target), dist]
 	else:
-		hud.order_label.text = tr("HUD_DELIVER") % [session.colonist_name(target), dist, DeliveryHud.format_time(o.remaining())]
+		var tag := "[%s] " % tr("KIND_" + o.kind.to_upper())
+		var extra := ""
+		if o.kind == "perishable":
+			extra = "  ·  " + tr("HUD_FRESH") % int(round(o.freshness * 100.0))
+		elif o.value_factor < 1.0:
+			extra = "  ·  " + tr("HUD_CONDITION") % int(round(o.value_factor * 100.0))
+		hud.order_label.text = tag + tr("HUD_DELIVER") % [session.colonist_name(target), dist, DeliveryHud.format_time(o.remaining())] + extra
 		hud.order_label.add_theme_color_override("font_color", Color("ff9f7a") if o.is_late() else Color("fff6ea"))
 
 func _update_credits() -> void:

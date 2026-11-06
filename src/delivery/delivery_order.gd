@@ -5,7 +5,10 @@ extends RefCounted
 enum State { OFFERED, ACCEPTED, CARRYING, DELIVERED, FAILED, STOLEN, DROPPED }
 
 var id: int
+## normal, urgent, fragile, perishable, important (dá um KeyCard), special (amizade ≥ 3)
 var kind := "normal"
+## Frescura (encomendas perecíveis): desce com o tempo e multiplica o pagamento.
+var freshness := 1.0
 var from_post: int
 var to_post: int
 var base_pay: int
