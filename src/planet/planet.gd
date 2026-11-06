@@ -243,6 +243,8 @@ func _build_turf() -> void:
 		mmi.name = "Turf"
 		mmi.multimesh = mm
 		mmi.material_override = _grass_mat
+		# Relva densa só perto da câmara; mais longe vê-se a relva pintada no chão.
+		mmi.visibility_range_end = TURF_VISIBLE_M + 20.0 # a região mede ~20 m
 		mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		_regions[r].add_child(mmi)
 
@@ -296,13 +298,30 @@ func _build_terrain() -> void:
 	terrain = MeshInstance3D.new()
 	terrain.name = "Terrain"
 	terrain.mesh = mesh
-	terrain.material_override = CelShading.terrain(PlanetGenerator.BIOMES[data.biome].ground)
+	terrain.material_override = _terrain_material()
 	add_child(terrain)
 	var shape := ConcavePolygonShape3D.new()
 	shape.set_faces(faces)
 	var cs := CollisionShape3D.new()
 	cs.shape = shape
 	body.add_child(cs)
+
+const TERRAIN_SHADER := preload("res://shaders/terrain_grass.gdshader")
+## Distância (m) até onde se desenha a relva procedimental (mais longe: a relva pintada no chão).
+const TURF_VISIBLE_M := 48.0
+
+## Chão com relva pintada (manchas e traços) nas cores do bioma.
+func _terrain_material() -> ShaderMaterial:
+	var b: Dictionary = PlanetGenerator.BIOMES[data.biome]
+	var g: Color = b.ground
+	var grass: Color = b.palette.get("Grass", g)
+	var m := ShaderMaterial.new()
+	m.shader = TERRAIN_SHADER
+	m.set_shader_parameter("ground", g)
+	m.set_shader_parameter("grass_dark", g.lerp(grass, 0.6).darkened(0.12))
+	m.set_shader_parameter("grass_light", g.lerp(grass, 0.3).lightened(0.12))
+	m.set_shader_parameter("strength", float(b.get("ground_grass", 1.0)))
+	return m
 
 func _region_of(dir: Vector3) -> int:
 	var best := 0

@@ -20,7 +20,7 @@ const BIOMES := {
 	"prado": {
 		"dirt": 140,
 		"ground": Color("8fd3a0"),
-		"turf": {"density": 0.9, "size": [0.35, 0.75]},
+		"turf": {"density": 2.4, "size": [0.35, 0.8]},
 		"creatures": 16,
 		"sky": {"bg": Color("2b2146"), "ambient": Color("b9a8e8"), "sun": Color("fff1dc"),
 			"nebula_a": Color("5b3f94"), "nebula_b": Color("ff9f7a"),
@@ -42,9 +42,9 @@ const BIOMES := {
 		"props": [
 			{"kinds": ["nature/BirchTree_1", "nature/BirchTree_2", "nature/BirchTree_3", "nature/BirchTree_4", "nature/BirchTree_5",
 				"nature/BirchTree_Autumn_1", "nature/CommonTree_Autumn_3", "natureza/Tree_Blob_3"],
-				"count": 380, "size": [3.4, 5.2], "clear": 2.0, "outline": true, "collider": 0.06, "cluster": 0.55},
+				"count": 460, "size": [3.4, 5.2], "clear": 2.0, "outline": true, "collider": 0.06, "cluster": 0.55},
 			{"kinds": ["nature/Bush_1", "nature/Bush_2", "nature/BushBerries_1", "nature/BushBerries_2", "natureza/Bush_3"],
-				"count": 400, "size": [0.7, 1.2], "clear": 1.0, "outline": true, "cluster": 0.4},
+				"count": 480, "size": [0.7, 1.2], "clear": 1.0, "outline": true, "cluster": 0.4},
 			{"kinds": ["rocks/SM_Rocks_01", "rocks/SM_Rocks_02", "rocks/SM_Rocks_03", "rocks/SM_Rocks_04", "rocks/SM_Rocks_05", "rocks/SM_Rocks_06", "rocks/SM_Rocks_07", "rocks/SM_Rocks_08", "rocks/SM_Rocks_09", "rocks/SM_Rocks_10", "rocks/SM_Rocks_11"], "count": 20, "size": [2.2, 4.5], "clear": 2.2, "outline": true, "collider": 0.4, "cluster": 0.3},
 			{"kinds": ["rocks/SM_Rocks_01", "rocks/SM_Rocks_02", "rocks/SM_Rocks_03", "rocks/SM_Rocks_04", "rocks/SM_Rocks_05", "rocks/SM_Rocks_06", "rocks/SM_Rocks_07", "rocks/SM_Rocks_08", "rocks/SM_Rocks_09", "rocks/SM_Rocks_10", "rocks/SM_Rocks_11"], "count": 70, "size": [0.6, 1.8], "clear": 1.0, "outline": true},
 			{"kinds": ["rocks/SM_Rocks_01", "rocks/SM_Rocks_02", "rocks/SM_Rocks_03", "rocks/SM_Rocks_04", "rocks/SM_Rocks_05", "rocks/SM_Rocks_06", "rocks/SM_Rocks_07", "rocks/SM_Rocks_08", "rocks/SM_Rocks_09", "rocks/SM_Rocks_10", "rocks/SM_Rocks_11"], "count": 180, "size": [0.25, 1.1], "clear": 0.45, "outline": true, "pile": [3, 7], "pile_radius": 2.6},
@@ -55,7 +55,8 @@ const BIOMES := {
 	"acido": {
 		"dirt": 120,
 		"ground": Color("8a7bb8"),
-		"turf": {"density": 0.6, "size": [0.3, 0.65]},
+		"turf": {"density": 1.5, "size": [0.3, 0.7]},
+		"ground_grass": 0.6,
 		"creatures": 20,
 		"sky": {"bg": Color("142220"), "ambient": Color("c4cfc8"), "sun": Color("f4ffe8"),
 			"nebula_a": Color("2c6e40"), "nebula_b": Color("8a4ac6"),
@@ -76,7 +77,7 @@ const BIOMES := {
 		"props": [
 			{"kinds": ["nature/CommonTree_Dead_1", "nature/CommonTree_Dead_2", "nature/CommonTree_Dead_3", "nature/CommonTree_Dead_4", "nature/CommonTree_Dead_5",
 				"nature/BirchTree_Dead_1", "nature/BirchTree_Dead_3", "natureza/Tree_Spikes_2"],
-				"count": 300, "size": [3.0, 4.8], "clear": 2.0, "outline": true, "collider": 0.06, "cluster": 0.5},
+				"count": 360, "size": [3.0, 4.8], "clear": 2.0, "outline": true, "collider": 0.06, "cluster": 0.5},
 			{"kinds": ["nature/Bush_1", "nature/Bush_2", "nature/BushBerries_1", "natureza/Tree_Spiral_1"],
 				"count": 320, "size": [0.7, 1.4], "clear": 1.0, "outline": true},
 			{"kinds": ["rocks/SM_Rocks_01", "rocks/SM_Rocks_02", "rocks/SM_Rocks_03", "rocks/SM_Rocks_04", "rocks/SM_Rocks_05", "rocks/SM_Rocks_06", "rocks/SM_Rocks_07", "rocks/SM_Rocks_08", "rocks/SM_Rocks_09", "rocks/SM_Rocks_10", "rocks/SM_Rocks_11"], "count": 30, "size": [2.2, 4.5], "clear": 2.2, "outline": true, "collider": 0.4, "cluster": 0.3},
@@ -88,7 +89,8 @@ const BIOMES := {
 	"lava": {
 		"dirt": 170,
 		"ground": Color("6e4a4e"),
-		"turf": {"density": 0.16, "size": [0.25, 0.45]},
+		"turf": {"density": 0.3, "size": [0.25, 0.45]},
+		"ground_grass": 0.25,
 		"creatures": 20,
 		"sky": {"bg": Color("2a0e14"), "ambient": Color("d2c2c8"), "sun": Color("ffe6cc"),
 			"nebula_a": Color("7a2034"), "nebula_b": Color("ff8a3a"),
@@ -332,6 +334,7 @@ static func _place_turf(d: PlanetData, b: Dictionary, p_seed: int) -> void:
 	rng.seed = hash(p_seed * 977 + 5)
 	var n := int(4.0 * PI * d.radius * d.radius * float(t.density))
 	var spots := d.flat_spots.map(func(s: Dictionary) -> Array: return [s.dir, cos(s.angle * 0.8)])
+	var near_road := d.road_cells()
 	for i in n:
 		var dir := Vector3(rng.randfn(), rng.randfn(), rng.randfn()).normalized()
 		var blocked := false
@@ -339,7 +342,9 @@ static func _place_turf(d: PlanetData, b: Dictionary, p_seed: int) -> void:
 			if dir.dot(sp[0]) > sp[1]:
 				blocked = true
 				break
-		if blocked or d.road_clearance(dir) < 0.2:
+		if blocked:
+			continue
+		if near_road.has(d.road_cell_of(dir)) and d.road_clearance(dir) < 0.2:
 			continue
 		d.turf_dirs.append(dir)
 		d.turf_sizes.append(rng.randf_range(t.size[0], t.size[1]))

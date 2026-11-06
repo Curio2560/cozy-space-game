@@ -40,6 +40,19 @@ func road_clearance(dir: Vector3) -> float:
 					best = minf(best, p.distance_to(e[0]) - e[1])
 	return best
 
+func road_cell_of(dir: Vector3) -> Vector3i:
+	return Vector3i((dir.normalized() * radius / ROAD_CELL).floor())
+
+## Células com estrada nelas ou ao lado (para saltar a verificação fina longe das estradas).
+func road_cells() -> Dictionary:
+	var out := {}
+	for k: Vector3i in _road_grid:
+		for x in range(-1, 2):
+			for y in range(-1, 2):
+				for z in range(-1, 2):
+					out[k + Vector3i(x, y, z)] = true
+	return out
+
 func _index_road(points: PackedVector3Array, width: float) -> void:
 	for d in points:
 		var p := d * radius
