@@ -247,25 +247,41 @@ func _physics_process(delta: float) -> void:
 	_hint.text = "" if deliveries.board_open else (dh if dh != "" and not driving else (h if h != "" else dh))
 
 var _env: Environment
+var sky_planets: SkyPlanets
+var _sky_mat: ShaderMaterial
 
 ## Céu e luz ambiente de cada bioma.
 func _apply_biome_sky() -> void:
 	var sky: Dictionary = PlanetGenerator.BIOMES[biome].get("sky", {})
 	_env.background_color = sky.get("bg", Color("2b2146"))
+	_sky_mat.set_shader_parameter("base_color", sky.get("bg", Color("2b2146")))
+	_sky_mat.set_shader_parameter("nebula_a", sky.get("nebula_a", Color("5b3f94")))
+	_sky_mat.set_shader_parameter("nebula_b", sky.get("nebula_b", Color("ff9f7a")))
+	sky_planets.setup(sky.get("planets", []))
 	_env.ambient_light_color = sky.get("ambient", Color("b9a8e8"))
 	sun.light_color = sky.get("sun", Color("fff1dc"))
 
 func _build_world() -> void:
 	var env := Environment.new()
-	env.background_mode = Environment.BG_COLOR
-	env.background_color = Color("2b2146")
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	env.ambient_light_color = Color("b9a8e8")
 	env.ambient_light_energy = 0.5
+	# Céu: shader de estrelas e nebulosas + planetas animados (cores por bioma).
+	_sky_mat = ShaderMaterial.new()
+	_sky_mat.shader = preload("res://shaders/space_sky.gdshader")
+	var sky_res := Sky.new()
+	sky_res.sky_material = _sky_mat
+	env.background_mode = Environment.BG_SKY
+	env.sky = sky_res
+	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+	env.reflected_light_source = Environment.REFLECTION_SOURCE_DISABLED
 	var we := WorldEnvironment.new()
 	we.environment = env
 	add_child(we)
 	_env = env
+	sky_planets = SkyPlanets.new()
+	sky_planets.name = "SkyPlanets"
+	add_child(sky_planets)
 	sun = DirectionalLight3D.new()
 	sun.light_color = Color("fff1dc")
 	sun.light_energy = 1.15
@@ -338,6 +354,8 @@ func _register_debug() -> void:
 	DebugMenu.add_slider(self, "DBG_ROVER_TURN", 0.8, 4.0, 0.1, rover.turn_rate, func(v: float) -> void: rover.turn_rate = v)
 	DebugMenu.add_slider(self, "DBG_ROVER_SPRING", 2000.0, 9000.0, 100.0, rover.spring_k, func(v: float) -> void: rover.spring_k = v)
 	DebugMenu.add_button(self, "DBG_ADD_CREDITS", func() -> void: wallet.add(Wallet.CREDITS, 500))
+	DebugMenu.add_slider(self, "DBG_SKY_BRIGHT", 0.3, 2.0, 0.05, 1.0, func(v: float) -> void: _sky_mat.set_shader_parameter("brightness", v))
+	DebugMenu.add_slider(self, "DBG_SKY_NEBULA", 0.0, 1.0, 0.05, 0.55, func(v: float) -> void: _sky_mat.set_shader_parameter("nebula_strength", v))
 	DebugMenu.add_button(self, "DBG_ROVER_DAMAGE", func() -> void: rover.take_damage(40.0))
 	DebugMenu.add_slider(self, "DBG_ROVER_BOUNCE", 80.0, 600.0, 10.0, rover.spring_damp, func(v: float) -> void: rover.spring_damp = v)
 	DebugMenu.add_slider(self, "DBG_ROVER_SPIN", 0.0, 4.0, 0.1, rover.spin_damp, func(v: float) -> void: rover.spin_damp = v)

@@ -63,9 +63,9 @@ var _labels: Array = [] # [Label, Callable]
 func _process(_delta: float) -> void:
 	if _fps:
 		_fps.text = stats_text()
+	_labels = _labels.filter(func(pair: Array) -> bool: return is_instance_valid(pair[0]) and (pair[1] as Callable).is_valid())
 	for pair in _labels:
-		if is_instance_valid(pair[0]):
-			(pair[0] as Label).text = str((pair[1] as Callable).call())
+		(pair[0] as Label).text = str((pair[1] as Callable).call())
 
 ## FPS, draw calls e triângulos do último frame (para medir no telemóvel).
 static func stats_text() -> String:

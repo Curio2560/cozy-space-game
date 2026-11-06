@@ -105,6 +105,7 @@ func place_at(pos: Vector3, facing: Vector3) -> void:
 	linear_velocity = Vector3.ZERO
 	angular_velocity = Vector3.ZERO
 	_prev_velocity = Vector3.ZERO
+	_bump_cd = 0.4 # pousar o rover não conta como embate
 
 func _physics_process(delta: float) -> void:
 	var u := planet_up()

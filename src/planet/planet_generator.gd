@@ -19,6 +19,13 @@ const MAX_SLOPE_DEG := 28.0
 const BIOMES := {
 	"prado": {
 		"ground": Color("8fd3a0"),
+		"sky": {"bg": Color("2b2146"), "ambient": Color("b9a8e8"), "sun": Color("fff1dc"),
+			"nebula_a": Color("5b3f94"), "nebula_b": Color("ff9f7a"),
+			"planets": [
+				{"tex": "planeta_ciano", "dir": Vector3(0.45, 0.6, -0.66), "size": 13.0},
+				{"tex": "planeta_rosa", "dir": Vector3(-0.72, 0.35, 0.6), "size": 6.0, "fps": 1.0},
+				{"tex": "planeta_vermelho", "dir": Vector3(0.1, -0.55, 0.83), "size": 3.0, "fps": 2.0},
+			]},
 		"height_amp": 1.8,
 		"noise_freq": 0.03,
 		# Cores do pack de natureza por nome de material (as árvores do kit usam a paleta própria).
@@ -44,7 +51,12 @@ const BIOMES := {
 	},
 	"acido": {
 		"ground": Color("8a7bb8"),
-		"sky": {"bg": Color("1e2a2a"), "ambient": Color("c4cfc8"), "sun": Color("f4ffe8")},
+		"sky": {"bg": Color("142220"), "ambient": Color("c4cfc8"), "sun": Color("f4ffe8"),
+			"nebula_a": Color("2c6e40"), "nebula_b": Color("8a4ac6"),
+			"planets": [
+				{"tex": "planeta_verde", "dir": Vector3(-0.3, 0.7, -0.65), "size": 15.0},
+				{"tex": "planeta_verde_azul", "dir": Vector3(0.75, 0.2, 0.62), "size": 7.0, "fps": 1.2},
+			]},
 		"kit_tint": Color("cdbcff"),
 		"height_amp": 2.2,
 		"noise_freq": 0.035,
@@ -69,7 +81,12 @@ const BIOMES := {
 	},
 	"lava": {
 		"ground": Color("6e4a4e"),
-		"sky": {"bg": Color("2e1418"), "ambient": Color("d2c2c8"), "sun": Color("ffe6cc")},
+		"sky": {"bg": Color("2a0e14"), "ambient": Color("d2c2c8"), "sun": Color("ffe6cc"),
+			"nebula_a": Color("7a2034"), "nebula_b": Color("ff8a3a"),
+			"planets": [
+				{"tex": "planeta_vermelho", "dir": Vector3(0.5, 0.55, -0.67), "size": 17.0, "fps": 1.0},
+				{"tex": "planeta_rosa", "dir": Vector3(-0.6, 0.45, 0.66), "size": 5.0, "fps": 1.8},
+			]},
 		"kit_tint": Color("ffb49c"),
 		"height_amp": 2.6,
 		"noise_freq": 0.04,
