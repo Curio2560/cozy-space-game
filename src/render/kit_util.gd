@@ -51,6 +51,14 @@ static func single_mesh(kit_path: String) -> Dictionary:
 		scene_root.free()
 		_single_cache[kit_path] = md
 		return md
+	if kit_path.begins_with("rocks/"):
+		# Rochas estilizadas: textura em tons de cinzento tingida pela cor "Rock" do bioma.
+		var rmesh: Mesh = load("res://assets/" + kit_path + ".obj")
+		assert(rmesh != null, "modelo em falta: %s" % kit_path)
+		var rk := {"mesh": rmesh, "xform": Transform3D.IDENTITY, "material": rmesh.surface_get_material(0),
+			"aabb": rmesh.get_aabb(), "palette": false, "tint_key": "Rock"}
+		_single_cache[kit_path] = rk
+		return rk
 	if kit_path.begins_with("nature/"):
 		var mesh: Mesh = load("res://assets/" + kit_path + ".obj")
 		assert(mesh != null, "modelo em falta: %s" % kit_path)

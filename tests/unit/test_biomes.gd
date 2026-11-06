@@ -94,24 +94,33 @@ func test_planet_builds_in_every_biome() -> void:
 		assert_eq(p.prop_instance_count(), p.data.placements.size(), biome)
 		p.free()
 
-func test_kit_props_get_biome_tint() -> void:
+func test_kit_props_and_rocks_get_biome_colours() -> void:
 	var p := Planet.new()
 	p.culling_enabled = false
 	add_child(p)
 	p.build(PlanetGenerator.generate(2, "lava"))
-	var tint: Color = PlanetGenerator.BIOMES["lava"].kit_tint
-	var found := false
+	var biome: Dictionary = PlanetGenerator.BIOMES["lava"]
+	var tints := {}
 	for r in p.get_children():
 		if not r.name.begins_with("Region"):
 			continue
 		for mmi: MultiMeshInstance3D in r.get_children():
 			var m := mmi.material_override as ShaderMaterial
-			if m.get_shader_parameter("use_vertex_color"):
-				continue
-			found = true
-			assert_true((m.get_shader_parameter("albedo_tint") as Color).is_equal_approx(tint), "rocha do kit sem o tom da lava")
-			break
-		if found:
-			break
-	assert_true(found, "devia haver modelos do kit na lava")
+			if not m.get_shader_parameter("use_vertex_color"):
+				tints[(m.get_shader_parameter("albedo_tint") as Color).to_html()] = true
+	assert_true(tints.has((biome.kit_tint as Color).to_html()), "modelos do kit sem o tom da lava")
+	assert_true(tints.has((biome.palette.Rock as Color).to_html()), "rochas sem a cor de rocha da lava")
 	p.free()
+
+func test_rocks_come_in_piles() -> void:
+	# O grupo de aglomerados junta pedras: muitas têm vizinhas a menos de 3 m.
+	var d := PlanetGenerator.generate(5, "prado")
+	var small := d.placements.filter(func(q: Dictionary) -> bool: return (q.kind as String).begins_with("rocks/") and q.size < 1.1 and q.clear < 0.5)
+	assert_gt(small.size(), 80)
+	var close := 0
+	for a in small:
+		for b in small:
+			if a != b and d.arc_m(a.dir, b.dir) < 3.0:
+				close += 1
+				break
+	assert_gt(float(close) / small.size(), 0.6, "as pedras pequenas deviam estar aglomeradas")

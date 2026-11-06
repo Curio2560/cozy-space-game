@@ -2,7 +2,7 @@
 """Separa um .obj com vários grupos (g NOME) num .obj por grupo: converte a escala, centra em
 X/Z, assenta em Y=0 e escreve um .mtl comum com a textura.
 
-Uso: python3 -I tools/split_obj.py <entrada.obj> <pasta_saida> <textura.png|jpg> [escala]
+Uso: python3 -I tools/split_obj.py <entrada.obj> <pasta_saida> <textura.png|jpg> [escala] [nome.mtl]
 (escala por omissão 0.01: centímetros -> metros)"""
 import os, sys
 
@@ -21,7 +21,9 @@ for line in open(src, encoding="utf-8", errors="replace"):
     elif p[0] == "vn":
         VN.append(p[1:4])
     elif p[0] == "g":
-        cur = None if p[1] == "default" else p[1]
+        # Alguns exportadores escrevem "g Grupo SM_Nome": preferir o nome que começa por SM_.
+        names = [n for n in p[1:] if n.startswith("SM_")] or p[1:2]
+        cur = None if names[0] == "default" else names[0]
         if cur:
             groups.setdefault(cur, [])
     elif p[0] == "f" and cur:
@@ -29,7 +31,8 @@ for line in open(src, encoding="utf-8", errors="replace"):
 
 os.makedirs(out, exist_ok=True)
 tex_name = os.path.basename(tex)
-with open(os.path.join(out, "terrain.mtl"), "w") as m:
+mtl = sys.argv[5] if len(sys.argv) > 5 else "terrain.mtl"
+with open(os.path.join(out, mtl), "w") as m:
     m.write("newmtl Terrain\nKd 1.000000 1.000000 1.000000\nmap_Kd %s\n" % tex_name)
 
 for name, faces in groups.items():
@@ -65,6 +68,6 @@ for name, faces in groups.items():
             idx.append(s)
         lines_f.append("f " + " ".join(idx))
     with open(os.path.join(out, name + ".obj"), "w") as o:
-        o.write("mtllib terrain.mtl\no %s\n" % name)
+        o.write("mtllib %s\no %s\n" % (mtl, name))
         o.write("\n".join(lines_v + lines_t + lines_n) + "\nusemtl Terrain\n" + "\n".join(lines_f) + "\n")
 print(len(groups), "peças em", out)

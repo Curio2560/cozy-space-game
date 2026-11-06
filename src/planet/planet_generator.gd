@@ -11,6 +11,8 @@ const MAX_SLOPE_DEG := 28.0
 
 ## Biomas: lista de tipos de decoração (repetir um tipo em `kinds` aumenta o seu peso).
 ## kit_tint: tom multiplicado nos modelos do kit (que têm a paleta numa textura).
+## pile: [min, max] — em vez de espalhar, faz montes: escolhe centros e põe entre min e max
+## objetos a menos de `pile_radius` m de cada centro (aglomerados de pedras).
 ## cluster (0..1): quanto a decoração se junta em manchas (bosques e clareiras) em vez de
 ## se espalhar por igual. count = quantos tentar colocar num planeta de raio 60
 ## (escala com a área); size = altura em m [min, max]; clear = raio livre em m.
@@ -25,7 +27,7 @@ const BIOMES := {
 			"Wood": Color("a8735a"), "LightWood": Color("c99a74"), "White": Color("efe9dc"),
 			"Black": Color("3a3346"), "Orange": Color("ff9f5a"), "LightOrange": Color("ffc07a"),
 			"Berry": Color("e8546e"), "Pink": Color("ff9ecf"), "Snow": Color("f4f8ff"),
-			"Grass": Color("5fb873"),
+			"Grass": Color("5fb873"), "Rock": Color("c4bccf"),
 		},
 		"props": [
 			{"kinds": ["nature/BirchTree_1", "nature/BirchTree_2", "nature/BirchTree_3", "nature/BirchTree_4", "nature/BirchTree_5",
@@ -33,8 +35,9 @@ const BIOMES := {
 				"count": 300, "size": [3.4, 5.2], "clear": 2.0, "outline": true, "collider": 0.06, "cluster": 0.55},
 			{"kinds": ["nature/Bush_1", "nature/Bush_2", "nature/BushBerries_1", "nature/BushBerries_2", "natureza/Bush_3"],
 				"count": 260, "size": [0.7, 1.2], "clear": 1.0, "outline": true, "cluster": 0.4},
-			{"kinds": ["natureza/Rock_Large_1", "natureza/Rock_Large_2", "natureza/Rock_Large_3"], "count": 40, "size": [1.2, 2.2], "clear": 1.8, "outline": true, "collider": 0.45},
-			{"kinds": ["natureza/Rock_1", "natureza/Rock_2", "natureza/Rock_3", "natureza/Rock_4"], "count": 50, "size": [0.35, 0.7], "clear": 0.6, "outline": true},
+			{"kinds": ["rocks/SM_Rocks_01", "rocks/SM_Rocks_02", "rocks/SM_Rocks_03", "rocks/SM_Rocks_04", "rocks/SM_Rocks_05", "rocks/SM_Rocks_06", "rocks/SM_Rocks_07", "rocks/SM_Rocks_08", "rocks/SM_Rocks_09", "rocks/SM_Rocks_10", "rocks/SM_Rocks_11"], "count": 20, "size": [2.2, 4.5], "clear": 2.2, "outline": true, "collider": 0.4, "cluster": 0.3},
+			{"kinds": ["rocks/SM_Rocks_01", "rocks/SM_Rocks_02", "rocks/SM_Rocks_03", "rocks/SM_Rocks_04", "rocks/SM_Rocks_05", "rocks/SM_Rocks_06", "rocks/SM_Rocks_07", "rocks/SM_Rocks_08", "rocks/SM_Rocks_09", "rocks/SM_Rocks_10", "rocks/SM_Rocks_11"], "count": 70, "size": [0.6, 1.8], "clear": 1.0, "outline": true},
+			{"kinds": ["rocks/SM_Rocks_01", "rocks/SM_Rocks_02", "rocks/SM_Rocks_03", "rocks/SM_Rocks_04", "rocks/SM_Rocks_05", "rocks/SM_Rocks_06", "rocks/SM_Rocks_07", "rocks/SM_Rocks_08", "rocks/SM_Rocks_09", "rocks/SM_Rocks_10", "rocks/SM_Rocks_11"], "count": 180, "size": [0.25, 1.1], "clear": 0.45, "outline": true, "pile": [3, 7], "pile_radius": 2.6},
 			{"kinds": ["natureza/Plant_1", "natureza/Plant_2", "natureza/Plant_2", "natureza/Plant_1", "natureza/Plant_3"], "count": 120, "size": [0.5, 0.9], "clear": 0.6, "outline": true, "cluster": 0.3},
 			{"kinds": ["mdvl/mdvl_nature_grass_01", "mdvl/mdvl_nature_grass_01", "natureza/Grass_2"], "count": 1500, "size": [0.3, 0.65], "clear": 0.22, "outline": false, "cluster": 0.3},
 		],
@@ -50,7 +53,7 @@ const BIOMES := {
 			"Wood": Color("5d4a78"), "LightWood": Color("7a64a0"), "White": Color("d6e8c4"),
 			"Black": Color("2c2438"), "Orange": Color("e8e44a"), "LightOrange": Color("cdf27a"),
 			"Berry": Color("c44ae6"), "Pink": Color("e07af0"), "Snow": Color("e8ffd0"),
-			"Grass": Color("a6d64a"),
+			"Grass": Color("a6d64a"), "Rock": Color("5c4c80"),
 		},
 		"props": [
 			{"kinds": ["nature/CommonTree_Dead_1", "nature/CommonTree_Dead_2", "nature/CommonTree_Dead_3", "nature/CommonTree_Dead_4", "nature/CommonTree_Dead_5",
@@ -58,8 +61,9 @@ const BIOMES := {
 				"count": 240, "size": [3.0, 4.8], "clear": 2.0, "outline": true, "collider": 0.06, "cluster": 0.5},
 			{"kinds": ["nature/Bush_1", "nature/Bush_2", "nature/BushBerries_1", "natureza/Tree_Spiral_1"],
 				"count": 220, "size": [0.7, 1.4], "clear": 1.0, "outline": true},
-			{"kinds": ["natureza/Rock_Large_1", "natureza/Rock_Large_2", "natureza/Rock_Large_3"], "count": 50, "size": [1.2, 2.4], "clear": 1.8, "outline": true, "collider": 0.45},
-			{"kinds": ["natureza/Rock_1", "natureza/Rock_2", "natureza/Rock_3", "natureza/Rock_4"], "count": 60, "size": [0.35, 0.7], "clear": 0.6, "outline": true},
+			{"kinds": ["rocks/SM_Rocks_01", "rocks/SM_Rocks_02", "rocks/SM_Rocks_03", "rocks/SM_Rocks_04", "rocks/SM_Rocks_05", "rocks/SM_Rocks_06", "rocks/SM_Rocks_07", "rocks/SM_Rocks_08", "rocks/SM_Rocks_09", "rocks/SM_Rocks_10", "rocks/SM_Rocks_11"], "count": 30, "size": [2.2, 4.5], "clear": 2.2, "outline": true, "collider": 0.4, "cluster": 0.3},
+			{"kinds": ["rocks/SM_Rocks_01", "rocks/SM_Rocks_02", "rocks/SM_Rocks_03", "rocks/SM_Rocks_04", "rocks/SM_Rocks_05", "rocks/SM_Rocks_06", "rocks/SM_Rocks_07", "rocks/SM_Rocks_08", "rocks/SM_Rocks_09", "rocks/SM_Rocks_10", "rocks/SM_Rocks_11"], "count": 90, "size": [0.6, 1.8], "clear": 1.0, "outline": true},
+			{"kinds": ["rocks/SM_Rocks_01", "rocks/SM_Rocks_02", "rocks/SM_Rocks_03", "rocks/SM_Rocks_04", "rocks/SM_Rocks_05", "rocks/SM_Rocks_06", "rocks/SM_Rocks_07", "rocks/SM_Rocks_08", "rocks/SM_Rocks_09", "rocks/SM_Rocks_10", "rocks/SM_Rocks_11"], "count": 220, "size": [0.25, 1.1], "clear": 0.45, "outline": true, "pile": [3, 7], "pile_radius": 2.6},
 			{"kinds": ["mdvl/mdvl_nature_grass_01"], "count": 1200, "size": [0.3, 0.65], "clear": 0.22, "outline": false, "cluster": 0.3},
 		],
 	},
@@ -74,15 +78,16 @@ const BIOMES := {
 			"Wood": Color("3a2a30"), "LightWood": Color("5a3e40"), "White": Color("8a6e6a"),
 			"Black": Color("1e1418"), "Orange": Color("ffc04a"), "LightOrange": Color("ffd27a"),
 			"Berry": Color("ffe04a"), "Pink": Color("ff7a4a"), "Snow": Color("c8a8a0"),
-			"Grass": Color("b0604a"),
+			"Grass": Color("b0604a"), "Rock": Color("b8968c"),
 		},
 		"props": [
 			{"kinds": ["nature/Cactus_1", "nature/Cactus_2", "nature/Cactus_3", "nature/Cactus_4", "nature/Cactus_5", "nature/CactusFlower_1", "nature/CactusFlowers_2"],
 				"count": 220, "size": [1.2, 3.0], "clear": 1.2, "outline": true, "collider": 0.12, "cluster": 0.45},
 			{"kinds": ["nature/CommonTree_Dead_2", "nature/BirchTree_Dead_2", "natureza/Tree_Lava_1", "natureza/Tree_Lava_2", "natureza/Tree_Lava_3"],
 				"count": 90, "size": [3.0, 4.5], "clear": 2.0, "outline": true, "collider": 0.06},
-			{"kinds": ["natureza/Rock_Large_1", "natureza/Rock_Large_2", "natureza/Rock_Large_3"], "count": 70, "size": [1.2, 2.8], "clear": 1.8, "outline": true, "collider": 0.45},
-			{"kinds": ["natureza/Rock_1", "natureza/Rock_2", "natureza/Rock_3", "natureza/Rock_4"], "count": 90, "size": [0.35, 0.8], "clear": 0.6, "outline": true},
+			{"kinds": ["rocks/SM_Rocks_01", "rocks/SM_Rocks_02", "rocks/SM_Rocks_03", "rocks/SM_Rocks_04", "rocks/SM_Rocks_05", "rocks/SM_Rocks_06", "rocks/SM_Rocks_07", "rocks/SM_Rocks_08", "rocks/SM_Rocks_09", "rocks/SM_Rocks_10", "rocks/SM_Rocks_11"], "count": 45, "size": [2.2, 4.5], "clear": 2.2, "outline": true, "collider": 0.4, "cluster": 0.3},
+			{"kinds": ["rocks/SM_Rocks_01", "rocks/SM_Rocks_02", "rocks/SM_Rocks_03", "rocks/SM_Rocks_04", "rocks/SM_Rocks_05", "rocks/SM_Rocks_06", "rocks/SM_Rocks_07", "rocks/SM_Rocks_08", "rocks/SM_Rocks_09", "rocks/SM_Rocks_10", "rocks/SM_Rocks_11"], "count": 120, "size": [0.6, 1.8], "clear": 1.0, "outline": true},
+			{"kinds": ["rocks/SM_Rocks_01", "rocks/SM_Rocks_02", "rocks/SM_Rocks_03", "rocks/SM_Rocks_04", "rocks/SM_Rocks_05", "rocks/SM_Rocks_06", "rocks/SM_Rocks_07", "rocks/SM_Rocks_08", "rocks/SM_Rocks_09", "rocks/SM_Rocks_10", "rocks/SM_Rocks_11"], "count": 280, "size": [0.25, 1.1], "clear": 0.45, "outline": true, "pile": [3, 7], "pile_radius": 2.6},
 			{"kinds": ["mdvl/mdvl_nature_grass_01"], "count": 500, "size": [0.25, 0.5], "clear": 0.22, "outline": false, "cluster": 0.55},
 		],
 	},
@@ -159,6 +164,8 @@ static func _place_props(d: PlanetData, b: Dictionary, rng: RandomNumberGenerato
 		var group_spin := spin * Basis.from_euler(Vector3(rng.randf() * TAU, rng.randf() * TAU, 0))
 		var cands := fibonacci_dirs(int(wanted * (4.0 + cluster * 6.0)), group_spin)
 		_shuffle(cands, rng)
+		if group.has("pile"):
+			cands = _pile_candidates(cands, group, wanted, d.radius, rng)
 		var placed := 0
 		for c: Vector3 in cands:
 			if placed >= wanted:
@@ -186,6 +193,24 @@ static func _place_props(d: PlanetData, b: Dictionary, rng: RandomNumberGenerato
 			})
 			grid.add(c, clear)
 			placed += 1
+
+## Candidatos em montes: para cada centro, várias direções a menos de pile_radius metros.
+static func _pile_candidates(centers: Array[Vector3], group: Dictionary, wanted: int, radius: float, rng: RandomNumberGenerator) -> Array[Vector3]:
+	var out: Array[Vector3] = []
+	var lo: int = group.pile[0]
+	var hi: int = group.pile[1]
+	var r_ang: float = group.pile_radius / radius
+	for c in centers:
+		if out.size() >= wanted * 3:
+			break
+		var n := rng.randi_range(lo, hi) * 3 # sobram candidatos para os rejeitados
+		var t1 := c.cross(Vector3.UP if absf(c.y) < 0.9 else Vector3.RIGHT).normalized()
+		var t2 := c.cross(t1)
+		for i in n:
+			var a := rng.randf() * TAU
+			var rr := sqrt(rng.randf()) * r_ang
+			out.append((c + (t1 * cos(a) + t2 * sin(a)) * rr).normalized())
+	return out
 
 ## `n` direções quase uniformes na esfera (espiral de Fibonacci), rodadas por `spin`.
 static func fibonacci_dirs(n: int, spin := Basis.IDENTITY) -> Array[Vector3]:

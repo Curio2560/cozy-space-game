@@ -162,7 +162,10 @@ func _build_props() -> void:
 			mmi.material_override = CelShading.vertex_color_material(with_outline)
 		else:
 			# Modelos do kit (paleta em textura): tom do bioma por cima.
-			var tint: Color = PlanetGenerator.BIOMES[data.biome].get("kit_tint", Color.WHITE)
+			var biome_def: Dictionary = PlanetGenerator.BIOMES[data.biome]
+			var tint: Color = biome_def.get("kit_tint", Color.WHITE)
+			if info.has("tint_key"):
+				tint = biome_def.palette[info.tint_key]
 			mm.mesh = CelShading.outline_ready_mesh(info.mesh) if with_outline else info.mesh
 			mmi.material_override = CelShading.material_for(info.material, true, tint) if with_outline else CelShading.material_no_outline(info.material, tint)
 		mm.instance_count = xfs.size()

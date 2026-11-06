@@ -65,6 +65,8 @@ func _ready() -> void:
 		enter_rover()
 	if "forest" in args:
 		spawn_in_forest()
+	if "rocks" in args:
+		spawn_in_forest("rocks/")
 	if "perf" in args:
 		_perf_log()
 	if "drive" in args:
@@ -109,9 +111,11 @@ func teleport(dir: Vector3) -> void:
 	_apply_camera(CAM_FOOT)
 	camera.target_facing = func() -> Vector3: return player.facing
 
-## Põe o jogador à beira do sítio com mais árvores (capturas de ecrã).
-func spawn_in_forest() -> void:
-	var trees := planet.data.placements.filter(func(p: Dictionary) -> bool: return p.size > 2.8)
+## Põe o jogador à beira do sítio com mais árvores (ou objetos cujo tipo começa por `prefix`).
+## Para capturas de ecrã.
+func spawn_in_forest(prefix := "") -> void:
+	var trees := planet.data.placements.filter(func(p: Dictionary) -> bool:
+		return (p.kind as String).begins_with(prefix) if prefix != "" else p.size > 2.8)
 	var best: Vector3 = trees[0].dir
 	var best_n := 0
 	for t in trees.slice(0, 120):

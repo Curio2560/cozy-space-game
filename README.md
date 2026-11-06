@@ -15,6 +15,7 @@ noturna com mechs. Godot 4.7.2 · renderer Compatibility · paisagem · cel-shad
 | `assets/kit/` | Quaternius **Ultimate Platformer Pack** (personagens, mechs, naves, rovers, base, pickups, natureza) |
 | `assets/nature/` | Quaternius **Ultimate Nature Pack** (árvores, arbustos, catos) — recoloridos por bioma |
 | `assets/mdvl/` | Relva "mdvl" (paleta em textura) — recolorida por bioma |
+| `assets/rocks/` | Rochas estilizadas — espalhadas, em pedregulhos e em montes, tingidas por bioma |
 | `assets/terrain/` | Terreno modular (penhascos, colinas, montanhas) — relevo carimbado nos planetas |
 | `assets/monsters/` | Quaternius **Ultimate Monsters** — criaturas (à espera da textura e da versão glTF com animações) |
 | `assets/icon/` | Ícone da app (gerado por `tools/`) |
