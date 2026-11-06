@@ -17,7 +17,8 @@ func add_bar(id: String, label_key: String, color: Color) -> void:
 	l.text = label_key
 	l.custom_minimum_size = Vector2(110, 0)
 	l.add_theme_font_size_override("font_size", 22)
-	l.add_theme_color_override("font_outline_color", Color(0.14, 0.1, 0.22))
+	l.add_theme_color_override("font_color", CozyTheme.CREAM)
+	l.add_theme_color_override("font_outline_color", CozyTheme.INK)
 	l.add_theme_constant_override("outline_size", 6)
 	row.add_child(l)
 	var bar := ProgressBar.new()
@@ -27,9 +28,7 @@ func add_bar(id: String, label_key: String, color: Color) -> void:
 	var bg := StyleBoxFlat.new()
 	bg.bg_color = Color(0.14, 0.1, 0.22, 0.7)
 	bg.set_corner_radius_all(8)
-	var fg := StyleBoxFlat.new()
-	fg.bg_color = color
-	fg.set_corner_radius_all(8)
+	var fg := CozyTheme.box(color, CozyTheme.INK, 3, 0, 9, 0)
 	bar.add_theme_stylebox_override("background", bg)
 	bar.add_theme_stylebox_override("fill", fg)
 	row.add_child(bar)

@@ -70,6 +70,9 @@ func _ready() -> void:
 	dust = _make_dust()
 	rover.add_child(dust)
 	_build_ui()
+	builder = ModuleBuilder.new()
+	builder.name = "ModuleBuilder"
+	add_child(builder)
 	deliveries = DeliveryController.new()
 	deliveries.name = "Deliveries"
 	add_child(deliveries)
@@ -86,7 +89,13 @@ func _ready() -> void:
 	_update_vital_bars()
 	start(seed_value)
 	_register_debug()
+	builder.setup(self)
 	var args := OS.get_cmdline_user_args() # argumentos só para capturas de ecrã no PC
+	if "dbgbuild" in args: # capturas: separador Construir com uma casa colocada
+		builder.selected = "★ Casa do colono"
+		builder.place()
+		DebugMenu.toggle()
+		DebugMenu.show_tab("DBG_TAB_BUILD")
 	if "pause" in args:
 		pause_menu.open()
 	if "board" in args:
@@ -145,6 +154,8 @@ func start(s: int) -> void:
 	if deliveries:
 		deliveries.start_planet(planet.data)
 	_spawn_creatures()
+	if builder:
+		builder.clear()
 
 ## Espalha as criaturas do bioma pelo planeta (determinístico pela seed), longe da base e dos postos.
 func _spawn_creatures() -> void:
@@ -504,6 +515,7 @@ func _process(_delta: float) -> void:
 
 var _hud_layer: CanvasLayer
 var pause_menu: PauseMenu
+var builder: ModuleBuilder
 var minimap: Minimap
 
 ## Nó que o jogador está a controlar (rover ou astronauta).
@@ -523,7 +535,7 @@ func _build_ui() -> void:
 		_update_touch_visibility()
 	var pause_btn := Button.new()
 	pause_btn.name = "PauseButton"
-	pause_btn.icon = NeonTheme.icon(NeonTheme.ICON_PAUSE)
+	pause_btn.icon = CozyTheme.icon(CozyTheme.ICON_PAUSE)
 	pause_btn.expand_icon = true
 	pause_btn.position = Vector2(20, 14)
 	pause_btn.custom_minimum_size = Vector2(68, 68)
@@ -560,6 +572,7 @@ func _build_ui() -> void:
 	_hint.position.y = 24
 	_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_hint.add_theme_font_size_override("font_size", 28)
+	_hint.add_theme_color_override("font_color", CozyTheme.CREAM)
 	_hint.add_theme_color_override("font_outline_color", Color(0.14, 0.1, 0.22))
 	_hint.add_theme_constant_override("outline_size", 8)
 	hud.add_child(_hint)
@@ -575,6 +588,7 @@ func _update_touch_visibility() -> void:
 		touch.visible = DisplayServer.is_touchscreen_available() or DebugMenu.force_touch
 
 func _register_debug() -> void:
+	DebugMenu.default_tab = "DBG_TAB_WORLD"
 	DebugMenu.add_label(self, func() -> String: return "%s · seed %d · %d ¢" % [biome, seed_value, wallet.credits()])
 	DebugMenu.add_button(self, "DBG_NEW_SEED", func() -> void: start(randi() % 100000))
 	DebugMenu.add_button(self, "DBG_NEXT_BIOME", func() -> void:
@@ -586,16 +600,20 @@ func _register_debug() -> void:
 	for i in 3:
 		DebugMenu.add_button(self, tr("DBG_GOTO_POST") + " %d" % (i + 1), func() -> void:
 			spawn_near(planet.data.posts[i], planet.data.outpost_dir, 7.0))
+	DebugMenu.default_tab = "DBG_TAB_PLAYER"
 	DebugMenu.add_slider(self, "DBG_SPEED", 2.0, 16.0, 0.5, player.walk_speed, func(v: float) -> void: player.walk_speed = v)
 	DebugMenu.add_slider(self, "DBG_JUMP", 3.0, 16.0, 0.5, player.jump_velocity, func(v: float) -> void: player.jump_velocity = v)
 	DebugMenu.add_slider(self, "DBG_GRAVITY", 5.0, 40.0, 1.0, player.gravity, func(v: float) -> void: player.gravity = v)
 	DebugMenu.add_slider(self, "DBG_CAM_DIST", 3.0, 14.0, 0.5, camera.distance, func(v: float) -> void: camera.distance = v)
+	DebugMenu.default_tab = "DBG_TAB_ROVER"
 	DebugMenu.add_slider(self, "DBG_ROVER_SPEED", 6.0, 30.0, 1.0, rover.max_speed, func(v: float) -> void: rover.max_speed = v)
 	DebugMenu.add_slider(self, "DBG_ROVER_TURN", 0.8, 4.0, 0.1, rover.turn_rate, func(v: float) -> void: rover.turn_rate = v)
 	DebugMenu.add_slider(self, "DBG_ROVER_SPRING", 2000.0, 9000.0, 100.0, rover.spring_k, func(v: float) -> void: rover.spring_k = v)
-	DebugMenu.add_button(self, "DBG_ADD_CREDITS", func() -> void: wallet.add(Wallet.CREDITS, 500))
+	DebugMenu.add_button(self, "DBG_ADD_CREDITS", func() -> void: wallet.add(Wallet.CREDITS, 500), "DBG_TAB_GENERAL")
+	DebugMenu.default_tab = "DBG_TAB_WORLD"
 	DebugMenu.add_slider(self, "DBG_SKY_BRIGHT", 0.3, 2.0, 0.05, 1.0, func(v: float) -> void: _sky_mat.set_shader_parameter("brightness", v))
 	DebugMenu.add_slider(self, "DBG_SKY_NEBULA", 0.0, 1.0, 0.05, 0.55, func(v: float) -> void: _sky_mat.set_shader_parameter("nebula_strength", v))
+	DebugMenu.default_tab = "DBG_TAB_CREATURES"
 	DebugMenu.add_toggle(self, "DBG_CREATURES", true, func(on: bool) -> void:
 		for c in creatures:
 			c.process_mode = Node.PROCESS_MODE_INHERIT if on else Node.PROCESS_MODE_DISABLED
@@ -606,8 +624,10 @@ func _register_debug() -> void:
 		var c: Creature = creatures[0]
 		var pd := planet.to_local(player.global_position).normalized()
 		c.teleport_to(pd.rotated(SphereMath.basis_from_up(pd).x, 6.0 / planet.data.radius)))
+	DebugMenu.default_tab = "DBG_TAB_PLAYER"
 	DebugMenu.add_button(self, "DBG_HURT", func() -> void: vitals.damage(30.0))
 	DebugMenu.add_toggle(self, "DBG_O2_DRAIN", false, func(on: bool) -> void: extra_o2_drain = 12.0 if on else 0.0)
+	DebugMenu.default_tab = "DBG_TAB_ROVER"
 	DebugMenu.add_button(self, "DBG_ROVER_DAMAGE", func() -> void: rover.take_damage(40.0))
 	DebugMenu.add_slider(self, "DBG_ROVER_BOUNCE", 80.0, 600.0, 10.0, rover.spring_damp, func(v: float) -> void: rover.spring_damp = v)
 	DebugMenu.add_slider(self, "DBG_ROVER_SPIN", 0.0, 4.0, 0.1, rover.spin_damp, func(v: float) -> void: rover.spin_damp = v)
@@ -616,3 +636,4 @@ func _register_debug() -> void:
 		if driving:
 			exit_rover()
 		_park_rover_near_player())
+	DebugMenu.default_tab = DebugMenu.GENERAL

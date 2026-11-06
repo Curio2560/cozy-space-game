@@ -69,3 +69,19 @@ PAUSE_RESUME,Resume,Continuar
 PAUSE_NEW_PLANET,New planet,Novo planeta
 PAUSE_LANGUAGE,Language: English,Idioma: Português
 PAUSE_EXIT,Exit,Sair
+DBG_TAB_GENERAL,General,Geral
+DBG_TAB_WORLD,World,Mundo
+DBG_TAB_PLAYER,Player,Jogador
+DBG_TAB_ROVER,Rover,Rover
+DBG_TAB_CREATURES,Creatures,Criaturas
+DBG_TAB_BUILD,Build,Construir
+BUILD_PLACE,Place,Colocar
+BUILD_ROTATE,Rotate 90°,Rodar 90°
+BUILD_UNDO,Undo,Desfazer
+BUILD_UP,Floor +,Andar +
+BUILD_DOWN,Floor −,Andar −
+BUILD_CLEAR,Clear,Limpar
+BUILD_COPY,Copy layout,Copiar montagem
+BUILD_GHOST,Show preview,Mostrar pré-visualização
+"BUILD_INFO","%s · %d° · floor %d · %d pieces","%s · %d° · andar %d · %d peças"
+BUILD_COPIED,Layout copied (%d pieces),Montagem copiada (%d peças)

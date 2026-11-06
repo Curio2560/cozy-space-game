@@ -68,12 +68,14 @@ func _icon(tex: Texture2D, p: Vector2, px: float, rot := 0.0, tint := Color.WHIT
 
 func _draw() -> void:
 	var c := Vector2(SIZE, SIZE) * 0.5
-	draw_circle(c, SIZE * 0.5, Color(0.04, 0.03, 0.09, 0.82))
 	if run == null or run.planet == null or run.planet.data == null:
 		return
 	var planet: Planet = run.planet
 	var d: PlanetData = planet.data
-	var road_col := Color(PlanetGenerator.BIOMES[d.biome].palette.get("Road", Color("d9c49b")), 0.9)
+	# Estilo cel: sombra sólida, fundo da cor do chão do bioma, contorno escuro grosso.
+	draw_circle(c + Vector2(0, 6), SIZE * 0.5, CozyTheme.INK)
+	draw_circle(c, SIZE * 0.5, Color(PlanetGenerator.BIOMES[d.biome].ground).darkened(0.05))
+	var road_col := Color(PlanetGenerator.BIOMES[d.biome].palette.get("Road", Color("d9c49b"))).lightened(0.25)
 	# Estradas.
 	for road in d.roads:
 		var pts: PackedVector3Array = road.points
@@ -89,9 +91,9 @@ func _draw() -> void:
 				draw_line(prev, mp, road_col, w, true)
 			prev = mp
 	# Estruturas.
-	_marker(TEX_BASE, planet.to_global(d.surface_point(d.outpost_dir)), 30.0, false)
+	_marker(TEX_BASE, planet.to_global(d.surface_point(d.outpost_dir)), 30.0, false, CozyTheme.INK)
 	for p in d.posts:
-		_marker(TEX_POST, planet.to_global(d.surface_point(p)), 22.0, false)
+		_marker(TEX_POST, planet.to_global(d.surface_point(p)), 22.0, false, CozyTheme.INK)
 	_marker(TEX_LAIR, planet.to_global(d.surface_point(d.lair_dir)), 22.0, false, Color(1.0, 0.45, 0.45))
 	# Criaturas perto.
 	for cr in run.creatures:
@@ -102,10 +104,10 @@ func _draw() -> void:
 		var mp := to_map(cr.global_position)
 		if _inside(mp):
 			var hostile: bool = cr._hostile() or cr.carrying # vermelho só quando há perigo (com encomenda)
-			_icon(TEX_CREATURE, mp, 14.0, 0.0, Color(1.0, 0.35, 0.35) if hostile else Color(0.75, 0.75, 0.8))
+			_icon(TEX_CREATURE, mp, 14.0, 0.0, Color("e8455a") if hostile else Color(CozyTheme.INK, 0.55))
 	# Rover (quando o jogador vai a pé).
 	if not run.driving:
-		_marker(TEX_ROVER, run.rover.global_position, 18.0, false, NeonTheme.CYAN)
+		_marker(TEX_ROVER, run.rover.global_position, 18.0, false, CozyTheme.INK)
 	# Destino da entrega (pisca; preso à borda se estiver longe).
 	last_target_pos = Vector2.INF
 	var t = run.deliveries.target_world_position() if run.deliveries else null
@@ -113,11 +115,12 @@ func _draw() -> void:
 		var tp := _target_point(t)
 		last_target_pos = tp
 		var pulse := 0.75 + 0.25 * sin(Time.get_ticks_msec() * 0.008)
-		_icon(TEX_TARGET, tp, 24.0 * pulse, 0.0, Color(1.0, 0.8, 0.3))
+		_icon(TEX_TARGET, tp, 26.0 * pulse, 0.0, CozyTheme.INK)
+		_icon(TEX_TARGET, tp, 22.0 * pulse, 0.0, CozyTheme.SUN)
 	# Jogador no centro, a apontar para cima.
-	_icon(TEX_PLAYER, c, 22.0, 0.0, NeonTheme.CYAN)
-	draw_arc(c, SIZE * 0.5 - 2.0, 0.0, TAU, 64, NeonTheme.PINK, 3.0, true)
-	draw_arc(c, SIZE * 0.5 - 8.0, 0.0, TAU, 64, Color(NeonTheme.CYAN, 0.35), 1.0, true)
+	_icon(TEX_PLAYER, c + Vector2(0, 2), 26.0, 0.0, CozyTheme.INK)
+	_icon(TEX_PLAYER, c, 22.0, 0.0, CozyTheme.PEACH)
+	draw_arc(c, SIZE * 0.5 - 4.0, 0.0, TAU, 64, CozyTheme.INK, 8.0, true)
 
 ## Posição do destino no mapa; se estiver longe (ou do outro lado do planeta) fica na borda, na
 ## direção certa (a mesma conta da seta do HUD).

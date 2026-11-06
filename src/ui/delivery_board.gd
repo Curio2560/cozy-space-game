@@ -19,7 +19,9 @@ func _ready() -> void:
 	var title := Label.new()
 	title.text = "BOARD_TITLE"
 	title.add_theme_font_size_override("font_size", 34)
-	title.add_theme_color_override("font_color", NeonTheme.CYAN)
+	title.add_theme_color_override("font_color", CozyTheme.PEACH)
+	title.add_theme_color_override("font_outline_color", CozyTheme.INK)
+	title.add_theme_constant_override("outline_size", 8)
 	v.add_child(title)
 	_list = VBoxContainer.new()
 	_list.add_theme_constant_override("separation", 10)
@@ -38,7 +40,7 @@ func refresh() -> void:
 		var busy := Label.new()
 		busy.text = "BOARD_BUSY"
 		busy.add_theme_font_size_override("font_size", 24)
-		busy.add_theme_color_override("font_color", Color(NeonTheme.TEXT, 0.7))
+		busy.add_theme_color_override("font_color", Color(CozyTheme.INK, 0.65))
 		_list.add_child(busy)
 	for o in session.offers:
 		var row := HBoxContainer.new()
@@ -47,7 +49,7 @@ func refresh() -> void:
 		info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		info.text = "%s → %s   ·   %d ¢   ·   %s" % [session.colonist_name(o.from_post), session.colonist_name(o.to_post), o.base_pay, DeliveryHud.format_time(o.time_limit)]
 		info.add_theme_font_size_override("font_size", 26)
-		info.add_theme_color_override("font_color", NeonTheme.TEXT)
+		info.add_theme_color_override("font_color", CozyTheme.INK)
 		row.add_child(info)
 		var b := Button.new()
 		b.text = "BOARD_ACCEPT"

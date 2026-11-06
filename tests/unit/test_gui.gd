@@ -16,7 +16,8 @@ func test_neon_theme_applies_to_buttons() -> void:
 	add_child_autofree(b)
 	var sb := b.get_theme_stylebox("normal") as StyleBoxFlat
 	assert_not_null(sb, "os botões deviam usar o tema néon")
-	assert_eq(sb.border_color, NeonTheme.CYAN)
+	assert_eq(sb.border_color, CozyTheme.INK)
+	assert_gt(sb.shadow_offset.y, 0.0, "sombra cel deslocada")
 
 func test_pause_menu_pauses_and_resumes() -> void:
 	var pm: PauseMenu = run.pause_menu
@@ -59,7 +60,7 @@ func test_game_font_is_matcha_with_fallback_for_symbols() -> void:
 	add_child_autofree(l)
 	var f := l.get_theme_font("font")
 	assert_true(f.resource_path.contains("MatchaStyle") or (f is FontFile and (f as FontFile).fallbacks.size() > 0), "a fonte do jogo devia ser a Matcha Style")
-	var mf := NeonTheme.font()
+	var mf := CozyTheme.font()
 	assert_true(mf.has_char("ç".unicode_at(0)) and mf.has_char("ã".unicode_at(0)), "acentos portugueses")
 	assert_gt(mf.fallbacks.size(), 0, "fonte de reserva para → · ₂")
 

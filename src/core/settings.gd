@@ -11,8 +11,8 @@ var _cfg := ConfigFile.new()
 func _ready() -> void:
 	# Tema néon para toda a interface: junta-se ao tema base do motor (o tema da janela não
 	# chega aos controlos dentro de CanvasLayers).
-	var f := NeonTheme.font()
-	ThemeDB.get_default_theme().merge_with(NeonTheme.make())
+	var f := CozyTheme.font()
+	ThemeDB.get_default_theme().merge_with(CozyTheme.make())
 	ThemeDB.get_default_theme().default_font = f
 	ThemeDB.fallback_font = f # também para Label3D (nomes dos colonos) e desenho direto
 	_cfg.load(PATH)
