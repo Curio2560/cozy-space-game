@@ -17,3 +17,9 @@ func test_boot_scene_shows_name_and_version() -> void:
 	add_child_autofree(boot)
 	assert_eq((boot.get_node("%Title") as Label).text, "Correio Cósmico")
 	assert_eq((boot.get_node("%Version") as Label).text, "v" + BuildInfo.version())
+
+func test_boot_has_button_to_showcase_scene() -> void:
+	var boot: Control = load("res://scenes/ui/boot.tscn").instantiate()
+	add_child_autofree(boot)
+	assert_not_null(boot.get_node_or_null("%Showcase"))
+	assert_true(ResourceLoader.exists(boot.SHOWCASE), "a cena da vitrine não existe")
