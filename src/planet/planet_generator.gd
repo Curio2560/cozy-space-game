@@ -9,20 +9,81 @@ const OUTPOST_CLEAR_M := 14.0
 const LAIR_CLEAR_M := 10.0
 const MAX_SLOPE_DEG := 28.0
 
-## Biomas: lista de tipos de decoração (repetir um tipo em `kinds` aumenta o seu peso). count = quantos tentar colocar num planeta de raio 60
+## Biomas: lista de tipos de decoração (repetir um tipo em `kinds` aumenta o seu peso).
+## kit_tint: tom multiplicado nos modelos do kit (que têm a paleta numa textura).
+## cluster (0..1): quanto a decoração se junta em manchas (bosques e clareiras) em vez de
+## se espalhar por igual. count = quantos tentar colocar num planeta de raio 60
 ## (escala com a área); size = altura em m [min, max]; clear = raio livre em m.
 const BIOMES := {
 	"prado": {
 		"ground": Color("8fd3a0"),
 		"height_amp": 1.8,
 		"noise_freq": 0.03,
+		# Cores do pack de natureza por nome de material (as árvores do kit usam a paleta própria).
+		"palette": {
+			"Green": Color("6cc47f"), "DarkGreen": Color("3f9c6e"), "Leaves": Color("6cc47f"),
+			"Wood": Color("a8735a"), "LightWood": Color("c99a74"), "White": Color("efe9dc"),
+			"Black": Color("3a3346"), "Orange": Color("ff9f5a"), "LightOrange": Color("ffc07a"),
+			"Berry": Color("e8546e"), "Pink": Color("ff9ecf"), "Snow": Color("f4f8ff"),
+			"Grass": Color("5fb873"),
+		},
 		"props": [
-			{"kinds": ["natureza/Tree_Blob_1", "natureza/Tree_Blob_2", "natureza/Tree_Blob_3", "natureza/Tree_Blob_3", "natureza/Tree_Blob_3"], "count": 95, "size": [3.2, 4.6], "clear": 2.2, "outline": true, "collider": 0.11},
-			{"kinds": ["natureza/Bush_1", "natureza/Bush_2", "natureza/Bush_3", "natureza/Bush_3", "natureza/Bush_3"], "count": 130, "size": [0.7, 1.2], "clear": 1.0, "outline": true},
+			{"kinds": ["nature/BirchTree_1", "nature/BirchTree_2", "nature/BirchTree_3", "nature/BirchTree_4", "nature/BirchTree_5",
+				"nature/BirchTree_Autumn_1", "nature/CommonTree_Autumn_3", "natureza/Tree_Blob_3"],
+				"count": 300, "size": [3.4, 5.2], "clear": 2.0, "outline": true, "collider": 0.06, "cluster": 0.55},
+			{"kinds": ["nature/Bush_1", "nature/Bush_2", "nature/BushBerries_1", "nature/BushBerries_2", "natureza/Bush_3"],
+				"count": 260, "size": [0.7, 1.2], "clear": 1.0, "outline": true, "cluster": 0.4},
 			{"kinds": ["natureza/Rock_Large_1", "natureza/Rock_Large_2", "natureza/Rock_Large_3"], "count": 40, "size": [1.2, 2.2], "clear": 1.8, "outline": true, "collider": 0.45},
 			{"kinds": ["natureza/Rock_1", "natureza/Rock_2", "natureza/Rock_3", "natureza/Rock_4"], "count": 50, "size": [0.35, 0.7], "clear": 0.6, "outline": true},
-			{"kinds": ["natureza/Plant_1", "natureza/Plant_2", "natureza/Plant_2", "natureza/Plant_1", "natureza/Plant_3"], "count": 80, "size": [0.5, 0.9], "clear": 0.6, "outline": true},
-			{"kinds": ["natureza/Grass_1", "natureza/Grass_2", "natureza/Grass_3"], "count": 450, "size": [0.25, 0.45], "clear": 0.3, "outline": false},
+			{"kinds": ["natureza/Plant_1", "natureza/Plant_2", "natureza/Plant_2", "natureza/Plant_1", "natureza/Plant_3"], "count": 120, "size": [0.5, 0.9], "clear": 0.6, "outline": true, "cluster": 0.3},
+			{"kinds": ["mdvl/mdvl_nature_grass_01", "mdvl/mdvl_nature_grass_01", "natureza/Grass_2"], "count": 600, "size": [0.3, 0.6], "clear": 0.3, "outline": false, "cluster": 0.35},
+		],
+	},
+	"acido": {
+		"ground": Color("8a7bb8"),
+		"sky": {"bg": Color("1e2a2a"), "ambient": Color("c4cfc8"), "sun": Color("f4ffe8")},
+		"kit_tint": Color("cdbcff"),
+		"height_amp": 2.2,
+		"noise_freq": 0.035,
+		"palette": {
+			"Green": Color("b6e83a"), "DarkGreen": Color("78b02c"), "Leaves": Color("b6e83a"),
+			"Wood": Color("5d4a78"), "LightWood": Color("7a64a0"), "White": Color("d6e8c4"),
+			"Black": Color("2c2438"), "Orange": Color("e8e44a"), "LightOrange": Color("cdf27a"),
+			"Berry": Color("c44ae6"), "Pink": Color("e07af0"), "Snow": Color("e8ffd0"),
+			"Grass": Color("a6d64a"),
+		},
+		"props": [
+			{"kinds": ["nature/CommonTree_Dead_1", "nature/CommonTree_Dead_2", "nature/CommonTree_Dead_3", "nature/CommonTree_Dead_4", "nature/CommonTree_Dead_5",
+				"nature/BirchTree_Dead_1", "nature/BirchTree_Dead_3", "natureza/Tree_Spikes_2"],
+				"count": 240, "size": [3.0, 4.8], "clear": 2.0, "outline": true, "collider": 0.06, "cluster": 0.5},
+			{"kinds": ["nature/Bush_1", "nature/Bush_2", "nature/BushBerries_1", "natureza/Tree_Spiral_1"],
+				"count": 220, "size": [0.7, 1.4], "clear": 1.0, "outline": true},
+			{"kinds": ["natureza/Rock_Large_1", "natureza/Rock_Large_2", "natureza/Rock_Large_3"], "count": 50, "size": [1.2, 2.4], "clear": 1.8, "outline": true, "collider": 0.45},
+			{"kinds": ["natureza/Rock_1", "natureza/Rock_2", "natureza/Rock_3", "natureza/Rock_4"], "count": 60, "size": [0.35, 0.7], "clear": 0.6, "outline": true},
+			{"kinds": ["mdvl/mdvl_nature_grass_01"], "count": 550, "size": [0.3, 0.6], "clear": 0.3, "outline": false, "cluster": 0.35},
+		],
+	},
+	"lava": {
+		"ground": Color("6e4a4e"),
+		"sky": {"bg": Color("2e1418"), "ambient": Color("d2c2c8"), "sun": Color("ffe6cc")},
+		"kit_tint": Color("ffb49c"),
+		"height_amp": 2.6,
+		"noise_freq": 0.04,
+		"palette": {
+			"Green": Color("e8743a"), "DarkGreen": Color("b84a32"), "Leaves": Color("e8743a"),
+			"Wood": Color("3a2a30"), "LightWood": Color("5a3e40"), "White": Color("8a6e6a"),
+			"Black": Color("1e1418"), "Orange": Color("ffc04a"), "LightOrange": Color("ffd27a"),
+			"Berry": Color("ffe04a"), "Pink": Color("ff7a4a"), "Snow": Color("c8a8a0"),
+			"Grass": Color("b0604a"),
+		},
+		"props": [
+			{"kinds": ["nature/Cactus_1", "nature/Cactus_2", "nature/Cactus_3", "nature/Cactus_4", "nature/Cactus_5", "nature/CactusFlower_1", "nature/CactusFlowers_2"],
+				"count": 220, "size": [1.2, 3.0], "clear": 1.2, "outline": true, "collider": 0.12, "cluster": 0.45},
+			{"kinds": ["nature/CommonTree_Dead_2", "nature/BirchTree_Dead_2", "natureza/Tree_Lava_1", "natureza/Tree_Lava_2", "natureza/Tree_Lava_3"],
+				"count": 90, "size": [3.0, 4.5], "clear": 2.0, "outline": true, "collider": 0.06},
+			{"kinds": ["natureza/Rock_Large_1", "natureza/Rock_Large_2", "natureza/Rock_Large_3"], "count": 70, "size": [1.2, 2.8], "clear": 1.8, "outline": true, "collider": 0.45},
+			{"kinds": ["natureza/Rock_1", "natureza/Rock_2", "natureza/Rock_3", "natureza/Rock_4"], "count": 90, "size": [0.35, 0.8], "clear": 0.6, "outline": true},
+			{"kinds": ["mdvl/mdvl_nature_grass_01"], "count": 250, "size": [0.25, 0.45], "clear": 0.3, "outline": false, "cluster": 0.6},
 		],
 	},
 }
@@ -85,11 +146,18 @@ static func _farthest(cands: Array, chosen: Array) -> Vector3:
 static func _place_props(d: PlanetData, b: Dictionary, rng: RandomNumberGenerator, spin: Basis) -> void:
 	var area_k := pow(d.radius / DEFAULT_RADIUS, 2.0)
 	var grid := _Grid.new(d.radius)
+	var gi := 0
 	for group: Dictionary in b.props:
+		gi += 1
 		var wanted := int(round(group.count * area_k))
+		var cluster: float = group.get("cluster", 0.0)
+		var patches := FastNoiseLite.new()
+		patches.seed = d.seed * 31 + gi
+		patches.frequency = 0.045
+		patches.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
 		# Candidatos: espiral de Fibonacci com rotação própria por grupo, embaralhados.
 		var group_spin := spin * Basis.from_euler(Vector3(rng.randf() * TAU, rng.randf() * TAU, 0))
-		var cands := fibonacci_dirs(wanted * 4, group_spin)
+		var cands := fibonacci_dirs(int(wanted * (4.0 + cluster * 6.0)), group_spin)
 		_shuffle(cands, rng)
 		var placed := 0
 		for c: Vector3 in cands:
@@ -100,6 +168,12 @@ static func _place_props(d: PlanetData, b: Dictionary, rng: RandomNumberGenerato
 				continue
 			if d.slope_deg(c) > MAX_SLOPE_DEG:
 				continue
+			if cluster > 0.0:
+				# Manchas: aceitar mais onde o ruído é alto; nas clareiras quase nada.
+				var n := patches.get_noise_3dv(c * d.radius)
+				var keep := lerpf(1.0, smoothstep(-0.25, 0.35, n), cluster)
+				if rng.randf() > keep:
+					continue
 			var kinds: Array = group.kinds
 			d.placements.append({
 				"kind": kinds[rng.randi() % kinds.size()],

@@ -150,13 +150,25 @@ func _build_props() -> void:
 		var mm := MultiMesh.new()
 		mm.transform_format = MultiMesh.TRANSFORM_3D
 		var with_outline: bool = outline_of[kind]
-		mm.mesh = CelShading.outline_ready_mesh(info.mesh) if with_outline else info.mesh
+		var mmi := MultiMeshInstance3D.new()
+		if info.get("recolor", "") != "":
+			# Paleta em textura (relva mdvl): cor do bioma por vértice.
+			var pal: Dictionary = PlanetGenerator.BIOMES[data.biome].palette
+			mm.mesh = CelShading.recolor_textured_mesh(info.mesh, info.texture, pal[info.recolor])
+			mmi.material_override = CelShading.vertex_color_material(with_outline)
+		elif info.palette:
+			# Pack de natureza: uma superfície com a cor da paleta do bioma por vértice.
+			mm.mesh = CelShading.palette_mesh(info.mesh, PlanetGenerator.BIOMES[data.biome].palette)
+			mmi.material_override = CelShading.vertex_color_material(with_outline)
+		else:
+			# Modelos do kit (paleta em textura): tom do bioma por cima.
+			var tint: Color = PlanetGenerator.BIOMES[data.biome].get("kit_tint", Color.WHITE)
+			mm.mesh = CelShading.outline_ready_mesh(info.mesh) if with_outline else info.mesh
+			mmi.material_override = CelShading.material_for(info.material, true, tint) if with_outline else CelShading.material_no_outline(info.material, tint)
 		mm.instance_count = xfs.size()
 		for j in xfs.size():
 			mm.set_instance_transform(j, xfs[j])
-		var mmi := MultiMeshInstance3D.new()
 		mmi.multimesh = mm
-		mmi.material_override = CelShading.material_for(info.material, true) if with_outline else CelShading.material_no_outline(info.material)
 		_regions[key.x].add_child(mmi)
 
 func _prop_transform(p: Dictionary, info: Dictionary) -> Transform3D:

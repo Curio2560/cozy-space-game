@@ -3,7 +3,13 @@
 shader_type spatial;
 render_mode unshaded, cull_front, depth_draw_opaque, shadows_disabled;
 
-uniform sampler2D albedo_tex : source_color, filter_nearest, repeat_disable;
+uniform sampler2D albedo_tex : source_color, hint_default_white, filter_nearest, repeat_disable;
+// Modelos com a cor da paleta guardada por vértice (pack de natureza, ver CelShading.palette_mesh).
+uniform bool use_vertex_color = false;
+
+vec3 srgb_to_linear(vec3 c) {
+	return mix(c / 12.92, pow((c + 0.055) / 1.055, vec3(2.4)), step(vec3(0.04045), c));
+}
 uniform float width : hint_range(0.0, 0.2) = 0.032; // metros, à escala do mundo
 uniform float darkness : hint_range(0.0, 1.0) = 0.22;
 // true quando a malha foi preparada por CelShading.outline_ready_mesh (normal suave na tangente).
@@ -17,5 +23,9 @@ void vertex() {
 }
 
 void fragment() {
-	ALBEDO = texture(albedo_tex, UV).rgb * darkness;
+	vec3 c = texture(albedo_tex, UV).rgb;
+	if (use_vertex_color) {
+		c *= srgb_to_linear(COLOR.rgb);
+	}
+	ALBEDO = c * darkness;
 }

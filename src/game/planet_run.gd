@@ -7,6 +7,7 @@ const CAM_FOOT := {"distance": 6.5, "pitch": -0.42, "focus_height": 1.2, "auto_r
 const CAM_ROVER := {"distance": 9.5, "pitch": -0.36, "focus_height": 1.6, "auto_return_delay": 0.35}
 
 var seed_value := 1
+var biome := "prado"
 var planet: Planet
 var player: Astronaut
 var camera: PlanetCamera
@@ -23,6 +24,8 @@ func _ready() -> void:
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("seed="):
 			seed_value = int(a.substr(5))
+		if a.begins_with("biome="):
+			biome = a.substr(6)
 	_build_world()
 	planet = Planet.new()
 	planet.name = "Planet"
@@ -60,6 +63,8 @@ func _ready() -> void:
 		deliveries.session.tick(12.0)
 		_vehicle_btn = JumpBuffer.new()
 		enter_rover()
+	if "forest" in args:
+		spawn_in_forest()
 	if "perf" in args:
 		_perf_log()
 	if "drive" in args:
@@ -71,7 +76,8 @@ func _ready() -> void:
 ## Gera o planeta `s` e põe o jogador junto ao posto avançado.
 func start(s: int) -> void:
 	seed_value = s
-	planet.build(PlanetGenerator.generate(s))
+	planet.build(PlanetGenerator.generate(s, biome))
+	_apply_biome_sky()
 	player.planet_center = planet.global_position
 	camera.planet_center = planet.global_position
 	rover.planet_center = planet.global_position
@@ -102,6 +108,21 @@ func teleport(dir: Vector3) -> void:
 	camera.set_target(player, player.facing)
 	_apply_camera(CAM_FOOT)
 	camera.target_facing = func() -> Vector3: return player.facing
+
+## Põe o jogador à beira do sítio com mais árvores (capturas de ecrã).
+func spawn_in_forest() -> void:
+	var trees := planet.data.placements.filter(func(p: Dictionary) -> bool: return p.size > 2.8)
+	var best: Vector3 = trees[0].dir
+	var best_n := 0
+	for t in trees.slice(0, 120):
+		var n := 0
+		for o in trees:
+			if planet.data.arc_m(t.dir, o.dir) < 14.0:
+				n += 1
+		if n > best_n:
+			best_n = n
+			best = t.dir
+	spawn_near(best, planet.data.outpost_dir, 9.0)
 
 ## Estaciona o rover a uns metros do jogador.
 func _park_rover_near_player() -> void:
@@ -163,6 +184,15 @@ func _physics_process(delta: float) -> void:
 	var dh := deliveries.hint()
 	_hint.text = "" if deliveries.board_open else (dh if dh != "" and not driving else (h if h != "" else dh))
 
+var _env: Environment
+
+## Céu e luz ambiente de cada bioma.
+func _apply_biome_sky() -> void:
+	var sky: Dictionary = PlanetGenerator.BIOMES[biome].get("sky", {})
+	_env.background_color = sky.get("bg", Color("2b2146"))
+	_env.ambient_light_color = sky.get("ambient", Color("b9a8e8"))
+	sun.light_color = sky.get("sun", Color("fff1dc"))
+
 func _build_world() -> void:
 	var env := Environment.new()
 	env.background_mode = Environment.BG_COLOR
@@ -173,6 +203,7 @@ func _build_world() -> void:
 	var we := WorldEnvironment.new()
 	we.environment = env
 	add_child(we)
+	_env = env
 	sun = DirectionalLight3D.new()
 	sun.light_color = Color("fff1dc")
 	sun.light_energy = 1.15
@@ -226,8 +257,12 @@ func _update_touch_visibility() -> void:
 		touch.visible = DisplayServer.is_touchscreen_available() or DebugMenu.force_touch
 
 func _register_debug() -> void:
-	DebugMenu.add_label(self, func() -> String: return "seed %d · %d ¢" % [seed_value, wallet.credits()])
+	DebugMenu.add_label(self, func() -> String: return "%s · seed %d · %d ¢" % [biome, seed_value, wallet.credits()])
 	DebugMenu.add_button(self, "DBG_NEW_SEED", func() -> void: start(randi() % 100000))
+	DebugMenu.add_button(self, "DBG_NEXT_BIOME", func() -> void:
+		var names := PlanetGenerator.BIOMES.keys()
+		biome = names[(names.find(biome) + 1) % names.size()]
+		start(seed_value))
 	DebugMenu.add_button(self, "DBG_GOTO_OUTPOST", func() -> void:
 		spawn_near(planet.data.outpost_dir, planet.data.posts[0], 9.0))
 	for i in 3:

@@ -6,6 +6,7 @@ const LOOK_SENS := 0.005
 
 var planet: Planet
 var seed_value := 1
+var biome := "prado"
 var radius := PlanetGenerator.DEFAULT_RADIUS
 var _cam: Camera3D
 var _yaw := 0.4
@@ -18,6 +19,8 @@ func _ready() -> void:
 	for a in args:
 		if a.begins_with("seed="):
 			seed_value = int(a.substr(5))
+		if a.begins_with("biome="):
+			biome = a.substr(6)
 		if a.begins_with("dist="):
 			_dist = float(a.substr(5))
 	_build_world()
@@ -27,6 +30,10 @@ func _ready() -> void:
 	regenerate()
 	DebugMenu.add_button(self, "DBG_NEW_SEED", func() -> void:
 		seed_value = randi() % 100000
+		regenerate())
+	DebugMenu.add_button(self, "DBG_NEXT_BIOME", func() -> void:
+		var names := PlanetGenerator.BIOMES.keys()
+		biome = names[(names.find(biome) + 1) % names.size()]
 		regenerate())
 	DebugMenu.add_slider(self, "DBG_RADIUS", 30.0, 100.0, 5.0, radius, func(v: float) -> void:
 		radius = v
@@ -41,11 +48,11 @@ func _ready() -> void:
 
 func regenerate() -> void:
 	var t0 := Time.get_ticks_msec()
-	var d := PlanetGenerator.generate(seed_value, "prado", radius)
+	var d := PlanetGenerator.generate(seed_value, biome, radius)
 	var t1 := Time.get_ticks_msec()
 	planet.build(d)
 	var t2 := Time.get_ticks_msec()
-	_info.text = "seed %d · %d objetos · gerar %d ms · construir %d ms" % [seed_value, planet.prop_instance_count(), t1 - t0, t2 - t1]
+	_info.text = "%s · seed %d · %d objetos · gerar %d ms · construir %d ms" % [biome, seed_value, planet.prop_instance_count(), t1 - t0, t2 - t1]
 	print(_info.text)
 
 func _process(delta: float) -> void:

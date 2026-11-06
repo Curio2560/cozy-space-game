@@ -41,3 +41,4 @@ DBG_ADD_CREDITS,+500 credits,+500 créditos
 DBG_TIME_SCALE,Time speed,Velocidade do tempo
 DBG_RENDER_SCALE,3D resolution,Resolução 3D
 DBG_GOTO_OUTPOST,Go to outpost,Ir ao posto avançado
+DBG_NEXT_BIOME,Next biome,Bioma seguinte

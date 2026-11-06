@@ -3,7 +3,13 @@
 shader_type spatial;
 render_mode diffuse_lambert, specular_disabled;
 
-uniform sampler2D albedo_tex : source_color, filter_nearest, repeat_disable;
+uniform sampler2D albedo_tex : source_color, hint_default_white, filter_nearest, repeat_disable;
+// Modelos com a cor da paleta guardada por vértice (pack de natureza, ver CelShading.palette_mesh).
+uniform bool use_vertex_color = false;
+
+vec3 srgb_to_linear(vec3 c) {
+	return mix(c / 12.92, pow((c + 0.055) / 1.055, vec3(2.4)), step(vec3(0.04045), c));
+}
 uniform vec4 albedo_tint : source_color = vec4(1.0);
 // Limiares da rampa (em N·L) e luminosidade dos dois tons de sombra.
 uniform float band_lit : hint_range(-1.0, 1.0) = 0.35;
@@ -19,6 +25,9 @@ uniform float rim_strength : hint_range(0.0, 1.0) = 0.7;
 
 void fragment() {
 	vec4 c = texture(albedo_tex, UV) * albedo_tint;
+	if (use_vertex_color) {
+		c.rgb *= srgb_to_linear(COLOR.rgb);
+	}
 	ALBEDO = c.rgb;
 	ROUGHNESS = 1.0;
 }
