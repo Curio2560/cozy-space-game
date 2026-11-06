@@ -46,6 +46,14 @@ theme_override_colors/font_color = Color(0.435, 0.839, 0.706, 1)
 theme_override_font_sizes/font_size = 28
 horizontal_alignment = 1
 
+[node name="Play" type="Button" parent="Center"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(320, 84)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 36
+text = "BOOT_PLAY"
+
 [node name="Showcase" type="Button" parent="Center"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(280, 72)

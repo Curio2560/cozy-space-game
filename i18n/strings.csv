@@ -16,3 +16,7 @@ DBG_NEW_SEED,New seed,Nova seed
 DBG_RADIUS,Radius,Raio
 DBG_ZOOM,Zoom,Zoom
 DBG_CULLING,Hemisphere culling,Culling por hemisfério
+BOOT_PLAY,Play (prototype),Jogar (protótipo)
+DBG_GOTO_POST,Go to post,Ir ao posto
+DBG_GRAVITY,Gravity,Gravidade
+DBG_CAM_DIST,Camera distance,Distância da câmara
