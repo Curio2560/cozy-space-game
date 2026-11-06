@@ -43,4 +43,5 @@ e em `export_presets.cfg`; um teste garante que coincidem.
 
 - Ultimate Platformer Pack e Ultimate Nature Pack — Quaternius (CC0 1.0).
 - Stylized Explosion FX — Binbun3D (CC0), bun3d.com.
-- Relva `mdvl_nature_grass_01` — enviada pelo autor do projeto (origem/licença a confirmar).
+- Relva `mdvl_nature_grass_01`, **Free Pack – Modular Terrain** e **Free Pack – Rocks Stylized** — Sketchfab
+  (downloads gratuitos; autor e licença exata a confirmar na página de cada modelo).
