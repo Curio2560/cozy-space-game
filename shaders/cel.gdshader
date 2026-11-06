@@ -26,7 +26,7 @@ uniform float rim_strength : hint_range(0.0, 1.0) = 0.7;
 void fragment() {
 	vec4 c = texture(albedo_tex, UV) * albedo_tint;
 	if (use_vertex_color) {
-		c.rgb *= srgb_to_linear(COLOR.rgb);
+		c.rgb *= COLOR.rgb; // o Godot já entrega COLOR em linear
 	}
 	ALBEDO = c.rgb;
 	ROUGHNESS = 1.0;

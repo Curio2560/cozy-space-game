@@ -39,6 +39,7 @@ func build(d: PlanetData) -> void:
 	add_child(body)
 	_build_terrain()
 	_build_props()
+	_build_turf()
 	_build_spots()
 	built.emit()
 
@@ -47,8 +48,54 @@ func prop_instance_count() -> int:
 	var n := 0
 	for r in _regions:
 		for mmi in r.get_children():
+			if mmi.name.begins_with("Turf"):
+				continue
 			n += (mmi as MultiMeshInstance3D).multimesh.instance_count
 	return n
+
+func turf_instance_count() -> int:
+	return _turf_count
+
+var _turf_count := 0
+const GRASS_SHADER := preload("res://shaders/grass.gdshader")
+static var _grass_mat: ShaderMaterial
+
+## Relva procedimental em MultiMesh por região (entra no culling por hemisfério).
+func _build_turf() -> void:
+	_turf_count = data.turf_dirs.size()
+	if _turf_count == 0:
+		return
+	if _grass_mat == null:
+		_grass_mat = ShaderMaterial.new()
+		_grass_mat.shader = GRASS_SHADER
+	var color: Color = PlanetGenerator.BIOMES[data.biome].palette.get("Grass", Color("5fb873"))
+	var mesh := GrassTuft.mesh(color)
+	var per_region: Array = []
+	per_region.resize(_regions.size())
+	for i in per_region.size():
+		per_region[i] = []
+	for i in _turf_count:
+		per_region[_region_of(data.turf_dirs[i])].append(i)
+	for r in _regions.size():
+		var idxs: Array = per_region[r]
+		if idxs.is_empty():
+			continue
+		var mm := MultiMesh.new()
+		mm.transform_format = MultiMesh.TRANSFORM_3D
+		mm.use_colors = false
+		mm.mesh = mesh
+		mm.instance_count = idxs.size()
+		for j in idxs.size():
+			var k: int = idxs[j]
+			var dir := data.turf_dirs[k]
+			var b := SphereMath.basis_from_up(dir, data.turf_yaws[k]).scaled_local(Vector3.ONE * data.turf_sizes[k])
+			mm.set_instance_transform(j, Transform3D(b, data.surface_point(dir) - dir * 0.03))
+		var mmi := MultiMeshInstance3D.new()
+		mmi.name = "Turf"
+		mmi.multimesh = mm
+		mmi.material_override = _grass_mat
+		mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		_regions[r].add_child(mmi)
 
 func visible_region_count() -> int:
 	return _regions.filter(func(r: Node3D) -> bool: return r.visible).size()

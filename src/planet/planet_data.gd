@@ -11,6 +11,10 @@ var noise: FastNoiseLite
 ## [{kind: String (caminho no kit), dir: Vector3, yaw: float, size: float (altura em m),
 ##   clear: float (raio livre em m), outline: bool, collider: float (raio do colisor / altura; 0 = sem)}]
 var placements: Array[Dictionary] = []
+## Relva procedimental (tufos leves): direção, tamanho e rotação de cada tufo.
+var turf_dirs := PackedVector3Array()
+var turf_sizes := PackedFloat32Array()
+var turf_yaws := PackedFloat32Array()
 ## Postos dos colonos (direções).
 var posts: Array[Vector3] = []
 var outpost_dir: Vector3

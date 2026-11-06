@@ -105,6 +105,8 @@ func test_kit_props_and_rocks_get_biome_colours() -> void:
 		if not r.name.begins_with("Region"):
 			continue
 		for mmi: MultiMeshInstance3D in r.get_children():
+			if mmi.name.begins_with("Turf"):
+				continue
 			var m := mmi.material_override as ShaderMaterial
 			if not m.get_shader_parameter("use_vertex_color"):
 				tints[(m.get_shader_parameter("albedo_tint") as Color).to_html()] = true
@@ -124,3 +126,28 @@ func test_rocks_come_in_piles() -> void:
 				close += 1
 				break
 	assert_gt(float(close) / small.size(), 0.6, "as pedras pequenas deviam estar aglomeradas")
+
+func test_dense_turf_everywhere_except_spots() -> void:
+	var d := PlanetGenerator.generate(4, "prado")
+	var area := 4.0 * PI * d.radius * d.radius
+	assert_gt(d.turf_dirs.size(), int(area * 0.7), "relva pouco densa no prado")
+	for i in range(0, d.turf_dirs.size(), 37):
+		for s in d.flat_spots:
+			assert_gt(d.arc_m(d.turf_dirs[i], s.dir), s.angle * d.radius * 0.75, "relva em cima de um posto")
+	var again := PlanetGenerator.generate(4, "prado")
+	assert_eq(again.turf_dirs.size(), d.turf_dirs.size())
+	assert_true(again.turf_dirs[100].is_equal_approx(d.turf_dirs[100]))
+
+func test_turf_is_built_in_regions() -> void:
+	var p := Planet.new()
+	p.culling_enabled = false
+	add_child(p)
+	p.build(PlanetGenerator.generate(4, "prado"))
+	var n := 0
+	for r in p.get_children():
+		if r.name.begins_with("Region"):
+			for c in r.get_children():
+				if c.name.begins_with("Turf"):
+					n += (c as MultiMeshInstance3D).multimesh.instance_count
+	assert_eq(n, p.data.turf_dirs.size())
+	p.free()

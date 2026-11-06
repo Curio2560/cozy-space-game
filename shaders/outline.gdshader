@@ -25,7 +25,7 @@ void vertex() {
 void fragment() {
 	vec3 c = texture(albedo_tex, UV).rgb;
 	if (use_vertex_color) {
-		c *= srgb_to_linear(COLOR.rgb);
+		c *= COLOR.rgb; // o Godot já entrega COLOR em linear
 	}
 	ALBEDO = c * darkness;
 }
