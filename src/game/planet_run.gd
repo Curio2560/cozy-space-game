@@ -29,6 +29,12 @@ var wallet := Wallet.new()
 var bars: StatusBars
 var respawning := false
 var vitals := PlayerVitals.new()
+var creatures: Array[Creature] = []
+const CREATURE_MIN_BASE_M := 30.0
+const CREATURE_MIN_POST_M := 12.0
+const ATTACK_DAMAGE := 8.0
+const ATTACK_ROVER_DAMAGE := 6.0
+const RAM_SPEED := 6.0 # o rover a esta velocidade atropela e afugenta
 var explosion: RoverExplosion
 var deliveries: DeliveryController
 
@@ -90,6 +96,16 @@ func _ready() -> void:
 		spawn_in_forest()
 	if "rocks" in args:
 		spawn_in_forest("rocks/")
+	if "monsters" in args: # traz algumas criaturas para perto (capturas)
+		var pd := planet.to_local(player.global_position).normalized()
+		var f := planet.global_basis.inverse() * (-camera.global_basis.z)
+		f = (f - pd * f.dot(pd)).normalized()
+		var side := pd.cross(f).normalized()
+		for i in mini(5, creatures.size()):
+			var c: Creature = creatures[i * 3 % creatures.size()]
+			var m := 7.0 + i * 3.0
+			var p := pd + f * (m / planet.data.radius) + side * ((i - 2) * 2.5 / planet.data.radius)
+			c.teleport_to(p.normalized())
 	if "boom" in args:
 		enter_rover()
 		await get_tree().create_timer(1.0).timeout
@@ -116,6 +132,74 @@ func start(s: int) -> void:
 	_park_rover_near_player()
 	if deliveries:
 		deliveries.start_planet(planet.data)
+	_spawn_creatures()
+
+## Espalha as criaturas do bioma pelo planeta (determinístico pela seed), longe da base e dos postos.
+func _spawn_creatures() -> void:
+	for c in creatures:
+		c.queue_free()
+	creatures.clear()
+	var d := planet.data
+	var n: int = PlanetGenerator.BIOMES[biome].get("creatures", 0)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash(d.seed * 131 + 7)
+	var ids := CreatureCatalog.ids()
+	var tries := 0
+	while creatures.size() < n and tries < n * 20:
+		tries += 1
+		var dir := Vector3(rng.randfn(), rng.randfn(), rng.randfn()).normalized()
+		if d.arc_m(dir, d.outpost_dir) < CREATURE_MIN_BASE_M:
+			continue
+		if d.posts.any(func(p: Vector3) -> bool: return d.arc_m(dir, p) < CREATURE_MIN_POST_M):
+			continue
+		var c := Creature.new()
+		c.name = "Creature%d" % creatures.size()
+		add_child(c)
+		c.setup(ids[rng.randi() % ids.size()], planet, dir, biome, rng.randi())
+		c.target = _creature_target
+		c.attacked.connect(_on_creature_attack)
+		c.dropped_crate.connect(_on_crate_dropped)
+		creatures.append(c)
+
+func _creature_target() -> Node3D:
+	return rover if driving else player
+
+## Uma criatura apanhou o jogador (ou o rover): empurra, tira vida e pode estragar ou roubar a encomenda.
+func _on_creature_attack(c: Creature) -> void:
+	if respawning:
+		return
+	var t := _creature_target()
+	var away := (t.global_position - c.global_position)
+	var up := (t.global_position - planet.global_position).normalized()
+	away = (away - up * away.dot(up)).normalized()
+	if driving:
+		rover.take_damage(ATTACK_ROVER_DAMAGE)
+		rover.apply_central_impulse((away * 3.0 + up * 2.0) * rover.mass)
+		return
+	vitals.damage(ATTACK_DAMAGE)
+	player.add_push(away * 9.0 + up * 4.0)
+	var s := deliveries.session
+	if s and s.carrying():
+		if randf() < c.steal_chance and s.steal():
+			c.take_crate()
+			deliveries.thief = c
+			deliveries.hud.toast(tr("TOAST_STOLEN"))
+		else:
+			s.damage_active()
+			deliveries.hud.toast(tr("TOAST_BUMPED"))
+
+func _on_crate_dropped(c: Creature, at: Vector3) -> void:
+	if deliveries.session and deliveries.session.drop(at):
+		deliveries.thief = null
+		deliveries.hud.toast(tr("TOAST_DROPPED"))
+
+## O rover depressa atropela e afugenta as criaturas (sem se estragar).
+func _check_rams() -> void:
+	if not driving or rover.linear_velocity.length() < RAM_SPEED:
+		return
+	for c in creatures:
+		if c.mode != Creature.Mode.KNOCKED and c.global_position.distance_to(rover.global_position) < 2.6:
+			c.knock(rover.global_position)
 
 ## Coloca o jogador a `arc_m` metros de `dir`, na direção de `toward`.
 func spawn_near(dir: Vector3, toward: Vector3, arc_m: float) -> void:
@@ -292,6 +376,7 @@ func _physics_process(delta: float) -> void:
 	if rover.alive and rover.health < rover.max_health and rover_near_base() and rover.linear_velocity.length() < 1.0:
 		rover.repair(REPAIR_RATE * delta)
 	bars.show_bar("rover", driving or rover.health < rover.max_health)
+	_check_rams()
 	if not respawning:
 		# A cabine do rover protege: lá dentro o O₂ não se gasta.
 		vitals.o2_drain = 0.0 if driving else o2_drain_here()
@@ -431,6 +516,16 @@ func _register_debug() -> void:
 	DebugMenu.add_button(self, "DBG_ADD_CREDITS", func() -> void: wallet.add(Wallet.CREDITS, 500))
 	DebugMenu.add_slider(self, "DBG_SKY_BRIGHT", 0.3, 2.0, 0.05, 1.0, func(v: float) -> void: _sky_mat.set_shader_parameter("brightness", v))
 	DebugMenu.add_slider(self, "DBG_SKY_NEBULA", 0.0, 1.0, 0.05, 0.55, func(v: float) -> void: _sky_mat.set_shader_parameter("nebula_strength", v))
+	DebugMenu.add_toggle(self, "DBG_CREATURES", true, func(on: bool) -> void:
+		for c in creatures:
+			c.process_mode = Node.PROCESS_MODE_INHERIT if on else Node.PROCESS_MODE_DISABLED
+			c.visible = on)
+	DebugMenu.add_button(self, "DBG_CREATURE_HERE", func() -> void:
+		if creatures.is_empty():
+			return
+		var c: Creature = creatures[0]
+		var pd := planet.to_local(player.global_position).normalized()
+		c.teleport_to(pd.rotated(SphereMath.basis_from_up(pd).x, 6.0 / planet.data.radius)))
 	DebugMenu.add_button(self, "DBG_HURT", func() -> void: vitals.damage(30.0))
 	DebugMenu.add_toggle(self, "DBG_O2_DRAIN", false, func(on: bool) -> void: extra_o2_drain = 12.0 if on else 0.0)
 	DebugMenu.add_button(self, "DBG_ROVER_DAMAGE", func() -> void: rover.take_damage(40.0))

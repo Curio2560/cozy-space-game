@@ -12,6 +12,8 @@ const PAY_PER_M := 0.6
 const TIME_PER_M := 1.0 / 8.0 # s por metro (rover com folga)
 const TIME_SLACK := 20.0
 const MIN_LATE_FACTOR := 0.3 # atrasado paga pelo menos 30%
+const MIN_VALUE_FACTOR := 0.4 # uma encomenda maltratada vale pelo menos 40%
+const PUSH_VALUE_LOSS := 0.15
 const NAMES := ["Nina", "Tomé", "Lua", "Bento", "Íris", "Zeca", "Maya", "Rui", "Olga", "Duda", "Kiko", "Sara"]
 
 var wallet: Wallet
@@ -78,8 +80,39 @@ func pick_up() -> bool:
 	return true
 
 func tick(delta: float) -> void:
-	if active and active.state == DeliveryOrder.State.CARRYING:
+	if active and active.state in [DeliveryOrder.State.CARRYING, DeliveryOrder.State.STOLEN, DeliveryOrder.State.DROPPED]:
 		active.elapsed += delta
+
+func carrying() -> bool:
+	return active != null and active.state == DeliveryOrder.State.CARRYING
+
+## Um empurrão (criatura) estraga a encomenda que se leva: perde valor.
+func damage_active(loss := PUSH_VALUE_LOSS) -> void:
+	if carrying():
+		active.value_factor = maxf(active.value_factor - loss, MIN_VALUE_FACTOR)
+
+## Uma criatura rouba a caixa que se leva.
+func steal() -> bool:
+	if not carrying():
+		return false
+	damage_active(PUSH_VALUE_LOSS)
+	active.state = DeliveryOrder.State.STOLEN
+	return true
+
+## A caixa roubada cai no chão em `pos` (a criatura largou-a).
+func drop(pos: Vector3) -> bool:
+	if active == null or active.state != DeliveryOrder.State.STOLEN:
+		return false
+	active.state = DeliveryOrder.State.DROPPED
+	active.drop_position = pos
+	return true
+
+## O jogador volta a apanhar a caixa caída.
+func recover() -> bool:
+	if active == null or active.state != DeliveryOrder.State.DROPPED:
+		return false
+	active.state = DeliveryOrder.State.CARRYING
+	return true
 
 ## Entrega a encomenda ativa (o jogador está no posto de destino). Devolve o pagamento.
 func deliver() -> int:
@@ -87,7 +120,7 @@ func deliver() -> int:
 		return 0
 	var o := active
 	var on_time := not o.is_late()
-	o.paid = payment(o.base_pay, o.time_limit, o.elapsed)
+	o.paid = maxi(1, int(round(payment(o.base_pay, o.time_limit, o.elapsed) * o.value_factor)))
 	o.state = DeliveryOrder.State.DELIVERED
 	wallet.add(Wallet.CREDITS, o.paid)
 	if on_time:

@@ -56,3 +56,11 @@ BAR_O2,O₂,O₂
 TOAST_FAINTED,You fainted!,Desmaiaste!
 DBG_HURT,Hurt astronaut (30),Ferir o astronauta (30)
 DBG_O2_DRAIN,Drain O₂ (test),Gastar O₂ (teste)
+TOAST_STOLEN,A creature stole the delivery! Catch it!,Uma criatura roubou a encomenda! Apanha-a!
+TOAST_BUMPED,The delivery got bumped (worth less),A encomenda levou um encontrão (vale menos)
+TOAST_DROPPED,The box fell! Pick it up,A caixa caiu! Apanha-a
+TOAST_RECOVERED,Box recovered!,Caixa recuperada!
+"HUD_THIEF","Catch the thief · %d m · %s","Apanha o ladrão · %d m · %s"
+"HUD_DROPPED","Pick up the box · %d m · %s","Apanha a caixa · %d m · %s"
+DBG_CREATURES,Creatures,Criaturas
+DBG_CREATURE_HERE,Bring a creature here,Trazer uma criatura para aqui

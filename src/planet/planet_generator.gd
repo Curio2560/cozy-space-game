@@ -20,6 +20,7 @@ const BIOMES := {
 	"prado": {
 		"ground": Color("8fd3a0"),
 		"turf": {"density": 0.9, "size": [0.35, 0.75]},
+		"creatures": 16,
 		"sky": {"bg": Color("2b2146"), "ambient": Color("b9a8e8"), "sun": Color("fff1dc"),
 			"nebula_a": Color("5b3f94"), "nebula_b": Color("ff9f7a"),
 			"planets": [
@@ -53,6 +54,7 @@ const BIOMES := {
 	"acido": {
 		"ground": Color("8a7bb8"),
 		"turf": {"density": 0.6, "size": [0.3, 0.65]},
+		"creatures": 20,
 		"sky": {"bg": Color("142220"), "ambient": Color("c4cfc8"), "sun": Color("f4ffe8"),
 			"nebula_a": Color("2c6e40"), "nebula_b": Color("8a4ac6"),
 			"planets": [
@@ -84,6 +86,7 @@ const BIOMES := {
 	"lava": {
 		"ground": Color("6e4a4e"),
 		"turf": {"density": 0.16, "size": [0.25, 0.45]},
+		"creatures": 20,
 		"sky": {"bg": Color("2a0e14"), "ambient": Color("d2c2c8"), "sun": Color("ffe6cc"),
 			"nebula_a": Color("7a2034"), "nebula_b": Color("ff8a3a"),
 			"planets": [

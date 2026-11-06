@@ -101,3 +101,36 @@ func test_fail_active_pays_nothing_and_frees_the_player() -> void:
 	assert_null(s.active)
 	assert_signal_emitted(s, "order_failed")
 	assert_false(s.fail_active(), "sem encomenda ativa não há nada a falhar")
+
+func test_pushes_lower_the_pay_but_not_below_floor() -> void:
+	var s := _session()
+	var o: DeliveryOrder = s.offers[0]
+	s.accept(o)
+	s.pick_up()
+	var clean := DeliverySession.payment(o.base_pay, o.time_limit, 1.0)
+	for i in 10:
+		s.damage_active()
+	assert_almost_eq(o.value_factor, DeliverySession.MIN_VALUE_FACTOR, 0.001)
+	s.tick(1.0)
+	var paid := s.deliver()
+	assert_lt(paid, clean)
+	assert_eq(paid, int(round(clean * DeliverySession.MIN_VALUE_FACTOR)))
+
+func test_steal_drop_and_recover() -> void:
+	var s := _session()
+	var o: DeliveryOrder = s.offers[0]
+	s.accept(o)
+	assert_false(s.steal(), "só se rouba o que se está a levar")
+	s.pick_up()
+	assert_true(s.steal())
+	assert_eq(o.state, DeliveryOrder.State.STOLEN)
+	assert_eq(s.deliver(), 0, "não se entrega uma caixa roubada")
+	assert_true(s.drop(Vector3(1, 2, 3)))
+	assert_eq(o.state, DeliveryOrder.State.DROPPED)
+	assert_eq(o.drop_position, Vector3(1, 2, 3))
+	var t := o.elapsed
+	s.tick(2.0)
+	assert_gt(o.elapsed, t, "o relógio continua enquanto a caixa está perdida")
+	assert_true(s.recover())
+	assert_eq(o.state, DeliveryOrder.State.CARRYING)
+	assert_lt(o.value_factor, 1.0)

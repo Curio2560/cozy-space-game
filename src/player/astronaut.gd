@@ -27,6 +27,8 @@ var visual: Node3D
 var facing := Vector3.FORWARD
 ## Quando falso o astronauta ignora o input (p. ex. dentro do rover).
 var controllable := true
+## Empurrão (criaturas): soma-se à velocidade e desaparece em menos de um segundo.
+var push := Vector3.ZERO
 
 var _anim: AnimationPlayer
 var _jump := JumpBuffer.new()
@@ -87,7 +89,8 @@ func _physics_process(delta: float) -> void:
 		vert = u * jump_velocity
 	else:
 		vert -= u * gravity * delta
-	velocity = hor + vert
+	velocity = hor + vert + push
+	push = push.move_toward(Vector3.ZERO, 14.0 * delta)
 	move_and_slide()
 
 	if wish.length() > 0.1:
@@ -97,6 +100,9 @@ func _physics_process(delta: float) -> void:
 	visual.rotation.y = atan2(local.x, local.z)
 	if not downed:
 		_update_anim(hor.length())
+
+func add_push(v: Vector3) -> void:
+	push += v
 
 ## Desmaio: animação de cair e fica sem controlo até `revive()`.
 func faint() -> void:
