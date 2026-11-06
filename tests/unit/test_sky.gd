@@ -17,14 +17,14 @@ func test_each_biome_has_its_sky_colours_and_planets() -> void:
 		assert_eq(run.sky_planets.count(), (sky.planets as Array).size(), biome)
 		run.free()
 
-func test_sky_planets_animate_and_follow_camera() -> void:
+func test_sky_planets_rotate_smoothly_and_follow_camera() -> void:
 	var run := _run("prado")
 	await wait_process_frames(2)
 	var sp: SkyPlanets = run.sky_planets
-	var s: Sprite3D = sp.get_child(0)
-	var first := s.texture
-	await wait_seconds(1.2)
-	assert_ne(s.texture, first, "o planeta devia mudar de fotograma (rodar)")
+	var q: MeshInstance3D = sp.get_child(0)
+	var m := q.material_override as ShaderMaterial
+	assert_eq(m.shader, SkyPlanets.SHADER, "planeta com o shader de rotação suave")
+	assert_not_null(m.get_shader_parameter("sheet"))
 	assert_almost_eq(sp.global_position.distance_to(run.camera.global_position), 0.0, 0.5)
 
 func test_placing_rover_does_not_hurt_it() -> void:
