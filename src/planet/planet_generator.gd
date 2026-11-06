@@ -4,8 +4,8 @@ extends RefCounted
 
 const DEFAULT_RADIUS := 60.0
 const POST_COUNT := 3
-const POST_CLEAR_M := 9.0 # raio aplanado e sem decoração à volta de cada posto
-const OUTPOST_CLEAR_M := 14.0
+const POST_CLEAR_M := 10.0 # raio aplanado e sem decoração à volta de cada posto
+const OUTPOST_CLEAR_M := 16.0
 const LAIR_CLEAR_M := 10.0
 const MAX_SLOPE_DEG := 28.0
 
@@ -151,7 +151,7 @@ const SIDE_ROADS := 12
 const PATHS := 8
 const CONNECTORS := 3
 ## Meia diagonal (m) das estruturas, para as estradas passarem à porta e as contornarem.
-const STRUCT_RADIUS := {"post": 2.2, "outpost": 5.6, "lair": 2.4}
+const STRUCT_RADIUS := {"post": 3.4, "outpost": 6.8, "lair": 2.4} # casas 4×4 m e base 8×8 m (pack modular)
 
 ## Estruturas do planeta: [[direção, raio (m)], …].
 static func structures(d: PlanetData) -> Array:

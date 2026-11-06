@@ -140,7 +140,7 @@ func start(s: int) -> void:
 	rover.planet_center = planet.global_position
 	if driving:
 		exit_rover()
-	spawn_near(planet.data.outpost_dir, planet.data.posts[0], 9.0)
+	spawn_near(planet.data.outpost_dir, planet.data.posts[0], 10.5)
 	_park_rover_near_player()
 	if deliveries:
 		deliveries.start_planet(planet.data)
@@ -335,7 +335,7 @@ func _respawn_at_base() -> void:
 		player.collision_layer = 2
 	player.revive()
 	vitals.reset()
-	spawn_near(planet.data.outpost_dir, planet.data.posts[0], 9.0)
+	spawn_near(planet.data.outpost_dir, planet.data.posts[0], 10.5)
 	rover.restore()
 	_park_rover_near_player()
 	await _fade(0.0)
@@ -582,7 +582,7 @@ func _register_debug() -> void:
 		biome = names[(names.find(biome) + 1) % names.size()]
 		start(seed_value))
 	DebugMenu.add_button(self, "DBG_GOTO_OUTPOST", func() -> void:
-		spawn_near(planet.data.outpost_dir, planet.data.posts[0], 9.0))
+		spawn_near(planet.data.outpost_dir, planet.data.posts[0], 10.5))
 	for i in 3:
 		DebugMenu.add_button(self, tr("DBG_GOTO_POST") + " %d" % (i + 1), func() -> void:
 			spawn_near(planet.data.posts[i], planet.data.outpost_dir, 7.0))

@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://cm8vagnm3vv1n"
+path="res://.godot/imported/Details_Hexagon.obj-194f565b070f715dd961d7b6b83e9818.mesh"
+
+[deps]
+
+files=["res://.godot/imported/Details_Hexagon.obj-194f565b070f715dd961d7b6b83e9818.mesh"]
+
+source_file="res://assets/scifi/Details_Hexagon.obj"
+dest_files=["res://.godot/imported/Details_Hexagon.obj-194f565b070f715dd961d7b6b83e9818.mesh", "res://.godot/imported/Details_Hexagon.obj-194f565b070f715dd961d7b6b83e9818.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

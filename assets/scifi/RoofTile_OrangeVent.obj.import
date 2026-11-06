@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://bc0e05dwnkuug"
+path="res://.godot/imported/RoofTile_OrangeVent.obj-48d8bb543a233fecbfa60ccae5f0e766.mesh"
+
+[deps]
+
+files=["res://.godot/imported/RoofTile_OrangeVent.obj-48d8bb543a233fecbfa60ccae5f0e766.mesh"]
+
+source_file="res://assets/scifi/RoofTile_OrangeVent.obj"
+dest_files=["res://.godot/imported/RoofTile_OrangeVent.obj-48d8bb543a233fecbfa60ccae5f0e766.mesh", "res://.godot/imported/RoofTile_OrangeVent.obj-48d8bb543a233fecbfa60ccae5f0e766.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

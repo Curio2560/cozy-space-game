@@ -390,11 +390,32 @@ func _add_collider(p: Dictionary) -> void:
 	body.add_child(cs)
 
 func _build_spots() -> void:
+	# Casas dos colonos e base: edifícios montados com o pack modular sci-fi.
 	for i in data.posts.size():
 		var door: Vector3 = data.post_doors[i] if i < data.post_doors.size() else Vector3.ZERO
-		_place_model(POST_MODEL, data.posts[i], 3.0, "Post%d" % i, door)
-	_place_model(OUTPOST_MODEL, data.outpost_dir, 4.5, "Outpost")
+		var accent: Color = BuildingKit.COLONIST_ACCENTS[i % BuildingKit.COLONIST_ACCENTS.size()]
+		_place_building(BuildingKit.colonist_house(), BuildingKit.palette_with_accent(accent), data.posts[i], "Post%d" % i, door)
+	var plaza_face := data.toward_point(data.outpost_dir, data.post_doors[0], 1.0) if not data.post_doors.is_empty() else Vector3.ZERO
+	_place_building(BuildingKit.outpost(), BuildingKit.BASE_PALETTE, data.outpost_dir, "Outpost", plaza_face)
 	_place_model(LAIR_MODEL, data.lair_dir, 4.0, "Lair", data.lair_door)
+
+## Edifício do pack modular, assente em `dir`, com a porta (+Z) virada para `face`.
+func _place_building(parts: Array, palette: Dictionary, dir: Vector3, node_name: String, face: Vector3) -> Node3D:
+	var b := BuildingKit.build(parts, palette)
+	b.name = node_name
+	add_child(b)
+	b.transform = Transform3D(_facing_basis(dir, face), data.surface_point(dir) - dir * 0.05)
+	return b
+
+func _facing_basis(dir: Vector3, face: Vector3) -> Basis:
+	var b := SphereMath.basis_from_up(dir)
+	if face != Vector3.ZERO:
+		var f := face - dir * face.dot(dir)
+		if f.length() > 0.0001:
+			var z := f.normalized()
+			var x := dir.cross(z).normalized()
+			b = Basis(x, dir, x.cross(dir)).orthonormalized()
+	return b
 
 ## `face`: direção (espaço do planeta) para onde a frente (+Z) do modelo fica virada — a estrada.
 func _place_model(kit_path: String, dir: Vector3, height: float, node_name: String, face := Vector3.ZERO) -> Node3D:

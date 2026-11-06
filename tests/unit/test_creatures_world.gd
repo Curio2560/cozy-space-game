@@ -9,6 +9,12 @@ func before_each() -> void:
 	add_child_autofree(run)
 	await wait_physics_frames(30)
 
+## Põe o jogador a meio de uma estrada principal (campo aberto, longe dos edifícios).
+func _open_ground() -> void:
+	var pts: PackedVector3Array = run.planet.data.roads[0].points
+	run.teleport(pts[pts.size() / 2])
+	await wait_physics_frames(20)
+
 func _bring(c: Creature, metres: float) -> void:
 	var pd: Vector3 = run.planet.to_local(run.player.global_position).normalized()
 	c.teleport_to(pd.rotated(SphereMath.basis_from_up(pd).x, metres / run.planet.data.radius))
@@ -37,6 +43,7 @@ func _carry_order() -> DeliveryOrder:
 	return o
 
 func test_aggressive_chases_and_attacks_player_with_a_package() -> void:
+	await _open_ground()
 	_carry_order()
 	var c: Creature = run.creatures[0]
 	c.set_personality(Creature.Personality.AGGRESSIVE)
@@ -51,6 +58,7 @@ func test_steal_touch_drop_and_recover() -> void:
 	var o: DeliveryOrder = dc.session.offers[0]
 	dc.accept(o)
 	dc.session.pick_up()
+	await _open_ground()
 	var c: Creature = run.creatures[0]
 	c.set_personality(Creature.Personality.THIEF)
 	c.steal_chance = 1.0
@@ -122,6 +130,7 @@ func test_aggressive_ignores_player_without_a_package() -> void:
 	assert_eq(run.vitals.health, PlayerVitals.MAX_HEALTH)
 
 func test_gives_up_when_package_is_delivered() -> void:
+	await _open_ground()
 	var o := _carry_order()
 	var c: Creature = run.creatures[0]
 	c.set_personality(Creature.Personality.AGGRESSIVE)
