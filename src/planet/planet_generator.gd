@@ -36,7 +36,7 @@ const BIOMES := {
 			{"kinds": ["natureza/Rock_Large_1", "natureza/Rock_Large_2", "natureza/Rock_Large_3"], "count": 40, "size": [1.2, 2.2], "clear": 1.8, "outline": true, "collider": 0.45},
 			{"kinds": ["natureza/Rock_1", "natureza/Rock_2", "natureza/Rock_3", "natureza/Rock_4"], "count": 50, "size": [0.35, 0.7], "clear": 0.6, "outline": true},
 			{"kinds": ["natureza/Plant_1", "natureza/Plant_2", "natureza/Plant_2", "natureza/Plant_1", "natureza/Plant_3"], "count": 120, "size": [0.5, 0.9], "clear": 0.6, "outline": true, "cluster": 0.3},
-			{"kinds": ["mdvl/mdvl_nature_grass_01", "mdvl/mdvl_nature_grass_01", "natureza/Grass_2"], "count": 600, "size": [0.3, 0.6], "clear": 0.3, "outline": false, "cluster": 0.35},
+			{"kinds": ["mdvl/mdvl_nature_grass_01", "mdvl/mdvl_nature_grass_01", "natureza/Grass_2"], "count": 1500, "size": [0.3, 0.65], "clear": 0.22, "outline": false, "cluster": 0.3},
 		],
 	},
 	"acido": {
@@ -60,7 +60,7 @@ const BIOMES := {
 				"count": 220, "size": [0.7, 1.4], "clear": 1.0, "outline": true},
 			{"kinds": ["natureza/Rock_Large_1", "natureza/Rock_Large_2", "natureza/Rock_Large_3"], "count": 50, "size": [1.2, 2.4], "clear": 1.8, "outline": true, "collider": 0.45},
 			{"kinds": ["natureza/Rock_1", "natureza/Rock_2", "natureza/Rock_3", "natureza/Rock_4"], "count": 60, "size": [0.35, 0.7], "clear": 0.6, "outline": true},
-			{"kinds": ["mdvl/mdvl_nature_grass_01"], "count": 550, "size": [0.3, 0.6], "clear": 0.3, "outline": false, "cluster": 0.35},
+			{"kinds": ["mdvl/mdvl_nature_grass_01"], "count": 1200, "size": [0.3, 0.65], "clear": 0.22, "outline": false, "cluster": 0.3},
 		],
 	},
 	"lava": {
@@ -83,7 +83,7 @@ const BIOMES := {
 				"count": 90, "size": [3.0, 4.5], "clear": 2.0, "outline": true, "collider": 0.06},
 			{"kinds": ["natureza/Rock_Large_1", "natureza/Rock_Large_2", "natureza/Rock_Large_3"], "count": 70, "size": [1.2, 2.8], "clear": 1.8, "outline": true, "collider": 0.45},
 			{"kinds": ["natureza/Rock_1", "natureza/Rock_2", "natureza/Rock_3", "natureza/Rock_4"], "count": 90, "size": [0.35, 0.8], "clear": 0.6, "outline": true},
-			{"kinds": ["mdvl/mdvl_nature_grass_01"], "count": 250, "size": [0.25, 0.45], "clear": 0.3, "outline": false, "cluster": 0.6},
+			{"kinds": ["mdvl/mdvl_nature_grass_01"], "count": 500, "size": [0.25, 0.5], "clear": 0.22, "outline": false, "cluster": 0.55},
 		],
 	},
 }
