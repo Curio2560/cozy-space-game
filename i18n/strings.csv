@@ -11,3 +11,8 @@ DBG_TOUCH,Show touch controls,Mostrar controlos táteis
 DBG_SPEED,Speed,Velocidade
 DBG_JUMP,Jump strength,Força do salto
 DBG_RESET,Reset position,Repor posição
+BOOT_PLANET,Planet (seed),Planeta (seed)
+DBG_NEW_SEED,New seed,Nova seed
+DBG_RADIUS,Radius,Raio
+DBG_ZOOM,Zoom,Zoom
+DBG_CULLING,Hemisphere culling,Culling por hemisfério
