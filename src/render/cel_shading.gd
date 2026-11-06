@@ -91,6 +91,21 @@ static func _smoothed_normal_tangents(verts: PackedVector3Array, normals: Packed
 static func _pos_key(p: Vector3) -> Vector3i:
 	return Vector3i(roundi(p.x * 10000.0), roundi(p.y * 10000.0), roundi(p.z * 10000.0))
 
+## Igual a material_for mas sem passe de contorno (relva e detalhes pequenos).
+static func material_no_outline(src: Material) -> ShaderMaterial:
+	var key := "noline|" + _key_for(src)
+	if _cache.has(key):
+		return _cache[key]
+	var m := material_for(src).duplicate() as ShaderMaterial
+	m.next_pass = null
+	_cache[key] = m
+	return m
+
+static func _key_for(src: Material) -> String:
+	if src is BaseMaterial3D:
+		return _key((src as BaseMaterial3D).albedo_texture, (src as BaseMaterial3D).albedo_color)
+	return _key(null, Color.WHITE)
+
 ## Material cel-shaded de uma só cor (chão, protótipos). Partilhado por cor.
 static func flat(c: Color) -> ShaderMaterial:
 	var img := Image.create(1, 1, false, Image.FORMAT_RGBA8)
@@ -108,6 +123,8 @@ static func terrain(c: Color) -> ShaderMaterial:
 	var m := flat(c).duplicate() as ShaderMaterial
 	m.set_shader_parameter("rim_strength", 0.0)
 	m.set_shader_parameter("spec_strength", 0.0)
+	# A normal do terreno varia devagar: com suavização normal as bandas ficariam esbatidas.
+	m.set_shader_parameter("band_softness", 0.004)
 	_cache[key] = m
 	return m
 

@@ -11,3 +11,33 @@ DBG_TOUCH,Show touch controls,Mostrar controlos táteis
 DBG_SPEED,Speed,Velocidade
 DBG_JUMP,Jump strength,Força do salto
 DBG_RESET,Reset position,Repor posição
+BOOT_PLANET,Planet (seed),Planeta (seed)
+DBG_NEW_SEED,New seed,Nova seed
+DBG_RADIUS,Radius,Raio
+DBG_ZOOM,Zoom,Zoom
+DBG_CULLING,Hemisphere culling,Culling por hemisfério
+BOOT_PLAY,Play (prototype),Jogar (protótipo)
+DBG_GOTO_POST,Go to post,Ir ao posto
+DBG_GRAVITY,Gravity,Gravidade
+DBG_CAM_DIST,Camera distance,Distância da câmara
+HINT_ENTER_ROVER,Tap Rover to drive,Toca em Rover para conduzir
+HINT_EXIT_ROVER,Tap Rover to get out,Toca em Rover para sair
+DBG_ROVER_SPEED,Rover top speed,Velocidade máx. do rover
+DBG_ROVER_TURN,Rover steering,Direção do rover
+DBG_ROVER_SPRING,Rover suspension,Suspensão do rover
+DBG_ROVER_HERE,Bring rover here,Trazer o rover para aqui
+BOARD_TITLE,Delivery board,Quadro de encomendas
+BOARD_ACCEPT,Accept,Aceitar
+BOARD_BUSY,Finish your current delivery first.,Acaba primeiro a entrega atual.
+UI_CLOSE,Close,Fechar
+HINT_BOARD,Tap Action to see deliveries,Toca em Ação para ver as encomendas
+"HUD_PICKUP","Pick up the box at %s's · %d m","Apanhar a caixa em casa de %s · %d m"
+"HUD_DELIVER","Deliver to %s · %d m · %s","Entregar a %s · %d m · %s"
+TOAST_ACCEPTED,Box waiting at %s's,Caixa à espera em casa de %s
+TOAST_PICKED,Box picked up!,Caixa apanhada!
+TOAST_DELIVERED,+%d ¢ on time!,+%d ¢ a tempo!
+TOAST_DELIVERED_LATE,+%d ¢ (late),+%d ¢ (atrasada)
+DBG_ADD_CREDITS,+500 credits,+500 créditos
+DBG_TIME_SCALE,Time speed,Velocidade do tempo
+DBG_RENDER_SCALE,3D resolution,Resolução 3D
+DBG_GOTO_OUTPOST,Go to outpost,Ir ao posto avançado

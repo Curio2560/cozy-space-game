@@ -54,10 +54,24 @@ func _ready() -> void:
 	add_toggle(self, "DBG_TOUCH", force_touch, func(on: bool) -> void:
 		force_touch = on
 		force_touch_changed.emit(on))
+	add_slider(self, "DBG_TIME_SCALE", 0.25, 4.0, 0.25, Engine.time_scale, func(v: float) -> void: Engine.time_scale = v)
+	add_slider(self, "DBG_RENDER_SCALE", 0.5, 1.0, 0.05, get_viewport().scaling_3d_scale, func(v: float) -> void:
+		get_tree().root.scaling_3d_scale = v)
+
+var _labels: Array = [] # [Label, Callable]
 
 func _process(_delta: float) -> void:
 	if _fps:
-		_fps.text = "%d fps" % Engine.get_frames_per_second()
+		_fps.text = stats_text()
+	for pair in _labels:
+		if is_instance_valid(pair[0]):
+			(pair[0] as Label).text = str((pair[1] as Callable).call())
+
+## FPS, draw calls e triângulos do último frame (para medir no telemóvel).
+static func stats_text() -> String:
+	var dc := int(Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME))
+	var tris := int(Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME))
+	return "%d fps · %d dc · %dk tri" % [Engine.get_frames_per_second(), dc, tris / 1000]
 
 func _unhandled_input(event: InputEvent) -> void:
 	if enabled and event.is_action_pressed("debug_toggle"):
@@ -114,6 +128,15 @@ func add_slider(owner_node: Node, label_key: String, min_v: float, max_v: float,
 		refresh.call(v)
 		on_change.call(v))
 	return _add(owner_node, box)
+
+## Linha de texto atualizada a cada frame com o resultado de `getter`.
+func add_label(owner_node: Node, getter: Callable) -> Control:
+	if not enabled:
+		return null
+	var l := Label.new()
+	l.add_theme_font_size_override("font_size", 20)
+	_labels.append([l, getter])
+	return _add(owner_node, l)
 
 func _add(owner_node: Node, c: Control) -> Control:
 	_items.add_child(c)
