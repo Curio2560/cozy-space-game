@@ -88,3 +88,16 @@ func test_same_seed_same_offers() -> void:
 		assert_eq(a.offers[i].from_post, b.offers[i].from_post)
 		assert_eq(a.offers[i].to_post, b.offers[i].to_post)
 	assert_eq(a.colonist_name(0), b.colonist_name(0))
+
+func test_fail_active_pays_nothing_and_frees_the_player() -> void:
+	var s := _session()
+	var o: DeliveryOrder = s.offers[0]
+	s.accept(o)
+	s.pick_up()
+	watch_signals(s)
+	assert_true(s.fail_active())
+	assert_eq(o.state, DeliveryOrder.State.FAILED)
+	assert_eq(s.wallet.credits(), 0)
+	assert_null(s.active)
+	assert_signal_emitted(s, "order_failed")
+	assert_false(s.fail_active(), "sem encomenda ativa não há nada a falhar")

@@ -4,6 +4,7 @@ extends RefCounted
 ## relógio suave e pagamento. A cena só chama accept/pick_up/deliver/tick.
 
 signal order_delivered(order: DeliveryOrder, on_time: bool)
+signal order_failed(order: DeliveryOrder)
 
 const OFFER_COUNT := 3
 const BASE_PAY := 40.0
@@ -94,6 +95,17 @@ func deliver() -> int:
 	active = null
 	order_delivered.emit(o, on_time)
 	return o.paid
+
+## A encomenda ativa falha (rover explodiu, jogador desmaiou): não paga e liberta o jogador.
+func fail_active() -> bool:
+	if active == null:
+		return false
+	var o := active
+	o.state = DeliveryOrder.State.FAILED
+	o.paid = 0
+	active = null
+	order_failed.emit(o)
+	return true
 
 ## Posto onde o jogador tem de ir a seguir, ou -1.
 func target_post() -> int:

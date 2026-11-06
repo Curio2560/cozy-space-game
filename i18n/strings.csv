@@ -42,3 +42,9 @@ DBG_TIME_SCALE,Time speed,Velocidade do tempo
 DBG_RENDER_SCALE,3D resolution,Resolução 3D
 DBG_GOTO_OUTPOST,Go to outpost,Ir ao posto avançado
 DBG_NEXT_BIOME,Next biome,Bioma seguinte
+BAR_ROVER,Rover,Rover
+TOAST_ORDER_LOST,Delivery lost!,Encomenda perdida!
+DBG_ROVER_DAMAGE,Damage rover (40),Danificar o rover (40)
+DBG_ROVER_BOUNCE,Rover damping (low = bouncy),Amortecimento (baixo = saltitão)
+DBG_ROVER_SPIN,Rover spin damping,Travão de rotação do rover
+DBG_ROVER_AIR,Rover air alignment,Alinhamento no ar

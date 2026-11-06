@@ -2,7 +2,7 @@ class_name DeliveryOrder
 extends RefCounted
 ## Uma encomenda: apanhar no posto `from_post` e entregar no posto `to_post`.
 
-enum State { OFFERED, ACCEPTED, CARRYING, DELIVERED }
+enum State { OFFERED, ACCEPTED, CARRYING, DELIVERED, FAILED }
 
 var id: int
 var kind := "normal"

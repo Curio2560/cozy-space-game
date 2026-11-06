@@ -5,6 +5,8 @@ extends RigidBody3D
 ## e endireita-se sozinho se capotar. Regista embates (para as encomendas frágeis).
 
 signal bumped(strength: float)
+signal health_changed(value: float, max_value: float)
+signal destroyed
 
 const MODEL := "veiculos/Rover_1"
 const LENGTH := 2.8 # m
@@ -21,11 +23,15 @@ const MODEL_WHEELS := {
 @export var max_speed := 15.0
 @export var reverse_factor := 0.5
 @export var turn_rate := 2.2 # rad/s em velocidade
-@export var spring_k := 5200.0
-@export var spring_damp := 420.0
+@export var spring_k := 4200.0
+@export var spring_damp := 260.0 # pouco amortecimento = mais saltitão
 @export var rest_length := 0.35
 @export var grip := 9.0
-@export var air_align := 6.0
+@export var air_align := 1.6 # baixo: no ar dá para dar cambalhotas
+@export var spin_damp := 0.6 # amortecimento da rotação (baixo = capota mais)
+@export var max_health := 100.0
+@export var bump_damage := 22.0 # vida perdida por unidade de "força" de embate
+@export var bump_cooldown := 0.35
 @export var bump_threshold := 28.0 # m/s² acima do esperado conta como embate
 
 var planet_center := Vector3.ZERO
@@ -36,6 +42,9 @@ var steer := 0.0
 var wheel_radius: float
 var grounded_wheels := 0
 var bump_total := 0.0
+var health := 100.0
+var alive := true
+var _bump_cd := 0.0
 
 var _anchors: Array[Vector3] = []
 var _wheel_nodes: Array[Node3D] = []
@@ -49,7 +58,8 @@ func _ready() -> void:
 	mass = 150.0
 	gravity_scale = 0.0
 	linear_damp = 0.05
-	angular_damp = 2.5
+	angular_damp = spin_damp
+	health = max_health
 	center_of_mass_mode = RigidBody3D.CENTER_OF_MASS_MODE_CUSTOM
 	center_of_mass = Vector3(0, -0.1, 0)
 	can_sleep = false
@@ -146,6 +156,8 @@ func _physics_process(delta: float) -> void:
 		# No ar: tende a alinhar com o planeta para aterrar de rodas.
 		apply_torque(r_up.cross(u) * air_align * mass)
 
+	angular_damp = spin_damp
+	_bump_cd = maxf(_bump_cd - delta, 0.0)
 	_check_bump(delta, u)
 	_check_flip(delta, u)
 	_spin += speed() * delta / maxf(wheel_radius, 0.01)
@@ -168,6 +180,34 @@ func _check_bump(delta: float, u: Vector3) -> void:
 		var strength := (a - bump_threshold) / bump_threshold
 		bump_total += strength
 		bumped.emit(strength)
+		if _bump_cd <= 0.0:
+			_bump_cd = bump_cooldown
+			take_damage(minf(strength * bump_damage, 60.0))
+
+## Tira vida ao rover (embates, ácido, criaturas). A 0 emite `destroyed` (uma vez).
+func take_damage(amount: float) -> void:
+	if not alive or amount <= 0.0:
+		return
+	health = maxf(health - amount, 0.0)
+	health_changed.emit(health, max_health)
+	if health <= 0.0:
+		alive = false
+		destroyed.emit()
+
+func repair(amount: float) -> void:
+	if not alive or health >= max_health:
+		return
+	health = minf(health + amount, max_health)
+	health_changed.emit(health, max_health)
+
+## Volta a pôr o rover inteiro (depois de explodir).
+func restore() -> void:
+	alive = true
+	health = max_health
+	_bump_cd = 1.0
+	visible = true
+	freeze = false
+	health_changed.emit(health, max_health)
 
 func _check_flip(delta: float, u: Vector3) -> void:
 	if global_basis.y.normalized().dot(u) < 0.35 and linear_velocity.length() < 4.0:

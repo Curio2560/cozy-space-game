@@ -3,6 +3,10 @@ extends Node3D
 ## (As entregas entram no ticket #8.)
 
 const ENTER_DISTANCE := 5.0
+const REPAIR_RADIUS := 16.0 # junto ao posto avançado
+const REPAIR_RATE := 20.0 # vida por segundo, parado junto à base
+const RESPAWN_DELAY := 2.6
+const EXPLOSION := "res://assets/BinbunVFX_Vol2/ExplosionFX/effects/ground/vfx_ground_explosion_01.tscn"
 const CAM_FOOT := {"distance": 6.5, "pitch": -0.42, "focus_height": 1.2, "auto_return_delay": 1.6}
 const CAM_ROVER := {"distance": 9.5, "pitch": -0.36, "focus_height": 1.6, "auto_return_delay": 0.35}
 
@@ -18,6 +22,8 @@ var driving := false
 var _vehicle_btn := JumpBuffer.new()
 var _hint: Label
 var wallet := Wallet.new()
+var bars: StatusBars
+var respawning := false
 var deliveries: DeliveryController
 
 func _ready() -> void:
@@ -46,11 +52,17 @@ func _ready() -> void:
 	rover.collision_layer = 4
 	rover.collision_mask = 1 | 2
 	add_child(rover)
+	rover.destroyed.connect(_on_rover_destroyed)
 	_build_ui()
 	deliveries = DeliveryController.new()
 	deliveries.name = "Deliveries"
 	add_child(deliveries)
 	deliveries.setup(self, wallet, _hud_layer)
+	bars = StatusBars.new()
+	_hud_layer.add_child(bars)
+	bars.add_bar("rover", "BAR_ROVER", Color("ff9f5a"))
+	rover.health_changed.connect(func(v: float, m: float) -> void: bars.set_value("rover", v, m))
+	bars.set_value("rover", rover.health, rover.max_health)
 	start(seed_value)
 	_register_debug()
 	var args := OS.get_cmdline_user_args() # argumentos só para capturas de ecrã no PC
@@ -67,6 +79,10 @@ func _ready() -> void:
 		spawn_in_forest()
 	if "rocks" in args:
 		spawn_in_forest("rocks/")
+	if "boom" in args:
+		enter_rover()
+		await get_tree().create_timer(1.0).timeout
+		rover.take_damage(999.0)
 	if "perf" in args:
 		_perf_log()
 	if "drive" in args:
@@ -173,7 +189,49 @@ func _apply_camera(profile: Dictionary) -> void:
 	for k: String in profile:
 		camera.set(k, profile[k])
 
+## Explosão do rover: efeito, a encomenda falha e, passado um pouco, renasces na base
+## com o rover reparado.
+func _on_rover_destroyed() -> void:
+	respawning = true
+	spawn_explosion(rover.global_position, rover.planet_up())
+	rover.visible = false
+	rover.freeze = true
+	if deliveries.session and deliveries.session.fail_active():
+		deliveries.hud.toast(tr("TOAST_ORDER_LOST"))
+	await get_tree().create_timer(RESPAWN_DELAY).timeout
+	if not is_inside_tree():
+		return
+	if driving:
+		driving = false
+		rover.driven = false
+		player.process_mode = Node.PROCESS_MODE_INHERIT
+		player.visible = true
+		player.controllable = true
+		player.collision_layer = 2
+	spawn_near(planet.data.outpost_dir, planet.data.posts[0], 9.0)
+	rover.restore()
+	_park_rover_near_player()
+	respawning = false
+
+func spawn_explosion(pos: Vector3, up: Vector3) -> Node3D:
+	var fx: Node3D = (load(EXPLOSION) as PackedScene).instantiate()
+	add_child(fx)
+	fx.global_transform = Transform3D(SphereMath.basis_from_up(up).scaled(Vector3.ONE * 2.2), pos)
+	if fx.has_method("play"):
+		fx.call("play")
+	get_tree().create_timer(5.0).timeout.connect(fx.queue_free)
+	return fx
+
+func rover_near_base() -> bool:
+	return rover.global_position.distance_to(planet.to_global(planet.data.surface_point(planet.data.outpost_dir))) < REPAIR_RADIUS
+
 func _physics_process(delta: float) -> void:
+	if rover.alive and rover.health < rover.max_health and rover_near_base() and rover.linear_velocity.length() < 1.0:
+		rover.repair(REPAIR_RATE * delta)
+	bars.show_bar("rover", driving or rover.health < rover.max_health)
+	if respawning:
+		_hint.text = ""
+		return
 	_vehicle_btn.update(Input.is_action_pressed("vehicle"), delta)
 	if _vehicle_btn.consume() and not deliveries.board_open:
 		if driving:
@@ -280,6 +338,10 @@ func _register_debug() -> void:
 	DebugMenu.add_slider(self, "DBG_ROVER_TURN", 0.8, 4.0, 0.1, rover.turn_rate, func(v: float) -> void: rover.turn_rate = v)
 	DebugMenu.add_slider(self, "DBG_ROVER_SPRING", 2000.0, 9000.0, 100.0, rover.spring_k, func(v: float) -> void: rover.spring_k = v)
 	DebugMenu.add_button(self, "DBG_ADD_CREDITS", func() -> void: wallet.add(Wallet.CREDITS, 500))
+	DebugMenu.add_button(self, "DBG_ROVER_DAMAGE", func() -> void: rover.take_damage(40.0))
+	DebugMenu.add_slider(self, "DBG_ROVER_BOUNCE", 80.0, 600.0, 10.0, rover.spring_damp, func(v: float) -> void: rover.spring_damp = v)
+	DebugMenu.add_slider(self, "DBG_ROVER_SPIN", 0.0, 4.0, 0.1, rover.spin_damp, func(v: float) -> void: rover.spin_damp = v)
+	DebugMenu.add_slider(self, "DBG_ROVER_AIR", 0.0, 8.0, 0.2, rover.air_align, func(v: float) -> void: rover.air_align = v)
 	DebugMenu.add_button(self, "DBG_ROVER_HERE", func() -> void:
 		if driving:
 			exit_rover()
