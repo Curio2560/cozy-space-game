@@ -63,6 +63,30 @@ func toward_point(from: Vector3, toward: Vector3, metres: float) -> Vector3:
 		t = SphereMath.basis_from_up(from).z
 	return (from + t.normalized() * tan(metres / radius)).normalized()
 
+## Obstáculos para as criaturas contornarem (árvores, pedregulhos, estruturas).
+var _obstacle_grid := {} # célula -> [[ponto (m), raio (m)]]
+const OBSTACLE_CELL := 6.0
+
+func add_obstacle(dir: Vector3, radius_m: float) -> void:
+	var p := dir.normalized() * radius
+	var k := Vector3i((p / OBSTACLE_CELL).floor())
+	if not _obstacle_grid.has(k):
+		_obstacle_grid[k] = []
+	_obstacle_grid[k].append([p, radius_m])
+
+## Obstáculos perto de `dir`: [[ponto à superfície (m, espaço do planeta), raio (m)], …].
+func obstacles_near(dir: Vector3) -> Array:
+	var p := dir.normalized() * radius
+	var k := Vector3i((p / OBSTACLE_CELL).floor())
+	var out := []
+	for x in range(-1, 2):
+		for y in range(-1, 2):
+			for z in range(-1, 2):
+				var cell = _obstacle_grid.get(k + Vector3i(x, y, z))
+				if cell != null:
+					out.append_array(cell)
+	return out
+
 ## Relva procedimental (tufos leves): direção, tamanho e rotação de cada tufo.
 var turf_dirs := PackedVector3Array()
 var turf_sizes := PackedFloat32Array()

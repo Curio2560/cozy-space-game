@@ -139,6 +139,7 @@ static func generate(p_seed: int, biome := "prado", radius := DEFAULT_RADIUS) ->
 	_place_roads(d, rng)
 	_place_dirt(d, b, rng)
 	_place_props(d, b, rng, spin)
+	_place_obstacles(d)
 	_place_turf(d, b, p_seed)
 	return d
 
@@ -201,6 +202,14 @@ static func _place_roads(d: PlanetData, rng: RandomNumberGenerator) -> void:
 		var pb: Vector3 = _mid_point(rb.points, rng)
 		if d.arc_m(pa, pb) > 15.0 and d.arc_m(pa, pb) < 90.0:
 			d.add_road(_road(d, pa, pb, rng, 6.0, SIDE_ROAD_WIDTH), SIDE_ROAD_WIDTH, false)
+
+## Obstáculos que as criaturas contornam: decoração com colisor e as estruturas.
+static func _place_obstacles(d: PlanetData) -> void:
+	for p in d.placements:
+		if p.collider > 0.0:
+			d.add_obstacle(p.dir, p.size * p.collider + 0.4)
+	for st in structures(d):
+		d.add_obstacle(st[0], st[1] + 0.5)
 
 ## Manchas de terra gasta fora das estradas: a maioria junto às estradas, algumas à volta das
 ## estruturas, as restantes espalhadas. Nada cresce em cima delas.

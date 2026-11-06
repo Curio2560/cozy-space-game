@@ -89,9 +89,12 @@ func _physics_process(delta: float) -> void:
 		vert = u * jump_velocity
 	else:
 		vert -= u * gravity * delta
+	# O empurrão entra só no movimento deste passo (não fica guardado na velocidade, senão
+	# acumulava-se de frame para frame e atirava o astronauta pelo ar).
 	velocity = hor + vert + push
-	push = push.move_toward(Vector3.ZERO, 14.0 * delta)
 	move_and_slide()
+	velocity -= push
+	push = push.move_toward(Vector3.ZERO, 14.0 * delta)
 
 	if wish.length() > 0.1:
 		facing = facing.slerp(wish.normalized(), clampf(14.0 * delta, 0.0, 1.0)).normalized()

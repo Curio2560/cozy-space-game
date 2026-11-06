@@ -33,10 +33,10 @@ var creatures: Array[Creature] = []
 const CREATURE_MIN_BASE_M := 30.0
 const CREATURE_MIN_POST_M := 12.0
 const ATTACK_DAMAGE := 8.0
-const ATTACK_ROVER_DAMAGE := 6.0
+const ATTACK_ROVER_DAMAGE := 4.0
+const PUSH_SPEED := 4.0 # m/s do encontrão (para o lado, sem atirar ao ar)
 const RAM_SPEED := 6.0 # o rover a esta velocidade atropela e afugenta
 var explosion: RoverExplosion
-var tracks: TireTracks
 var dust: CPUParticles3D
 var deliveries: DeliveryController
 
@@ -67,9 +67,6 @@ func _ready() -> void:
 	rover.collision_mask = 1 | 2
 	add_child(rover)
 	rover.destroyed.connect(_on_rover_destroyed)
-	tracks = TireTracks.new()
-	tracks.name = "TireTracks"
-	add_child(tracks)
 	dust = _make_dust()
 	rover.add_child(dust)
 	_build_ui()
@@ -172,7 +169,10 @@ func _spawn_creatures() -> void:
 		c.target = _creature_target
 		c.attacked.connect(_on_creature_attack)
 		c.dropped_crate.connect(_on_crate_dropped)
+		c.target_has_crate = func() -> bool: return deliveries.session != null and deliveries.session.carrying()
 		creatures.append(c)
+	for c in creatures:
+		c.flock = creatures
 
 func _creature_target() -> Node3D:
 	return rover if driving else player
@@ -187,10 +187,10 @@ func _on_creature_attack(c: Creature) -> void:
 	away = (away - up * away.dot(up)).normalized()
 	if driving:
 		rover.take_damage(ATTACK_ROVER_DAMAGE)
-		rover.apply_central_impulse((away * 3.0 + up * 2.0) * rover.mass)
+		rover.apply_central_impulse(away * 1.2 * rover.mass) # empurrão lateral, sem atirar ao ar
 		return
 	vitals.damage(ATTACK_DAMAGE)
-	player.add_push(away * 9.0 + up * 4.0)
+	player.add_push(away * PUSH_SPEED)
 	var s := deliveries.session
 	if s and s.carrying():
 		if randf() < c.steal_chance and s.steal():
@@ -382,7 +382,7 @@ func _fade(to_alpha: float) -> void:
 func _exit_tree() -> void:
 	Engine.time_scale = 1.0
 
-## Pó que sai de trás do rover em velocidade.
+## Fumo/pó que sai das rodas do rover quando anda.
 func _make_dust() -> CPUParticles3D:
 	var p := CPUParticles3D.new()
 	var sm := SphereMesh.new()
@@ -396,8 +396,8 @@ func _make_dust() -> CPUParticles3D:
 	mat.vertex_color_use_as_albedo = true
 	sm.material = mat
 	p.mesh = sm
-	p.amount = 36
-	p.lifetime = 1.3
+	p.amount = 60
+	p.lifetime = 1.8
 	p.local_coords = false
 	p.emitting = false
 	p.position = Vector3(0, 0.2, -1.3)
@@ -409,25 +409,18 @@ func _make_dust() -> CPUParticles3D:
 	p.initial_velocity_max = 1.6
 	p.gravity = Vector3.ZERO
 	var sc := Curve.new()
-	sc.add_point(Vector2(0.0, 0.5))
-	sc.add_point(Vector2(1.0, 2.2))
+	sc.add_point(Vector2(0.0, 0.6))
+	sc.add_point(Vector2(1.0, 3.0))
 	p.scale_amount_curve = sc
 	var g := Gradient.new()
-	g.set_color(0, Color(0.85, 0.74, 0.58, 0.55))
-	g.set_color(1, Color(0.85, 0.74, 0.58, 0.0))
+	g.set_color(0, Color(0.88, 0.8, 0.7, 0.6))
+	g.set_color(1, Color(0.75, 0.72, 0.72, 0.0))
 	p.color_ramp = g
 	return p
 
-## Rastos das rodas e pó (cada passo de física, se o rover se mexe).
+## Fumo/pó a sair das rodas quando o rover anda.
 func _update_tracks() -> void:
-	var moving := rover.alive and rover.linear_velocity.length() > 1.0
-	for i in rover.wheel_hits.size():
-		var h = rover.wheel_hits[i]
-		if moving and h != null and h[0]:
-			tracks.mark(i, h[1], h[2], rover.linear_velocity)
-		else:
-			tracks.lift(i)
-	dust.emitting = rover.alive and rover.grounded_wheels >= 2 and rover.linear_velocity.length() > 4.0
+	dust.emitting = rover.alive and rover.grounded_wheels >= 2 and rover.linear_velocity.length() > 2.5
 
 func rover_near_base() -> bool:
 	return rover.global_position.distance_to(planet.to_global(planet.data.surface_point(planet.data.outpost_dir))) < REPAIR_RADIUS

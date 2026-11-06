@@ -30,9 +30,11 @@ const MODEL_WHEELS := {
 @export var air_align := 1.6 # baixo: no ar dá para dar cambalhotas
 @export var spin_damp := 0.6 # amortecimento da rotação (baixo = capota mais)
 @export var max_health := 100.0
-@export var bump_damage := 22.0 # vida perdida por unidade de "força" de embate
+@export var safe_impact := 6.0 # m/s: impactos mais lentos não fazem dano
+@export var impact_damage := 4.5 # vida por m/s acima de safe_impact
+@export var max_impact_damage := 80.0
 @export var bump_cooldown := 0.35
-@export var bump_threshold := 28.0 # m/s² acima do esperado conta como embate
+@export var crash_threshold := 3.0 # m/s de mudança brusca num passo = choque
 
 var planet_center := Vector3.ZERO
 ## Quem conduz trata do input; sem condutor o rover trava.
@@ -45,6 +47,7 @@ var bump_total := 0.0
 var health := 100.0
 var alive := true
 var _bump_cd := 0.0
+var _was_airborne := false
 
 ## Contacto de cada roda no último passo de física: [tocando (bool), ponto (global), normal].
 var wheel_hits: Array = []
@@ -176,19 +179,31 @@ func _update_wheel_visual(i: int, dist: float) -> void:
 	w.position.y = _wheel_rest_y[i] - drop
 	w.rotation.x = _spin
 
+## Dano que escala com a velocidade do impacto:
+## - aterragem: velocidade de queda quando as rodas voltam a tocar no chão;
+## - choque: mudança brusca de velocidade num passo (bater numa árvore, rocha, casa).
 func _check_bump(delta: float, u: Vector3) -> void:
 	if delta <= 0.0:
 		return
-	var accel := (linear_velocity - _prev_velocity) / delta + u * gravity
+	var dv := (linear_velocity - _prev_velocity + u * gravity * delta).length()
+	var landing := 0.0
+	if _was_airborne and grounded_wheels > 0:
+		landing = maxf(-_prev_velocity.dot(u), 0.0)
+	_was_airborne = grounded_wheels == 0
 	_prev_velocity = linear_velocity
-	var a := accel.length()
-	if a > bump_threshold:
-		var strength := (a - bump_threshold) / bump_threshold
-		bump_total += strength
-		bumped.emit(strength)
-		if _bump_cd <= 0.0:
-			_bump_cd = bump_cooldown
-			take_damage(minf(strength * bump_damage, 60.0))
+	var impact := maxf(landing, dv if dv > crash_threshold else 0.0)
+	if impact <= 0.0:
+		return
+	var strength := impact / 10.0
+	bump_total += strength
+	bumped.emit(strength)
+	if _bump_cd <= 0.0 and impact > safe_impact:
+		_bump_cd = bump_cooldown
+		take_damage(impact_to_damage(impact))
+
+## Vida perdida num impacto a `speed` m/s (0 abaixo de safe_impact).
+func impact_to_damage(speed: float) -> float:
+	return clampf((speed - safe_impact) * impact_damage, 0.0, max_impact_damage)
 
 ## Tira vida ao rover (embates, ácido, criaturas). A 0 emite `destroyed` (uma vez).
 func take_damage(amount: float) -> void:
