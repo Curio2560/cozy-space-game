@@ -25,6 +25,7 @@ const BIOMES := {
 			"Wood": Color("a8735a"), "LightWood": Color("c99a74"), "White": Color("efe9dc"),
 			"Black": Color("3a3346"), "Orange": Color("ff9f5a"), "LightOrange": Color("ffc07a"),
 			"Berry": Color("e8546e"), "Pink": Color("ff9ecf"), "Snow": Color("f4f8ff"),
+			"Grass": Color("5fb873"),
 		},
 		"props": [
 			{"kinds": ["nature/BirchTree_1", "nature/BirchTree_2", "nature/BirchTree_3", "nature/BirchTree_4", "nature/BirchTree_5",
@@ -35,7 +36,7 @@ const BIOMES := {
 			{"kinds": ["natureza/Rock_Large_1", "natureza/Rock_Large_2", "natureza/Rock_Large_3"], "count": 40, "size": [1.2, 2.2], "clear": 1.8, "outline": true, "collider": 0.45},
 			{"kinds": ["natureza/Rock_1", "natureza/Rock_2", "natureza/Rock_3", "natureza/Rock_4"], "count": 50, "size": [0.35, 0.7], "clear": 0.6, "outline": true},
 			{"kinds": ["natureza/Plant_1", "natureza/Plant_2", "natureza/Plant_2", "natureza/Plant_1", "natureza/Plant_3"], "count": 120, "size": [0.5, 0.9], "clear": 0.6, "outline": true, "cluster": 0.3},
-			{"kinds": ["natureza/Grass_1", "natureza/Grass_2", "natureza/Grass_3"], "count": 700, "size": [0.25, 0.45], "clear": 0.3, "outline": false, "cluster": 0.3},
+			{"kinds": ["mdvl/mdvl_nature_grass_01", "mdvl/mdvl_nature_grass_01", "natureza/Grass_2"], "count": 600, "size": [0.3, 0.6], "clear": 0.3, "outline": false, "cluster": 0.35},
 		],
 	},
 	"acido": {
@@ -49,6 +50,7 @@ const BIOMES := {
 			"Wood": Color("5d4a78"), "LightWood": Color("7a64a0"), "White": Color("d6e8c4"),
 			"Black": Color("2c2438"), "Orange": Color("e8e44a"), "LightOrange": Color("cdf27a"),
 			"Berry": Color("c44ae6"), "Pink": Color("e07af0"), "Snow": Color("e8ffd0"),
+			"Grass": Color("a6d64a"),
 		},
 		"props": [
 			{"kinds": ["nature/CommonTree_Dead_1", "nature/CommonTree_Dead_2", "nature/CommonTree_Dead_3", "nature/CommonTree_Dead_4", "nature/CommonTree_Dead_5",
@@ -58,7 +60,7 @@ const BIOMES := {
 				"count": 220, "size": [0.7, 1.4], "clear": 1.0, "outline": true},
 			{"kinds": ["natureza/Rock_Large_1", "natureza/Rock_Large_2", "natureza/Rock_Large_3"], "count": 50, "size": [1.2, 2.4], "clear": 1.8, "outline": true, "collider": 0.45},
 			{"kinds": ["natureza/Rock_1", "natureza/Rock_2", "natureza/Rock_3", "natureza/Rock_4"], "count": 60, "size": [0.35, 0.7], "clear": 0.6, "outline": true},
-			{"kinds": ["natureza/Grass_1", "natureza/Grass_2", "natureza/Grass_3"], "count": 500, "size": [0.25, 0.45], "clear": 0.3, "outline": false, "cluster": 0.3},
+			{"kinds": ["mdvl/mdvl_nature_grass_01"], "count": 550, "size": [0.3, 0.6], "clear": 0.3, "outline": false, "cluster": 0.35},
 		],
 	},
 	"lava": {
@@ -72,6 +74,7 @@ const BIOMES := {
 			"Wood": Color("3a2a30"), "LightWood": Color("5a3e40"), "White": Color("8a6e6a"),
 			"Black": Color("1e1418"), "Orange": Color("ffc04a"), "LightOrange": Color("ffd27a"),
 			"Berry": Color("ffe04a"), "Pink": Color("ff7a4a"), "Snow": Color("c8a8a0"),
+			"Grass": Color("b0604a"),
 		},
 		"props": [
 			{"kinds": ["nature/Cactus_1", "nature/Cactus_2", "nature/Cactus_3", "nature/Cactus_4", "nature/Cactus_5", "nature/CactusFlower_1", "nature/CactusFlowers_2"],
@@ -80,6 +83,7 @@ const BIOMES := {
 				"count": 90, "size": [3.0, 4.5], "clear": 2.0, "outline": true, "collider": 0.06},
 			{"kinds": ["natureza/Rock_Large_1", "natureza/Rock_Large_2", "natureza/Rock_Large_3"], "count": 70, "size": [1.2, 2.8], "clear": 1.8, "outline": true, "collider": 0.45},
 			{"kinds": ["natureza/Rock_1", "natureza/Rock_2", "natureza/Rock_3", "natureza/Rock_4"], "count": 90, "size": [0.35, 0.8], "clear": 0.6, "outline": true},
+			{"kinds": ["mdvl/mdvl_nature_grass_01"], "count": 250, "size": [0.25, 0.45], "clear": 0.3, "outline": false, "cluster": 0.6},
 		],
 	},
 }

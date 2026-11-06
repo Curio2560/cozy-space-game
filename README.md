@@ -1,25 +1,41 @@
 # Correio Cósmico (nome provisório)
 
-Cozy delivery game em 3D para Android, em planetas pequenos com gravidade para o centro. Godot 4.7.2, renderer Compatibility, paisagem, cel-shaded.
+Cozy delivery game em 3D para Android: entregas a pé e de rover em pequenos planetas com
+gravidade para o centro, gerados aleatoriamente, com biomas, base, quinta, fábrica e defesa
+noturna com mechs. Godot 4.7.2 · renderer Compatibility · paisagem · cel-shaded.
 
-- Visão e decisões: `docs/design/` (visão, grill e respostas) e o spec na issue #1.
-- Fases: milestones F0–F6 no GitHub.
+- **Visão e decisões:** `docs/design/` (visão, grills e respostas) e o spec na issue #1.
+- **Fases:** milestones no GitHub (F0 e F1 concluídas; F2 em curso).
+- **APKs de teste:** [Releases](../../releases) (a mais recente no topo).
 
-## Testes
+## Estrutura
+
+| Pasta | O quê |
+|---|---|
+| `assets/kit/` | Quaternius **Ultimate Platformer Pack** (personagens, mechs, naves, rovers, base, pickups, natureza) |
+| `assets/nature/` | Quaternius **Ultimate Nature Pack** (árvores, arbustos, catos) — recoloridos por bioma |
+| `assets/mdvl/` | Relva "mdvl" (paleta em textura) — recolorida por bioma |
+| `assets/icon/` | Ícone da app (gerado por `tools/`) |
+| `entrada/` | **Onde pôr assets novos** (ver `entrada/LEIA-ME.md`) |
+| `src/` | Código: `planet/` (geração), `player/`, `vehicle/`, `camera/`, `delivery/`, `economy/`, `render/` (cel-shading), `input/`, `ui/`, `debug/`, `game/`, `dev/` |
+| `scenes/` | `game/` (jogo), `ui/` (arranque), `dev/` (vitrine, testes de controlos, planetas, paletas) |
+| `shaders/` | Cel-shading e contorno |
+| `i18n/` | Textos PT/EN |
+| `tests/unit/` | Testes GUT |
+| `tools/` | Ícone e utilitários |
+| `docs/` | `design/` (visão, grill), `art/` (capturas), `perf.md` |
+
+## Testes e APK
 
 ```bash
 ./run_tests.sh          # GUT em headless; falha também com parse errors
-```
-
-## APK debug (local)
-
-```bash
 ./build_apk.sh          # → build/correio-cosmico-debug.apk
 ```
 
-Precisa dos export templates 4.7.2, do Android SDK e do keystore debug configurados nas editor settings. A versão está em `project.godot` (`application/config/version`) e no `export_presets.cfg` (`version/name`, `version/code`); um teste garante que as duas coincidem.
+O APK é gerado localmente (sem CI) e publicado nas Releases. A versão está em `project.godot`
+e em `export_presets.cfg`; um teste garante que coincidem.
 
 ## Créditos
 
-- Ultimate Platformer Pack, Quaternius (CC0 1.0) — `assets/kit`.
-- Ultimate Nature Pack, Quaternius (CC0 1.0) — `assets/nature`.
+- Ultimate Platformer Pack e Ultimate Nature Pack — Quaternius (CC0 1.0).
+- Relva `mdvl_nature_grass_01` — enviada pelo autor do projeto (origem/licença a confirmar).

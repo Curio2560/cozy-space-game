@@ -151,7 +151,12 @@ func _build_props() -> void:
 		mm.transform_format = MultiMesh.TRANSFORM_3D
 		var with_outline: bool = outline_of[kind]
 		var mmi := MultiMeshInstance3D.new()
-		if info.palette:
+		if info.get("recolor", "") != "":
+			# Paleta em textura (relva mdvl): cor do bioma por vértice.
+			var pal: Dictionary = PlanetGenerator.BIOMES[data.biome].palette
+			mm.mesh = CelShading.recolor_textured_mesh(info.mesh, info.texture, pal[info.recolor])
+			mmi.material_override = CelShading.vertex_color_material(with_outline)
+		elif info.palette:
 			# Pack de natureza: uma superfície com a cor da paleta do bioma por vértice.
 			mm.mesh = CelShading.palette_mesh(info.mesh, PlanetGenerator.BIOMES[data.biome].palette)
 			mmi.material_override = CelShading.vertex_color_material(with_outline)

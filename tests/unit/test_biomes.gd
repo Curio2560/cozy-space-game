@@ -31,6 +31,25 @@ func test_every_nature_material_has_a_palette_colour() -> void:
 					var n := mat.resource_name.get_slice(".", 0)
 					assert_true(pal.has(n), "%s: cor '%s' de %s não está na paleta" % [biome, n, k])
 
+func test_user_grass_is_used_and_recoloured_per_biome() -> void:
+	var cols := {}
+	for biome: String in PlanetGenerator.BIOMES:
+		assert_true(_nature_kinds(biome).has("mdvl/mdvl_nature_grass_01"), "%s sem a relva do utilizador" % biome)
+		var info := KitUtil.single_mesh("mdvl/mdvl_nature_grass_01")
+		var target: Color = PlanetGenerator.BIOMES[biome].palette.Grass
+		var m := CelShading.recolor_textured_mesh(info.mesh, info.texture, target)
+		assert_eq(m.get_surface_count(), 1)
+		var c: PackedColorArray = m.surface_get_arrays(0)[Mesh.ARRAY_COLOR]
+		var avg := Color(0, 0, 0)
+		for x in c:
+			avg += x
+		avg /= c.size()
+		cols[biome] = avg
+		# A média fica perto da cor do bioma (a variação de claro/escuro mantém-se à volta dela).
+		assert_almost_eq(avg.r, target.r, 0.12, biome)
+		assert_almost_eq(avg.g, target.g, 0.12, biome)
+	assert_ne(cols.prado.to_html(), cols.lava.to_html())
+
 func test_palette_mesh_is_one_surface_with_palette_colours() -> void:
 	var src: Mesh = load("res://assets/nature/BirchTree_1.obj")
 	var pal: Dictionary = PlanetGenerator.BIOMES["acido"].palette

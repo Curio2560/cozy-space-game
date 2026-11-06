@@ -40,6 +40,17 @@ static var _single_cache: Dictionary = {}
 static func single_mesh(kit_path: String) -> Dictionary:
 	if _single_cache.has(kit_path):
 		return _single_cache[kit_path]
+	if kit_path.begins_with("mdvl/"):
+		# Modelos com paleta em textura (pack "mdvl"): recoloridos pela cor `recolor` do bioma.
+		var scene_root: Node3D = (load("res://assets/" + kit_path + ".glb") as PackedScene).instantiate()
+		var mi0: MeshInstance3D = _meshes(scene_root)[0]
+		var xf0 := _relative(mi0, scene_root)
+		var tex := (mi0.get_active_material(0) as BaseMaterial3D).albedo_texture
+		var md := {"mesh": mi0.mesh, "xform": xf0, "material": null, "aabb": xf0 * mi0.get_aabb(),
+			"palette": false, "recolor": "Grass", "texture": tex}
+		scene_root.free()
+		_single_cache[kit_path] = md
+		return md
 	if kit_path.begins_with("nature/"):
 		var mesh: Mesh = load("res://assets/" + kit_path + ".obj")
 		assert(mesh != null, "modelo em falta: %s" % kit_path)

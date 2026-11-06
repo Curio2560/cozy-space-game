@@ -151,6 +151,61 @@ static func _merge_with_palette(mesh: Mesh, palette: Dictionary) -> ArrayMesh:
 	out.set_meta(&"cel_outline_ready", true)
 	return out
 
+static var _recolor_cache: Dictionary = {}
+
+## Para modelos com a cor numa textura-paleta: lê a cor da textura em cada vértice e troca-a
+## por `target`, mantendo a variação de claro/escuro do original (relativa à média da malha).
+## Uma superfície com cor por vértice; usar com `vertex_color_material()`.
+static func recolor_textured_mesh(mesh: Mesh, texture: Texture2D, target: Color) -> ArrayMesh:
+	var key := [mesh.get_instance_id(), target.to_html()]
+	if _recolor_cache.has(key):
+		return _recolor_cache[key]
+	var img := texture.get_image()
+	if img.is_compressed():
+		img.decompress()
+	var w := img.get_width()
+	var h := img.get_height()
+	var verts := PackedVector3Array()
+	var normals := PackedVector3Array()
+	var lums := PackedFloat32Array()
+	var idx := PackedInt32Array()
+	for i in mesh.get_surface_count():
+		var arr := mesh.surface_get_arrays(i)
+		var v: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
+		var uv: PackedVector2Array = arr[Mesh.ARRAY_TEX_UV]
+		var base := verts.size()
+		verts.append_array(v)
+		normals.append_array(arr[Mesh.ARRAY_NORMAL])
+		for k in v.size():
+			var px := Vector2i(clampi(int(uv[k].x * w), 0, w - 1), clampi(int(uv[k].y * h), 0, h - 1))
+			lums.append(img.get_pixelv(px).get_luminance())
+		var si = arr[Mesh.ARRAY_INDEX]
+		if si == null or (si as PackedInt32Array).is_empty():
+			for k in v.size():
+				idx.append(base + k)
+		else:
+			for k in (si as PackedInt32Array):
+				idx.append(base + k)
+	var mean := 0.0
+	for l in lums:
+		mean += l
+	mean = maxf(mean / maxf(lums.size(), 1.0), 0.001)
+	var colors := PackedColorArray()
+	for l in lums:
+		var k := clampf(l / mean, 0.7, 1.35)
+		colors.append(Color(target.r * k, target.g * k, target.b * k, 1.0).clamp())
+	var arrays := []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = verts
+	arrays[Mesh.ARRAY_NORMAL] = normals
+	arrays[Mesh.ARRAY_TANGENT] = _smoothed_normal_tangents(verts, normals)
+	arrays[Mesh.ARRAY_COLOR] = colors
+	arrays[Mesh.ARRAY_INDEX] = idx
+	var out := ArrayMesh.new()
+	out.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	_recolor_cache[key] = out
+	return out
+
 static func flat_with_outline(c: Color) -> ShaderMaterial:
 	return material_for(_flat_src(c), true)
 
@@ -229,6 +284,7 @@ static func clear_cache() -> void:
 	_cache.clear()
 	_mesh_cache.clear()
 	_palette_cache.clear()
+	_recolor_cache.clear()
 
 static func _key(tex: Texture2D, tint: Color) -> String:
 	var img_hash := "none"
