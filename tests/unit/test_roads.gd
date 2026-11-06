@@ -1,44 +1,41 @@
 extends GutTest
-## Estradas: ligam o posto avançado aos postos e os postos entre si; há secundárias mais
-## estreitas; nada nasce em cima delas; determinístico; a malha existe.
+## Estradas (estilo Google Earth): a volta principal passa em frente às casas, há uma praça à
+## volta da base com estradas para cada casa, secundárias e caminhos mais estreitos; nada nasce em
+## cima delas; nenhuma estrada passa por cima de uma estrutura; determinístico.
 
 var d: PlanetData
 
 func before_all() -> void:
 	d = PlanetGenerator.generate(5)
 
-func _ends(r: Dictionary) -> Array:
-	var pts: PackedVector3Array = r.points
-	return [pts[0], pts[pts.size() - 1]]
-
-## As pontas das estradas ficam à porta (até ~DOOR_SLACK m do raio da estrutura + 1,3 m).
-const DOOR_SLACK := 4.5
-
-func _near(a: Vector3, b: Vector3) -> bool:
-	return d.arc_m(a, b) < PlanetGenerator._door_distance(d, b) + DOOR_SLACK
-
-func _connects(a: Vector3, b: Vector3) -> bool:
+func _passes_near(dir: Vector3, metres: float, main_only := true) -> bool:
 	for r in d.roads:
-		if not r.main:
+		if main_only and not r.main:
 			continue
-		var e := _ends(r)
-		if (_near(e[0], a) and _near(e[1], b)) or (_near(e[0], b) and _near(e[1], a)):
-			return true
+		for p: Vector3 in r.points:
+			if d.arc_m(p, dir) < metres:
+				return true
 	return false
 
-func test_main_roads_link_outpost_and_every_post() -> void:
-	for p in d.posts:
-		assert_true(_connects(d.outpost_dir, p), "falta a estrada base → posto")
-	for i in d.posts.size():
-		assert_true(_connects(d.posts[i], d.posts[(i + 1) % d.posts.size()]), "falta a estrada entre postos")
+func test_main_road_passes_in_front_of_every_post() -> void:
+	assert_eq(d.post_doors.size(), d.posts.size())
+	for door in d.post_doors:
+		assert_true(_passes_near(door, 2.5), "a estrada principal devia passar à porta de cada posto")
 
-func test_secondary_roads_are_narrower_and_one_reaches_the_lair() -> void:
+func test_plaza_ring_around_the_base() -> void:
+	var ring := d.roads.filter(func(r: Dictionary) -> bool: return r.get("closed", false))
+	assert_eq(ring.size(), 1, "devia haver uma praça circular à volta da base")
+	for p: Vector3 in ring[0].points:
+		assert_almost_eq(d.arc_m(p, d.outpost_dir), d.plaza_radius_m, 0.5)
+
+func test_a_road_reaches_the_lair_door() -> void:
+	assert_true(_passes_near(d.lair_door, 2.5, false))
+
+func test_secondary_roads_are_narrower() -> void:
 	var side := d.roads.filter(func(r: Dictionary) -> bool: return not r.main)
 	assert_gte(side.size(), 4)
 	for r in side:
 		assert_lt(r.width, PlanetGenerator.MAIN_ROAD_WIDTH)
-	var to_lair := side.any(func(r: Dictionary) -> bool: return _near(_ends(r)[1], d.lair_dir))
-	assert_true(to_lair, "devia haver uma estrada secundária até ao covil")
 
 func test_no_road_over_any_structure() -> void:
 	for r in d.roads:

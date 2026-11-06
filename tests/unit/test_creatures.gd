@@ -46,3 +46,10 @@ func test_creature_colour_follows_biome() -> void:
 	var ma := (a.find_children("*", "MeshInstance3D", true, false)[0] as MeshInstance3D).get_active_material(0) as ShaderMaterial
 	var mb := (b.find_children("*", "MeshInstance3D", true, false)[0] as MeshInstance3D).get_active_material(0) as ShaderMaterial
 	assert_ne((ma.get_shader_parameter("albedo_tint") as Color).to_html(), (mb.get_shader_parameter("albedo_tint") as Color).to_html())
+
+func test_catalog_finds_models_in_exported_builds_too() -> void:
+	# No APK a pasta lista "X.gltf.import"/".remap" em vez de "X.gltf".
+	var exported := PackedStringArray(["Alien.gltf.import", "Birb.gltf.remap", "Atlas.png.import", "Dino.gltf.import", "Dino.gltf.remap"])
+	assert_eq(CreatureCatalog.gltf_names(exported), ["Alien", "Birb", "Dino"])
+	var editor := PackedStringArray(["Alien.gltf", "Alien.gltf.import", "Birb.gltf"])
+	assert_eq(CreatureCatalog.gltf_names(editor), ["Alien", "Birb"])

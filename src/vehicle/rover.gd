@@ -46,6 +46,8 @@ var health := 100.0
 var alive := true
 var _bump_cd := 0.0
 
+## Contacto de cada roda no último passo de física: [tocando (bool), ponto (global), normal].
+var wheel_hits: Array = []
 var _anchors: Array[Vector3] = []
 var _wheel_nodes: Array[Node3D] = []
 var _wheel_rest_y: Array[float] = []
@@ -114,6 +116,7 @@ func _physics_process(delta: float) -> void:
 	var ray_len := rest_length + wheel_radius
 	var space := get_world_3d().direct_space_state
 	grounded_wheels = 0
+	wheel_hits.resize(_anchors.size())
 	var fwd := forward()
 	var right := b.x.normalized()
 
@@ -126,8 +129,10 @@ func _physics_process(delta: float) -> void:
 		q.exclude = [get_rid()]
 		var hit := space.intersect_ray(q)
 		var dist := ray_len
+		wheel_hits[i] = [false, Vector3.ZERO, Vector3.UP]
 		if not hit.is_empty():
 			grounded_wheels += 1
+			wheel_hits[i] = [true, hit.position, hit.normal]
 			dist = from.distance_to(hit.position)
 			var compression := ray_len - dist
 			var offset := from - global_position

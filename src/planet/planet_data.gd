@@ -11,6 +11,14 @@ var noise: FastNoiseLite
 ## [{kind: String (caminho no kit), dir: Vector3, yaw: float, size: float (altura em m),
 ##   clear: float (raio livre em m), outline: bool, collider: float (raio do colisor / altura; 0 = sem)}]
 var placements: Array[Dictionary] = []
+## Pontos "à porta": onde a estrada passa em frente a cada posto (e ao covil). As estruturas
+## viram-se para eles.
+var post_doors: Array[Vector3] = []
+var lair_door: Vector3
+## Praça circular à volta do posto avançado (as estradas para os postos saem dela).
+var plaza_radius_m := 0.0
+## Manchas de terra fora das estradas: [{dir, radius (m), yaw, shape (0..3)}]
+var dirt_patches: Array[Dictionary] = []
 ## Estradas: [{points: PackedVector3Array (direções ao longo do eixo), width: float (m), main: bool}]
 var roads: Array[Dictionary] = []
 var _road_grid := {} # célula -> [[ponto (m), meia largura]]
@@ -40,9 +48,20 @@ func _index_road(points: PackedVector3Array, width: float) -> void:
 			_road_grid[k] = []
 		_road_grid[k].append([p, width * 0.5])
 
-func add_road(points: PackedVector3Array, width: float, main: bool) -> void:
-	roads.append({"points": points, "width": width, "main": main})
+func add_road(points: PackedVector3Array, width: float, main: bool, closed := false) -> void:
+	roads.append({"points": points, "width": width, "main": main, "closed": closed})
 	_index_road(points, width)
+
+func add_dirt_patch(dir: Vector3, radius_m: float, yaw: float, shape: int) -> void:
+	dirt_patches.append({"dir": dir, "radius": radius_m, "yaw": yaw, "shape": shape})
+	_index_road(PackedVector3Array([dir]), radius_m * 2.0) # meia largura = raio da mancha
+
+## Ponto a `metres` de `from` na direção de `toward` (ao longo da superfície).
+func toward_point(from: Vector3, toward: Vector3, metres: float) -> Vector3:
+	var t := toward - from * toward.dot(from)
+	if t.length() < 0.0001:
+		t = SphereMath.basis_from_up(from).z
+	return (from + t.normalized() * tan(metres / radius)).normalized()
 
 ## Relva procedimental (tufos leves): direção, tamanho e rotação de cada tufo.
 var turf_dirs := PackedVector3Array()

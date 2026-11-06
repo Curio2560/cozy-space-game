@@ -39,6 +39,7 @@ func build(d: PlanetData) -> void:
 	add_child(body)
 	_build_terrain()
 	_build_roads()
+	_build_dirt()
 	_build_props()
 	_build_turf()
 	_build_spots()
@@ -61,7 +62,7 @@ const ROAD_SHADER := preload("res://shaders/road.gdshader")
 static var _road_mat: ShaderMaterial
 
 ## Estradas: uma faixa por estrada (5 vértices de largura) que segue o relevo, ligeiramente
-## acima do chão. A textura (cascalho, marcas de rodas, bermas irregulares) vem do shader
+## acima do chão. A textura (terra, pedrinhas, bermas irregulares) vem do shader
 ## de estrada. Tudo numa só malha.
 func _build_roads() -> void:
 	if data.roads.is_empty():
@@ -73,12 +74,17 @@ func _build_roads() -> void:
 	var uvs := PackedVector2Array()
 	var idx := PackedInt32Array()
 	var w := ROAD_ACROSS.size()
+	var road_i := 0
 	for road in data.roads:
 		var pts: PackedVector3Array = road.points
+		var lift := ROAD_LIFT
+		road_i += 1
+		if road.get("closed", false):
+			pts = pts.duplicate()
+			pts.append(pts[0]) # fecha a volta
 		var hw: float = road.width * 0.5
 		var base := verts.size()
 		var along := 0.0
-		var flag := 1.0 if road.main else 0.0 # marcas de rodas só nas principais
 		for i in pts.size():
 			if i > 0:
 				along += data.arc_m(pts[i - 1], pts[i])
@@ -88,9 +94,9 @@ func _build_roads() -> void:
 			var side := p.cross(t).normalized()
 			for k in w:
 				var q: Vector3 = (p + side * (float(ROAD_ACROSS[k]) * hw / data.radius)).normalized()
-				verts.append(data.surface_point(q) + q * ROAD_LIFT)
-				norms.append(data.normal_at(q))
-				cols.append(Color(col.r, col.g, col.b, flag))
+				verts.append(data.surface_point(q) + q * lift)
+				norms.append(q) # normal "para cima": estradas sobrepostas com a mesma luz
+				cols.append(col)
 				uvs.append(Vector2((float(ROAD_ACROSS[k]) + 1.0) * 0.5, along))
 		for i in pts.size() - 1:
 			for k in w - 1:
@@ -121,6 +127,80 @@ func _build_roads() -> void:
 	roads_mesh.material_override = _road_mat
 	roads_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(roads_mesh)
+
+var dirt_mesh: MeshInstance3D
+const DIRT_RINGS := [0.35, 0.7, 1.0]
+const DIRT_SEGMENTS := 20
+
+## Manchas de terra: discos irregulares que seguem o relevo (como as estradas), com o mesmo
+## shader de terra. UV.x vai de 0,5 no centro a 0 na borda (borda irregular do shader).
+func _build_dirt() -> void:
+	if data.dirt_patches.is_empty():
+		return
+	var col: Color = PlanetGenerator.BIOMES[data.biome].palette.get("Road", Color("d9c49b"))
+	col = Color(col.r * 0.94, col.g * 0.92, col.b * 0.9)
+	var verts := PackedVector3Array()
+	var norms := PackedVector3Array()
+	var cols := PackedColorArray()
+	var uvs := PackedVector2Array()
+	var idx := PackedInt32Array()
+	for patch in data.dirt_patches:
+		var center: Vector3 = patch.dir
+		var b := SphereMath.basis_from_up(center, patch.yaw)
+		var rng := RandomNumberGenerator.new()
+		rng.seed = int(patch.shape) * 97 + 13
+		var radii := PackedFloat32Array()
+		for k in DIRT_SEGMENTS:
+			radii.append(rng.randf_range(0.65, 1.0)) # forma irregular
+		var base := verts.size()
+		verts.append(data.surface_point(center) + center * ROAD_LIFT)
+		norms.append(center)
+		cols.append(col)
+		uvs.append(Vector2(0.5, 0.0))
+		for ring in DIRT_RINGS.size():
+			var rr: float = DIRT_RINGS[ring]
+			for k in DIRT_SEGMENTS:
+				var ang := TAU * k / DIRT_SEGMENTS
+				var off := (b.x * cos(ang) + b.z * sin(ang)) * (float(patch.radius) * rr * radii[k] / data.radius)
+				var q := (center + off).normalized()
+				verts.append(data.surface_point(q) + q * ROAD_LIFT)
+				norms.append(q)
+				cols.append(col)
+				uvs.append(Vector2(0.5 * (1.0 - rr), ang * float(patch.radius)))
+		for k in DIRT_SEGMENTS:
+			var k2 := (k + 1) % DIRT_SEGMENTS
+			_tri(idx, verts, base, base + 1 + k, base + 1 + k2)
+			for ring in DIRT_RINGS.size() - 1:
+				var a := base + 1 + ring * DIRT_SEGMENTS
+				var c := a + DIRT_SEGMENTS
+				_tri(idx, verts, a + k, c + k, c + k2)
+				_tri(idx, verts, a + k, c + k2, a + k2)
+	var arrays := []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = verts
+	arrays[Mesh.ARRAY_NORMAL] = norms
+	arrays[Mesh.ARRAY_COLOR] = cols
+	arrays[Mesh.ARRAY_TEX_UV] = uvs
+	arrays[Mesh.ARRAY_INDEX] = idx
+	var mesh := ArrayMesh.new()
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	if _road_mat == null:
+		_road_mat = ShaderMaterial.new()
+		_road_mat.shader = ROAD_SHADER
+	dirt_mesh = MeshInstance3D.new()
+	dirt_mesh.name = "Dirt"
+	dirt_mesh.mesh = mesh
+	dirt_mesh.material_override = _road_mat
+	dirt_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(dirt_mesh)
+
+## Triângulo com a face da frente virada para fora do planeta (sentido horário visto de fora).
+static func _tri(idx: PackedInt32Array, verts: PackedVector3Array, a: int, b: int, c: int) -> void:
+	var n := (verts[b] - verts[a]).cross(verts[c] - verts[a])
+	if n.dot(verts[a]) < 0.0:
+		idx.append_array([a, b, c])
+	else:
+		idx.append_array([a, c, b])
 
 func turf_instance_count() -> int:
 	return _turf_count
@@ -311,15 +391,24 @@ func _add_collider(p: Dictionary) -> void:
 
 func _build_spots() -> void:
 	for i in data.posts.size():
-		_place_model(POST_MODEL, data.posts[i], 3.0, "Post%d" % i)
+		var door: Vector3 = data.post_doors[i] if i < data.post_doors.size() else Vector3.ZERO
+		_place_model(POST_MODEL, data.posts[i], 3.0, "Post%d" % i, door)
 	_place_model(OUTPOST_MODEL, data.outpost_dir, 4.5, "Outpost")
-	_place_model(LAIR_MODEL, data.lair_dir, 4.0, "Lair")
+	_place_model(LAIR_MODEL, data.lair_dir, 4.0, "Lair", data.lair_door)
 
-func _place_model(kit_path: String, dir: Vector3, height: float, node_name: String) -> Node3D:
+## `face`: direção (espaço do planeta) para onde a frente (+Z) do modelo fica virada — a estrada.
+func _place_model(kit_path: String, dir: Vector3, height: float, node_name: String, face := Vector3.ZERO) -> Node3D:
 	var holder := Node3D.new()
 	holder.name = node_name
 	add_child(holder)
-	holder.transform = Transform3D(SphereMath.basis_from_up(dir), data.surface_point(dir))
+	var b := SphereMath.basis_from_up(dir)
+	if face != Vector3.ZERO:
+		var f := face - dir * face.dot(dir)
+		if f.length() > 0.0001:
+			var z := f.normalized()
+			var x := dir.cross(z).normalized()
+			b = Basis(x, dir, x.cross(dir)).orthonormalized()
+	holder.transform = Transform3D(b, data.surface_point(dir))
 	var m: Node3D = (load("res://assets/kit/" + kit_path + ".gltf") as PackedScene).instantiate()
 	holder.add_child(m)
 	KitUtil.fit_height(m, height)

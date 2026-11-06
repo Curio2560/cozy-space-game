@@ -1,8 +1,9 @@
-// Estrada de terra batida: cascalho, marcas de rodas (só nas principais: COLOR.a = 1), bermas
-// irregulares que se misturam com o chão, e cel-shading igual ao terreno.
+// Estrada de terra batida: manchas de terra, pedrinhas e bermas irregulares que se misturam com
+// o chão, e cel-shading igual ao terreno. (As marcas de rodas são deixadas pelo rover.)
 // UV.x = de berma a berma (0..1); UV.y = metros ao longo da estrada.
 shader_type spatial;
-render_mode diffuse_lambert, specular_disabled;
+// Sem escrever profundidade: estradas sobrepostas (cruzamentos) fundem-se sem "piscar".
+render_mode diffuse_lambert, specular_disabled, depth_draw_never;
 
 uniform float band_lit = 0.35;
 uniform float band_mid = -0.05;
@@ -36,7 +37,7 @@ void fragment() {
 	}
 	vec3 c = COLOR.rgb;
 	// Berma mais escura, a clarear para o meio.
-	c *= mix(0.78, 1.0, smoothstep(ragged, ragged + 0.14, edge));
+	c *= mix(0.93, 1.0, smoothstep(ragged, ragged + 0.1, edge)); // suave: nos cruzamentos não se nota
 	// Terra: manchas suaves (ruído de baixa frequência).
 	float mottle = vnoise2(vec2(UV.x * 3.0, UV.y * 0.35)) * 0.6 + vnoise2(vec2(UV.x * 9.0, UV.y * 1.1)) * 0.4;
 	c *= 0.9 + 0.2 * mottle;
@@ -48,9 +49,6 @@ void fragment() {
 	float dot_d = length((fract(q) - centre) * vec2(1.0, 1.0));
 	float pebble = (1.0 - smoothstep(r * 0.8, r, dot_d)) * step(0.6, hash(cell + 2.7));
 	c = mix(c, c * (hash(cell + 5.5) > 0.5 ? 1.22 : 0.8), pebble * 0.7);
-	// Marcas de rodas (principais).
-	float rut = (1.0 - smoothstep(0.025, 0.06, abs(UV.x - 0.32))) + (1.0 - smoothstep(0.025, 0.06, abs(UV.x - 0.68)));
-	c *= 1.0 - 0.2 * rut * COLOR.a;
 	ALBEDO = c;
 	ROUGHNESS = 1.0;
 }

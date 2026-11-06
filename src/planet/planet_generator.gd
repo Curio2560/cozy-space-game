@@ -18,6 +18,7 @@ const MAX_SLOPE_DEG := 28.0
 ## (escala com a área); size = altura em m [min, max]; clear = raio livre em m.
 const BIOMES := {
 	"prado": {
+		"dirt": 140,
 		"ground": Color("8fd3a0"),
 		"turf": {"density": 0.9, "size": [0.35, 0.75]},
 		"creatures": 16,
@@ -52,6 +53,7 @@ const BIOMES := {
 		],
 	},
 	"acido": {
+		"dirt": 120,
 		"ground": Color("8a7bb8"),
 		"turf": {"density": 0.6, "size": [0.3, 0.65]},
 		"creatures": 20,
@@ -84,6 +86,7 @@ const BIOMES := {
 		],
 	},
 	"lava": {
+		"dirt": 170,
 		"ground": Color("6e4a4e"),
 		"turf": {"density": 0.16, "size": [0.25, 0.45]},
 		"creatures": 20,
@@ -134,6 +137,7 @@ static func generate(p_seed: int, biome := "prado", radius := DEFAULT_RADIUS) ->
 
 	_place_spots(d, rng, spin)
 	_place_roads(d, rng)
+	_place_dirt(d, b, rng)
 	_place_props(d, b, rng, spin)
 	_place_turf(d, b, p_seed)
 	return d
@@ -141,14 +145,11 @@ static func generate(p_seed: int, biome := "prado", radius := DEFAULT_RADIUS) ->
 const MAIN_ROAD_WIDTH := 4.5
 const SIDE_ROAD_WIDTH := 2.6
 const ROAD_STEP_M := 2.0
-
-## Rede de estradas: principais do posto avançado a cada posto e entre postos (com curvas);
-## secundárias mais estreitas que saem das principais (para o covil, clareiras, becos).
 const PATH_WIDTH := 2.0
 const SIDE_ROADS := 12
 const PATHS := 8
 const CONNECTORS := 3
-## Meia diagonal (m) das estruturas, para as estradas pararem à porta e as contornarem.
+## Meia diagonal (m) das estruturas, para as estradas passarem à porta e as contornarem.
 const STRUCT_RADIUS := {"post": 2.2, "outpost": 5.6, "lair": 2.4}
 
 ## Estruturas do planeta: [[direção, raio (m)], …].
@@ -160,18 +161,32 @@ static func structures(d: PlanetData) -> Array:
 	out.append([d.lair_dir, STRUCT_RADIUS.lair])
 	return out
 
-## Rede de estradas:
-## - principais (base → cada posto, posto → posto) com curvas, a acabar à porta das estruturas;
-## - secundárias que saem das principais, caminhos que saem das secundárias, e ligações entre
-##   estradas principais diferentes; uma secundária vai até ao covil.
+## Rede de estradas (estilo Google Earth: as estradas passam em frente às casas):
+## - uma volta principal que passa à porta dos 3 postos;
+## - uma praça circular à volta do posto avançado, de onde saem estradas para a porta de cada posto;
+## - secundárias que saem das principais (uma até à porta do covil), caminhos que saem das
+##   secundárias e ligações entre estradas principais.
 ## Nenhuma estrada passa por cima de uma estrutura.
 static func _place_roads(d: PlanetData, rng: RandomNumberGenerator) -> void:
+	var hw := MAIN_ROAD_WIDTH * 0.5
 	for p in d.posts:
-		d.add_road(_road(d, d.outpost_dir, p, rng, 7.0, MAIN_ROAD_WIDTH, true, true), MAIN_ROAD_WIDTH, true)
+		d.post_doors.append(d.toward_point(p, d.outpost_dir, STRUCT_RADIUS.post + hw + 1.2))
+	# Volta principal pelas portas dos postos.
 	for i in d.posts.size():
-		d.add_road(_road(d, d.posts[i], d.posts[(i + 1) % d.posts.size()], rng, 7.0, MAIN_ROAD_WIDTH, true, true), MAIN_ROAD_WIDTH, true)
+		var a := d.post_doors[i]
+		var b := d.post_doors[(i + 1) % d.posts.size()]
+		d.add_road(_road(d, a, b, rng, 7.0, MAIN_ROAD_WIDTH), MAIN_ROAD_WIDTH, true)
+	# Praça à volta da base e estradas da praça para cada posto.
+	d.plaza_radius_m = STRUCT_RADIUS.outpost + hw + 2.5
+	d.add_road(_ring(d, d.outpost_dir, d.plaza_radius_m), MAIN_ROAD_WIDTH, true, true)
+	for door in d.post_doors:
+		var start := d.toward_point(d.outpost_dir, door, d.plaza_radius_m)
+		d.add_road(_road(d, start, door, rng, 6.0, MAIN_ROAD_WIDTH), MAIN_ROAD_WIDTH, true)
 	var mains := d.roads.duplicate()
-	d.add_road(_road(d, _nearest_road_point(d, d.lair_dir), d.lair_dir, rng, 4.0, SIDE_ROAD_WIDTH, false, true), SIDE_ROAD_WIDTH, false)
+	# Covil: a sua porta fica virada para a estrada principal mais próxima.
+	var near := _nearest_road_point(d, d.lair_dir)
+	d.lair_door = d.toward_point(d.lair_dir, near, STRUCT_RADIUS.lair + SIDE_ROAD_WIDTH * 0.5 + 1.0)
+	d.add_road(_road(d, near, d.lair_door, rng, 4.0, SIDE_ROAD_WIDTH), SIDE_ROAD_WIDTH, false)
 	for i in SIDE_ROADS:
 		_add_branch(d, mains, rng, 25.0, 70.0, SIDE_ROAD_WIDTH)
 	var sides := d.roads.filter(func(r: Dictionary) -> bool: return not r.main)
@@ -185,7 +200,39 @@ static func _place_roads(d: PlanetData, rng: RandomNumberGenerator) -> void:
 		var pa: Vector3 = _mid_point(ra.points, rng)
 		var pb: Vector3 = _mid_point(rb.points, rng)
 		if d.arc_m(pa, pb) > 15.0 and d.arc_m(pa, pb) < 90.0:
-			d.add_road(_road(d, pa, pb, rng, 6.0, SIDE_ROAD_WIDTH, false, false), SIDE_ROAD_WIDTH, false)
+			d.add_road(_road(d, pa, pb, rng, 6.0, SIDE_ROAD_WIDTH), SIDE_ROAD_WIDTH, false)
+
+## Manchas de terra gasta fora das estradas: a maioria junto às estradas, algumas à volta das
+## estruturas, as restantes espalhadas. Nada cresce em cima delas.
+static func _place_dirt(d: PlanetData, b: Dictionary, rng: RandomNumberGenerator) -> void:
+	var n := int(round(float(b.get("dirt", 140)) * pow(d.radius / DEFAULT_RADIUS, 2.0)))
+	var structs := structures(d)
+	for i in n:
+		var r := rng.randf_range(1.2, 3.5)
+		var roll := rng.randf()
+		var dir: Vector3
+		if roll < 0.55 and not d.roads.is_empty():
+			var road: Dictionary = d.roads[rng.randi() % d.roads.size()]
+			var pts: PackedVector3Array = road.points
+			var p := pts[rng.randi() % pts.size()]
+			var side := SphereMath.basis_from_up(p, rng.randf() * TAU).z
+			dir = (p + side * tan((road.width * 0.5 + rng.randf_range(0.5, 4.0)) / d.radius)).normalized()
+		elif roll < 0.8:
+			var st: Array = structs[rng.randi() % structs.size()]
+			var side2 := SphereMath.basis_from_up(st[0], rng.randf() * TAU).z
+			dir = ((st[0] as Vector3) + side2 * tan(((st[1] as float) + rng.randf_range(2.0, 7.0)) / d.radius)).normalized()
+		else:
+			dir = Vector3(rng.randfn(), rng.randfn(), rng.randfn()).normalized()
+		d.add_dirt_patch(dir, r, rng.randf() * TAU, rng.randi() % 4)
+
+## Círculo de raio `metres` à volta de `center` (estrada fechada).
+static func _ring(d: PlanetData, center: Vector3, metres: float) -> PackedVector3Array:
+	var out := PackedVector3Array()
+	var start := d.toward_point(center, SphereMath.basis_from_up(center).z + center, metres)
+	var n := maxi(12, int(TAU * metres / ROAD_STEP_M))
+	for i in n:
+		out.append(start.rotated(center, TAU * i / n).normalized())
+	return out
 
 static func _mid_point(pts: PackedVector3Array, rng: RandomNumberGenerator) -> Vector3:
 	return pts[rng.randi_range(int(pts.size() * 0.2), int(pts.size() * 0.8))]
@@ -204,49 +251,36 @@ static func _add_branch(d: PlanetData, parents: Array, rng: RandomNumberGenerato
 	var side := from.cross(tangent).normalized() * (1.0 if rng.randf() < 0.5 else -1.0)
 	var length := rng.randf_range(min_m, max_m) / d.radius
 	var to := (from + (side + tangent * rng.randf_range(-0.6, 0.6)).normalized() * tan(length)).normalized()
-	var path := _road(d, from, to, rng, 3.5, width, false, false)
+	var path := _road(d, from, to, rng, 3.5, width)
 	if path.size() >= 3:
 		d.add_road(path, width, false)
 
-## Estrada de `a` a `b`: caminho com curvas, desviado das estruturas pelo meio, e cortado à porta
-## das estruturas nas pontas (`trim_a`/`trim_b`).
-static func _road(d: PlanetData, a: Vector3, b: Vector3, rng: RandomNumberGenerator, wiggle_m: float, width: float, trim_a: bool, trim_b: bool) -> PackedVector3Array:
+## Estrada de `a` a `b`: caminho com curvas e desviado de todas as estruturas.
+static func _road(d: PlanetData, a: Vector3, b: Vector3, rng: RandomNumberGenerator, wiggle_m: float, width: float) -> PackedVector3Array:
 	var path := road_path(d, a, b, rng, wiggle_m)
-	var structs := structures(d)
 	var hw := width * 0.5
-	# Desviar de estruturas que não são as pontas.
-	for i in path.size():
-		var p := path[i]
-		for st in structs:
-			var sd: Vector3 = st[0]
-			if sd.angle_to(a) < 0.001 or sd.angle_to(b) < 0.001:
-				continue
-			var need: float = (st[1] + hw + 1.5) / d.radius
-			var ang := p.angle_to(sd)
-			if ang < need:
-				var away := (p - sd * p.dot(sd))
-				if away.length() < 0.0001:
-					away = sd.cross(Vector3.UP if absf(sd.y) < 0.9 else Vector3.RIGHT)
-				p = (sd + away.normalized() * tan(need)).normalized() # empurra para fora
-		path[i] = p
-	# Cortar à porta das estruturas nas pontas.
-	var out := PackedVector3Array()
-	var stop_a := _door_distance(d, a) if trim_a else 0.0
-	var stop_b := _door_distance(d, b) if trim_b else 0.0
-	for p in path:
-		if stop_a > 0.0 and d.arc_m(p, a) < stop_a:
-			continue
-		if stop_b > 0.0 and d.arc_m(p, b) < stop_b:
-			continue
-		out.append(p)
-	return out
+	for k in 2: # duas passagens resolvem estruturas próximas umas das outras
+		for i in path.size():
+			var p := path[i]
+			for st in structures(d):
+				var sd: Vector3 = st[0]
+				var need: float = (st[1] + hw + 0.8) / d.radius
+				if p.angle_to(sd) < need:
+					var away := p - sd * p.dot(sd)
+					if away.length() < 0.0001:
+						away = SphereMath.basis_from_up(sd).x
+					p = (sd + away.normalized() * tan(need)).normalized() # empurra para fora
+			path[i] = p
+	return _smooth(path, 2)
 
-## Distância (m) do centro de uma estrutura até onde a estrada acaba (a "porta").
-static func _door_distance(d: PlanetData, dir: Vector3) -> float:
-	for st in structures(d):
-		if (st[0] as Vector3).angle_to(dir) < 0.001:
-			return st[1] + 1.3
-	return 0.0
+## Suaviza um caminho (média com os vizinhos), mantendo as pontas.
+static func _smooth(path: PackedVector3Array, passes: int) -> PackedVector3Array:
+	for k in passes:
+		var out := path.duplicate()
+		for i in range(1, path.size() - 1):
+			out[i] = (path[i - 1] + path[i] * 2.0 + path[i + 1]).normalized()
+		path = out
+	return path
 
 static func _nearest_road_point(d: PlanetData, dir: Vector3) -> Vector3:
 	var best := Vector3.ZERO

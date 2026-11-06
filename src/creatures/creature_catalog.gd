@@ -34,11 +34,22 @@ static var _ids: Array = []
 static func ids() -> Array:
 	if _ids.is_empty():
 		for fam: String in FAMILIES:
-			var files := Array(DirAccess.get_files_at(DIR + fam)).filter(func(f: String) -> bool: return f.ends_with(".gltf"))
-			files.sort()
-			for f: String in files:
-				_ids.append(fam + "/" + f.get_basename())
+			for name in gltf_names(DirAccess.get_files_at(DIR + fam)):
+				_ids.append(fam + "/" + name)
 	return _ids
+
+## Nomes (sem extensão) dos modelos .gltf numa listagem de pasta. No APK exportado os .gltf
+## originais não existem: a pasta lista "X.gltf.import" (ou ".remap"), por isso aceitam-se os três.
+static func gltf_names(files: PackedStringArray) -> Array:
+	var out := []
+	for f in files:
+		var n := f.trim_suffix(".remap").trim_suffix(".import")
+		if n.ends_with(".gltf"):
+			n = n.trim_suffix(".gltf")
+			if n not in out:
+				out.append(n)
+	out.sort()
+	return out
 
 static func family(id: String) -> String:
 	return id.get_slice("/", 0)

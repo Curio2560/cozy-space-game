@@ -36,6 +36,8 @@ const ATTACK_DAMAGE := 8.0
 const ATTACK_ROVER_DAMAGE := 6.0
 const RAM_SPEED := 6.0 # o rover a esta velocidade atropela e afugenta
 var explosion: RoverExplosion
+var tracks: TireTracks
+var dust: CPUParticles3D
 var deliveries: DeliveryController
 
 func _ready() -> void:
@@ -65,6 +67,11 @@ func _ready() -> void:
 	rover.collision_mask = 1 | 2
 	add_child(rover)
 	rover.destroyed.connect(_on_rover_destroyed)
+	tracks = TireTracks.new()
+	tracks.name = "TireTracks"
+	add_child(tracks)
+	dust = _make_dust()
+	rover.add_child(dust)
 	_build_ui()
 	deliveries = DeliveryController.new()
 	deliveries.name = "Deliveries"
@@ -96,6 +103,12 @@ func _ready() -> void:
 		spawn_in_forest()
 	if "rocks" in args:
 		spawn_in_forest("rocks/")
+	if "post" in args: # junto ao primeiro posto, a olhar para a casa (capturas)
+		var door := planet.data.post_doors[0]
+		var back := planet.data.toward_point(door, planet.data.posts[0], -9.0)
+		teleport(back)
+		player.facing = (planet.to_global(planet.data.surface_point(planet.data.posts[0])) - player.global_position).normalized()
+		camera.set_target(player, player.facing)
 	if "monsters" in args: # traz algumas criaturas para perto (capturas)
 		var pd := planet.to_local(player.global_position).normalized()
 		var f := planet.global_basis.inverse() * (-camera.global_basis.z)
@@ -369,6 +382,53 @@ func _fade(to_alpha: float) -> void:
 func _exit_tree() -> void:
 	Engine.time_scale = 1.0
 
+## Pó que sai de trás do rover em velocidade.
+func _make_dust() -> CPUParticles3D:
+	var p := CPUParticles3D.new()
+	var sm := SphereMesh.new()
+	sm.radius = 0.25
+	sm.height = 0.5
+	sm.radial_segments = 6
+	sm.rings = 3
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.vertex_color_use_as_albedo = true
+	sm.material = mat
+	p.mesh = sm
+	p.amount = 36
+	p.lifetime = 1.3
+	p.local_coords = false
+	p.emitting = false
+	p.position = Vector3(0, 0.2, -1.3)
+	p.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
+	p.emission_box_extents = Vector3(1.0, 0.1, 0.2)
+	p.direction = Vector3(0, 0.6, -1)
+	p.spread = 35.0
+	p.initial_velocity_min = 0.6
+	p.initial_velocity_max = 1.6
+	p.gravity = Vector3.ZERO
+	var sc := Curve.new()
+	sc.add_point(Vector2(0.0, 0.5))
+	sc.add_point(Vector2(1.0, 2.2))
+	p.scale_amount_curve = sc
+	var g := Gradient.new()
+	g.set_color(0, Color(0.85, 0.74, 0.58, 0.55))
+	g.set_color(1, Color(0.85, 0.74, 0.58, 0.0))
+	p.color_ramp = g
+	return p
+
+## Rastos das rodas e pó (cada passo de física, se o rover se mexe).
+func _update_tracks() -> void:
+	var moving := rover.alive and rover.linear_velocity.length() > 1.0
+	for i in rover.wheel_hits.size():
+		var h = rover.wheel_hits[i]
+		if moving and h != null and h[0]:
+			tracks.mark(i, h[1], h[2], rover.linear_velocity)
+		else:
+			tracks.lift(i)
+	dust.emitting = rover.alive and rover.grounded_wheels >= 2 and rover.linear_velocity.length() > 4.0
+
 func rover_near_base() -> bool:
 	return rover.global_position.distance_to(planet.to_global(planet.data.surface_point(planet.data.outpost_dir))) < REPAIR_RADIUS
 
@@ -377,6 +437,7 @@ func _physics_process(delta: float) -> void:
 		rover.repair(REPAIR_RATE * delta)
 	bars.show_bar("rover", driving or rover.health < rover.max_health)
 	_check_rams()
+	_update_tracks()
 	if not respawning:
 		# A cabine do rover protege: lá dentro o O₂ não se gasta.
 		vitals.o2_drain = 0.0 if driving else o2_drain_here()
