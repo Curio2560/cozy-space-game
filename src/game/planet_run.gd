@@ -5,7 +5,12 @@ extends Node3D
 const ENTER_DISTANCE := 5.0
 const REPAIR_RADIUS := 16.0 # junto ao posto avançado
 const REPAIR_RATE := 20.0 # vida por segundo, parado junto à base
-const RESPAWN_DELAY := 2.6
+const WRECK_TIME := 4.2 # segundos (reais) a ver os destroços antes de escurecer
+const FADE_TIME := 0.5
+const SLOWMO := 0.4 # câmara lenta no início da explosão
+const SLOWMO_TIME := 0.9
+const RESPAWN_DELAY := WRECK_TIME + FADE_TIME * 2.0 # tempo total até voltar a jogar
+const CAM_WRECK := {"distance": 13.0, "pitch": -0.55, "focus_height": 1.0, "auto_return_delay": 999.0}
 const EXPLOSION := "res://assets/BinbunVFX_Vol2/ExplosionFX/effects/ground/vfx_ground_explosion_01.tscn"
 const CAM_FOOT := {"distance": 6.5, "pitch": -0.42, "focus_height": 1.2, "auto_return_delay": 1.6}
 const CAM_ROVER := {"distance": 9.5, "pitch": -0.36, "focus_height": 1.6, "auto_return_delay": 0.35}
@@ -189,18 +194,27 @@ func _apply_camera(profile: Dictionary) -> void:
 	for k: String in profile:
 		camera.set(k, profile[k])
 
-## Explosão do rover: efeito, a encomenda falha e, passado um pouco, renasces na base
-## com o rover reparado.
+## Explosão do rover: um momento para ver. Câmara lenta, o carro salta carbonizado, a câmara
+## afasta-se; depois o ecrã escurece, renasces na base com o rover novo e o ecrã volta a clarear.
+## A encomenda em curso falha.
 func _on_rover_destroyed() -> void:
 	respawning = true
 	spawn_explosion(rover.global_position, rover.planet_up())
-	rover.visible = false
-	rover.freeze = true
+	rover.wreck()
+	if driving:
+		camera.set_target(rover, rover.forward())
+	_apply_camera(CAM_WRECK)
+	camera.target_facing = Callable()
+	deliveries.hud.toast(tr("TOAST_ROVER_EXPLODED"))
 	if deliveries.session and deliveries.session.fail_active():
-		deliveries.hud.toast(tr("TOAST_ORDER_LOST"))
-	await get_tree().create_timer(RESPAWN_DELAY).timeout
+		deliveries.hud.toast(tr("TOAST_ROVER_EXPLODED") + "\n" + tr("TOAST_ORDER_LOST"))
+	Engine.time_scale = SLOWMO
+	await _real_seconds(SLOWMO_TIME)
+	Engine.time_scale = 1.0
+	await _real_seconds(WRECK_TIME - SLOWMO_TIME)
 	if not is_inside_tree():
 		return
+	await _fade(1.0)
 	if driving:
 		driving = false
 		rover.driven = false
@@ -211,7 +225,22 @@ func _on_rover_destroyed() -> void:
 	spawn_near(planet.data.outpost_dir, planet.data.posts[0], 9.0)
 	rover.restore()
 	_park_rover_near_player()
+	await _fade(0.0)
 	respawning = false
+
+func _real_seconds(t: float) -> void:
+	await get_tree().create_timer(t, true, false, true).timeout
+
+var _fade_rect: ColorRect
+
+## Escurece (1.0) ou clareia (0.0) o ecrã.
+func _fade(to_alpha: float) -> void:
+	var tw := create_tween().set_ignore_time_scale(true)
+	tw.tween_property(_fade_rect, "color:a", to_alpha, FADE_TIME)
+	await tw.finished
+
+func _exit_tree() -> void:
+	Engine.time_scale = 1.0
 
 func spawn_explosion(pos: Vector3, up: Vector3) -> Node3D:
 	var fx: Node3D = (load(EXPLOSION) as PackedScene).instantiate()
@@ -314,6 +343,14 @@ func _build_ui() -> void:
 	back.custom_minimum_size = Vector2(160, 64)
 	back.pressed.connect(func() -> void: get_tree().change_scene_to_file("res://scenes/ui/boot.tscn"))
 	hud.add_child(back)
+	var fade_layer := CanvasLayer.new()
+	fade_layer.layer = 50
+	add_child(fade_layer)
+	_fade_rect = ColorRect.new()
+	_fade_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_fade_rect.color = Color(0.08, 0.05, 0.12, 0.0)
+	_fade_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	fade_layer.add_child(_fade_rect)
 	_hint = Label.new()
 	_hint.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
 	_hint.grow_horizontal = Control.GROW_DIRECTION_BOTH

@@ -201,6 +201,16 @@ func repair(amount: float) -> void:
 	health = minf(health + amount, max_health)
 	health_changed.emit(health, max_health)
 
+## Destroços: o rover salta pelo ar a rodopiar e fica carbonizado (para se ver a explosão).
+func wreck() -> void:
+	driven = false
+	throttle = 0.0
+	steer = 0.0
+	_set_charred(true)
+	var u := planet_up()
+	apply_central_impulse(u * mass * 9.0 + forward() * mass * 1.5)
+	apply_torque_impulse((global_basis.x * 1.2 + global_basis.z * 0.6) * mass * 2.5)
+
 ## Volta a pôr o rover inteiro (depois de explodir).
 func restore() -> void:
 	alive = true
@@ -208,7 +218,26 @@ func restore() -> void:
 	_bump_cd = 1.0
 	visible = true
 	freeze = false
+	_set_charred(false)
 	health_changed.emit(health, max_health)
+
+static var _char_mat: StandardMaterial3D
+
+func is_charred() -> bool:
+	return has_meta(&"charred")
+
+func _set_charred(on: bool) -> void:
+	if _char_mat == null:
+		_char_mat = StandardMaterial3D.new()
+		_char_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		_char_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		_char_mat.albedo_color = Color(0.08, 0.05, 0.06, 0.72)
+	for mi in find_children("*", "MeshInstance3D", true, false):
+		(mi as MeshInstance3D).material_overlay = _char_mat if on else null
+	if on:
+		set_meta(&"charred", true)
+	elif has_meta(&"charred"):
+		remove_meta(&"charred")
 
 func _check_flip(delta: float, u: Vector3) -> void:
 	if global_basis.y.normalized().dot(u) < 0.35 and linear_velocity.length() < 4.0:

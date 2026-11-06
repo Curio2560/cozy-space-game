@@ -50,3 +50,4 @@ DBG_ROVER_SPIN,Rover spin damping,Travão de rotação do rover
 DBG_ROVER_AIR,Rover air alignment,Alinhamento no ar
 DBG_SKY_BRIGHT,Sky brightness,Brilho do céu
 DBG_SKY_NEBULA,Nebula strength,Intensidade da nebulosa
+TOAST_ROVER_EXPLODED,The rover exploded!,O rover explodiu!

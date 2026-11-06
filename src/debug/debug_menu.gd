@@ -135,7 +135,11 @@ func add_label(owner_node: Node, getter: Callable) -> Control:
 		return null
 	var l := Label.new()
 	l.add_theme_font_size_override("font_size", 20)
-	_labels.append([l, getter])
+	var pair := [l, getter]
+	_labels.append(pair)
+	# Deixar de chamar o getter logo que o dono sai (não esperar pelo queue_free da linha).
+	if owner_node != self:
+		owner_node.tree_exiting.connect(func() -> void: _labels.erase(pair), CONNECT_ONE_SHOT)
 	return _add(owner_node, l)
 
 func _add(owner_node: Node, c: Control) -> Control:
