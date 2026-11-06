@@ -16,6 +16,8 @@ var rover: Rover
 var driving := false
 var _vehicle_btn := JumpBuffer.new()
 var _hint: Label
+var wallet := Wallet.new()
+var deliveries: DeliveryController
 
 func _ready() -> void:
 	for a in OS.get_cmdline_user_args():
@@ -42,9 +44,23 @@ func _ready() -> void:
 	rover.collision_mask = 1 | 2
 	add_child(rover)
 	_build_ui()
+	deliveries = DeliveryController.new()
+	deliveries.name = "Deliveries"
+	add_child(deliveries)
+	deliveries.setup(self, wallet, _hud_layer)
 	start(seed_value)
 	_register_debug()
-	if "drive" in OS.get_cmdline_user_args(): # só para capturas de ecrã no PC
+	var args := OS.get_cmdline_user_args() # argumentos só para capturas de ecrã no PC
+	if "board" in args:
+		deliveries.open_board()
+	if "order" in args:
+		var o: DeliveryOrder = deliveries.session.offers[0]
+		deliveries.accept(o)
+		deliveries.session.pick_up()
+		deliveries.session.tick(12.0)
+		_vehicle_btn = JumpBuffer.new()
+		enter_rover()
+	if "drive" in args:
 		await get_tree().create_timer(0.5).timeout
 		enter_rover()
 		Input.action_press("move_forward", 1.0)
@@ -61,6 +77,8 @@ func start(s: int) -> void:
 		exit_rover()
 	spawn_near(planet.data.outpost_dir, planet.data.posts[0], 9.0)
 	_park_rover_near_player()
+	if deliveries:
+		deliveries.start_planet(planet.data)
 
 ## Coloca o jogador a `arc_m` metros de `dir`, na direção de `toward`.
 func spawn_near(dir: Vector3, toward: Vector3, arc_m: float) -> void:
@@ -130,7 +148,7 @@ func _apply_camera(profile: Dictionary) -> void:
 
 func _physics_process(delta: float) -> void:
 	_vehicle_btn.update(Input.is_action_pressed("vehicle"), delta)
-	if _vehicle_btn.consume():
+	if _vehicle_btn.consume() and not deliveries.board_open:
 		if driving:
 			exit_rover()
 		elif can_enter_rover():
@@ -139,7 +157,9 @@ func _physics_process(delta: float) -> void:
 		var m := InputHub.move_vector()
 		rover.throttle = m.y
 		rover.steer = m.x
-	_hint.text = tr("HINT_EXIT_ROVER") if driving else (tr("HINT_ENTER_ROVER") if can_enter_rover() else "")
+	var h := tr("HINT_EXIT_ROVER") if driving else (tr("HINT_ENTER_ROVER") if can_enter_rover() else "")
+	var dh := deliveries.hint()
+	_hint.text = "" if deliveries.board_open else (dh if dh != "" and not driving else (h if h != "" else dh))
 
 func _build_world() -> void:
 	var env := Environment.new()
@@ -163,8 +183,11 @@ func _process(_delta: float) -> void:
 	var light_dir := -(u * 0.75 + side * 0.45 + camera.global_basis.z * 0.25).normalized()
 	sun.look_at_from_position(Vector3.ZERO, light_dir, u if absf(light_dir.dot(u)) < 0.99 else side)
 
+var _hud_layer: CanvasLayer
+
 func _build_ui() -> void:
 	var hud := CanvasLayer.new()
+	_hud_layer = hud
 	add_child(hud)
 	touch = TouchControls.new()
 	hud.add_child(touch)
@@ -206,6 +229,7 @@ func _register_debug() -> void:
 	DebugMenu.add_slider(self, "DBG_ROVER_SPEED", 6.0, 30.0, 1.0, rover.max_speed, func(v: float) -> void: rover.max_speed = v)
 	DebugMenu.add_slider(self, "DBG_ROVER_TURN", 0.8, 4.0, 0.1, rover.turn_rate, func(v: float) -> void: rover.turn_rate = v)
 	DebugMenu.add_slider(self, "DBG_ROVER_SPRING", 2000.0, 9000.0, 100.0, rover.spring_k, func(v: float) -> void: rover.spring_k = v)
+	DebugMenu.add_button(self, "DBG_ADD_CREDITS", func() -> void: wallet.add(Wallet.CREDITS, 500))
 	DebugMenu.add_button(self, "DBG_ROVER_HERE", func() -> void:
 		if driving:
 			exit_rover()

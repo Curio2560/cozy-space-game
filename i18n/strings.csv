@@ -26,3 +26,15 @@ DBG_ROVER_SPEED,Rover top speed,Velocidade máx. do rover
 DBG_ROVER_TURN,Rover steering,Direção do rover
 DBG_ROVER_SPRING,Rover suspension,Suspensão do rover
 DBG_ROVER_HERE,Bring rover here,Trazer o rover para aqui
+BOARD_TITLE,Delivery board,Quadro de encomendas
+BOARD_ACCEPT,Accept,Aceitar
+BOARD_BUSY,Finish your current delivery first.,Acaba primeiro a entrega atual.
+UI_CLOSE,Close,Fechar
+HINT_BOARD,Tap Action to see deliveries,Toca em Ação para ver as encomendas
+"HUD_PICKUP","Pick up the box at %s's · %d m","Apanhar a caixa em casa de %s · %d m"
+"HUD_DELIVER","Deliver to %s · %d m · %s","Entregar a %s · %d m · %s"
+TOAST_ACCEPTED,Box waiting at %s's,Caixa à espera em casa de %s
+TOAST_PICKED,Box picked up!,Caixa apanhada!
+TOAST_DELIVERED,+%d ¢ on time!,+%d ¢ a tempo!
+TOAST_DELIVERED_LATE,+%d ¢ (late),+%d ¢ (atrasada)
+DBG_ADD_CREDITS,+500 credits,+500 créditos
