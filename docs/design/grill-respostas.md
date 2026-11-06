@@ -25,3 +25,24 @@
 22. Sem monetização por agora.
 23. Fluxo igual ao Deriva Estelar: issues + milestones por fase, ramo + PR por fase com merge sem esperar, APK local, release debug por fase e quando há correções.
 24. Sem multijogador.
+
+## Ronda 2 (06 nov 2026) — todas as recomendadas
+1. Biomas iniciais: Prado (tutorial), Ácido (rios tóxicos, bolhas de O₂), Lava (calor abranda o rover).
+2. Covil do boss: abre com KeyCards ganhos em X entregas importantes; sem limite de dias.
+3. Luta com o boss no mech, numa arena perto do covil (mesmo combate da noite).
+4. Encomendas: normal, urgente, frágil, perecível (colheitas da quinta).
+5. Clientes: colonos com nome e casinha, com reputação (contentes → pedem mais, pagam melhor).
+6. Tripulação: Barbara (abelha) quinta · Fernando (flamingo) salto/agilidade a pé · Finn (sapo) resiste a ácido/toxinas · Rae (panda-vermelho) condução/rover.
+7. Troca de tripulante só na base/nave-mãe, ao preparar o dia.
+8. XP só para o tripulante ativo; cada nível melhora a sua vantagem.
+9. Cada tripulante tem o seu mech do kit (mesmo animal); upgrades do mech partilhados.
+10. Mechs ajudantes (pack do utilizador): desbloqueados por pesquisa na nave-mãe (item avançado).
+11. Ajudantes: de dia regam e colhem a quinta; à noite defendem como torres móveis com IA simples.
+12. Nave: transição animada (descolar → mapa da galáxia → aterrar), sem pilotagem.
+13. Posto avançado: slots fixos à volta do núcleo; tocar no slot → escolher edifício.
+14. Entre planetas passam créditos, dados de pesquisa, tripulação e upgrades; minério, cristal e colheitas ficam (vender antes de partir).
+15. Criaturas calmas de dia (só atacam de perto), agressivas à noite.
+16. Tutorial guiado no primeiro planeta (prado), primeira noite mais fácil.
+17. Português e inglês desde o início (traduções do Godot).
+18. Música/som: placeholders CC0 até ao fim da F4.
+19. Telemóvel de teste: o mesmo do Deriva Estelar.
