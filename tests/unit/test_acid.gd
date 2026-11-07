@@ -86,3 +86,15 @@ func test_vitals_lose_health_in_acid() -> void:
 	var v := PlayerVitals.new()
 	v.damage(AcidHazard.FOOT_ACID_DPS * 1.0)
 	assert_almost_eq(v.health, PlayerVitals.MAX_HEALTH - AcidHazard.FOOT_ACID_DPS, 0.001)
+
+func test_every_acid_river_starts_at_a_mountain() -> void:
+	for s in [1, 7, 42]:
+		var e := PlanetGenerator.generate(s, "acido")
+		assert_gt(e.rivers.size(), 3)
+		for rv in e.rivers:
+			var p0: Vector3 = rv.points[0]
+			var near := false
+			for r in e.reliefs:
+				if e.arc_m(p0, r.dir) < ReliefKit.piece(r.kind).radius * float(r.scale) + 2.0:
+					near = true
+			assert_true(near, "rio que não nasce numa montanha (seed %d)" % s)

@@ -10,13 +10,14 @@ signal overheated
 
 const MAX := 100.0
 const COOL_OK := 55.0 # abaixo disto deixa de estar sobreaquecido
-const SPEED_HEAT := 3.0 # /s à velocidade máxima
-const NEAR_FISSURE_M := 9.0
+const SPEED_HEAT := 4.0 # /s à velocidade máxima
+const AIR_HEAT := 0.6 # /s a andar: o ar da lava já é quente
+const NEAR_FISSURE_M := 12.0
 const NEAR_HEAT := 10.0 # /s mesmo à beira da fissura
 const IN_FISSURE_HEAT := 35.0
 const PARKED_COOL := 9.0 # /s parado
 const SHADE_COOL := 7.0 # /s a mais à sombra
-const DRIVE_COOL := 1.5 # /s a andar longe de tudo (o ar arrefece um pouco)
+const DRIVE_COOL := 0.0 # o ar da lava não arrefece
 const SLOW_SPEED := 2.0 # m/s: abaixo disto conta como parado
 const OVERHEAT_SPEED := 0.4 # fração da velocidade máxima sobreaquecido
 
@@ -34,7 +35,7 @@ func tick(delta: float, speed_m_s: float, speed01: float, fissure_clearance: flo
 	if absf(speed_m_s) < SLOW_SPEED:
 		rate -= PARKED_COOL
 	else:
-		rate -= DRIVE_COOL
+		rate += AIR_HEAT - DRIVE_COOL
 	if in_shade:
 		rate -= SHADE_COOL
 	heat = clampf(heat + rate * delta, 0.0, MAX)

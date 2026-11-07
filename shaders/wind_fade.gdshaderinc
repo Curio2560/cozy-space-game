@@ -16,7 +16,8 @@ vec3 wind_vertex(inout vec3 v, mat4 model, float t) {
 	vec3 base = (model * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
 	if (wind_strength > 0.0) {
 		float h = max(v.y, 0.0);
-		float sway = sin(t * wind_speed + base.x * 0.21 + base.z * 0.17) + 0.4 * sin(t * wind_speed * 2.7 + base.y * 0.3);
+		float gust = 0.5 + 0.5 * sin(t * 0.7 - (base.x * 0.09 + base.z * 0.07 + base.y * 0.05));
+		float sway = (0.4 + gust) * sin(t * wind_speed + base.x * 0.21 + base.z * 0.17) + 0.4 * sin(t * wind_speed * 2.7 + base.y * 0.3);
 		v.x += sway * wind_strength * h;
 		v.z += sway * wind_strength * 0.6 * h;
 	}

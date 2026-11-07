@@ -371,7 +371,7 @@ func _build_turf() -> void:
 		_grass_mat = ShaderMaterial.new()
 		_grass_mat.shader = GRASS_SHADER
 	var color: Color = PlanetGenerator.BIOMES[data.biome].palette.get("Grass", Color("5fb873"))
-	var mesh := GrassTuft.mesh(color)
+	var mesh := GrassTuft.mesh(color, TURF_BLADES)
 	var per_region: Array = []
 	per_region.resize(_regions.size())
 	for i in per_region.size():
@@ -552,7 +552,8 @@ func _relief_tri(verts: PackedVector3Array, norms: PackedVector3Array, cols: Pac
 
 const TERRAIN_SHADER := preload("res://shaders/terrain_grass.gdshader")
 ## Distância (m) até onde se desenha a relva procedimental (mais longe: a relva pintada no chão).
-const TURF_VISIBLE_M := 34.0
+const TURF_VISIBLE_M := 30.0
+const TURF_BLADES := 6 # folhas por tufo: tufos mais cheios cobrem o chão com menos instâncias
 
 ## Chão com relva pintada (manchas e traços) nas cores do bioma.
 func _terrain_material() -> ShaderMaterial:
@@ -645,8 +646,8 @@ static func wind_for(kind: String, collider: float) -> float:
 	if kind.begins_with("rocks/") or collider >= 0.3:
 		return 0.0
 	if is_tree(collider):
-		return 0.012
-	return 0.05
+		return 0.03
+	return 0.08
 
 func _prop_transform(p: Dictionary, info: Dictionary) -> Transform3D:
 	var dir: Vector3 = p.dir

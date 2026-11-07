@@ -20,7 +20,7 @@ const BIOMES := {
 	"prado": {
 		"dirt": 70,
 		"ground": Color("8fd3a0"),
-		"turf": {"density": 1.9, "size": [0.38, 0.85]},
+		"turf": {"density": 3.4, "size": [0.42, 0.9]},
 		"creatures": 16,
 		"sky": {"bg": Color("2b2146"), "ambient": Color("b9a8e8"), "sun": Color("fff1dc"),
 			"nebula_a": Color("5b3f94"), "nebula_b": Color("ff9f7a"),
@@ -55,7 +55,7 @@ const BIOMES := {
 	"acido": {
 		"dirt": 60,
 		"ground": Color("8a7bb8"),
-		"turf": {"density": 1.5, "size": [0.3, 0.7]},
+		"turf": {"density": 2.8, "size": [0.35, 0.75]},
 		"ground_grass": 0.6,
 		"creatures": 20,
 		"sky": {"bg": Color("142220"), "ambient": Color("c4cfc8"), "sun": Color("f4ffe8"),
@@ -66,8 +66,8 @@ const BIOMES := {
 			]},
 		"kit_tint": Color("cdbcff"),
 		"o2_drain": 1.0, # O₂ por segundo a pé (100 = cheio)
-		"rivers": {"count": 6, "width": [2.2, 3.2], "length": [60.0, 130.0], "o2_near": 1.0,
-			"color": Color("8cff3a"), "wiggle": 9.0},
+		"rivers": {"count": 9, "width": [2.2, 3.2], "length": [70.0, 150.0], "o2_near": 1.0,
+			"color": Color("8cff3a"), "wiggle": 9.0, "from_reliefs": true},
 		"o2_bubbles": 26,
 		"height_amp": 2.2,
 		"noise_freq": 0.035,
@@ -93,7 +93,7 @@ const BIOMES := {
 	"lava": {
 		"dirt": 90,
 		"ground": Color("6e4a4e"),
-		"turf": {"density": 0.3, "size": [0.25, 0.45]},
+		"turf": {"density": 0.6, "size": [0.25, 0.45]},
 		"ground_grass": 0.25,
 		"creatures": 20,
 		"sky": {"bg": Color("2a0e14"), "ambient": Color("d2c2c8"), "sun": Color("ffe6cc"),
@@ -147,8 +147,8 @@ static func generate(p_seed: int, biome := "prado", radius := DEFAULT_RADIUS) ->
 
 	_place_spots(d, rng, spin)
 	_place_roads(d, rng)
-	_place_rivers(d, b, p_seed)
 	_place_reliefs(d, p_seed)
+	_place_rivers(d, b, p_seed) # depois do relevo: os rios do ácido nascem nas montanhas
 	_place_dirt(d, b, rng)
 	_place_props(d, b, rng, spin)
 	_place_obstacles(d)
@@ -156,7 +156,7 @@ static func generate(p_seed: int, biome := "prado", radius := DEFAULT_RADIUS) ->
 	_place_o2_bubbles(d, b, p_seed)
 	return d
 
-const RIVER_TRIES := 200
+const RIVER_TRIES := 600
 const RIVER_WIGGLE_M := 9.0 # por omissão; cada bioma pode dar "wiggle"
 const BRIDGE_MARGIN := 1 # pontos da estrada a mais de cada lado do rio
 
@@ -175,6 +175,13 @@ static func _place_rivers(d: PlanetData, b: Dictionary, p_seed: int) -> void:
 		var width := rng.randf_range(cfg.width[0], cfg.width[1])
 		var a := Vector3(rng.randfn(), rng.randfn(), rng.randfn()).normalized()
 		var toward := Vector3(rng.randfn(), rng.randfn(), rng.randfn()).normalized()
+		if cfg.get("from_reliefs", false) and not d.reliefs.is_empty():
+			# Nasce no sopé de uma montanha e corre para longe dela.
+			var r: Dictionary = d.reliefs[(tries + d.rivers.size()) % d.reliefs.size()]
+			var foot: float = ReliefKit.piece(r.kind).radius * float(r.scale)
+			var bearing: Vector3 = SphereMath.basis_from_up(r.dir, rng.randf() * TAU).z
+			a = d.toward_point(r.dir, (r.dir + bearing * 0.1).normalized(), foot * 0.75)
+			toward = d.toward_point(r.dir, (r.dir + bearing * 0.1).normalized(), foot + 80.0)
 		var bb := d.toward_point(a, toward, rng.randf_range(cfg.length[0], cfg.length[1]))
 		var path := _smooth(road_path(d, a, bb, rng, float(cfg.get("wiggle", RIVER_WIGGLE_M))), 2)
 		if _river_ok(d, path, width, float(cfg.get("spacing", 6.0))):
@@ -183,7 +190,10 @@ static func _place_rivers(d: PlanetData, b: Dictionary, p_seed: int) -> void:
 
 static func _river_ok(d: PlanetData, path: PackedVector3Array, width: float, spacing: float) -> bool:
 	var near_road := 0
-	for p in path:
+	for i in path.size():
+		var p := path[i]
+		if i > 3 and d.in_relief(p):
+			return false # não sobe para cima de (outra) montanha
 		for s in d.flat_spots:
 			if d.arc_m(p, s.dir) < s.angle * d.radius + width + 3.0:
 				return false

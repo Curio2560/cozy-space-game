@@ -6,7 +6,7 @@ extends RefCounted
 const NEAR_RIVER_M := 7.0 # a esta distância da margem começa a gastar mais O₂
 const NEAR_RIVER_DRAIN := 3.0 # O₂/s a mais mesmo à beira do rio
 const FOOT_ACID_DPS := 30.0 # vida/s a pé dentro do ácido
-const ROVER_ACID_DPS := 12.0 # vida/s do rover dentro do ácido
+const ROVER_ACID_DPS := 20.0 # vida/s do rover dentro do ácido
 const BUBBLE_O2 := 40.0
 const BUBBLE_RADIUS_M := 1.6
 const BUBBLE_RESPAWN_S := 25.0

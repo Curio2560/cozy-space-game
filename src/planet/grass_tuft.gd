@@ -20,10 +20,10 @@ static func mesh(color: Color, blades := 4) -> ArrayMesh:
 		var ang := TAU * float(i) / blades + rng.randf_range(-0.4, 0.4)
 		var dir := Vector3(cos(ang), 0, sin(ang))
 		var side := Vector3(-dir.z, 0, dir.x)
-		var off := dir * rng.randf_range(0.0, 0.12)
+		var off := dir * rng.randf_range(0.0, 0.22)
 		var h := rng.randf_range(0.7, 1.0)
 		var lean := dir * rng.randf_range(0.15, 0.4) * h
-		var w := rng.randf_range(0.06, 0.1)
+		var w := rng.randf_range(0.07, 0.12)
 		var tip_col := Color(minf(color.r * 1.15, 1.0), minf(color.g * 1.15, 1.0), minf(color.b * 1.15, 1.0), 1.0)
 		verts.append_array([off - side * w, off + side * w, off + lean + Vector3(0, h, 0)])
 		cols.append_array([base, base, tip_col])

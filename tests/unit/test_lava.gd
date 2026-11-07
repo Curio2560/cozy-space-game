@@ -71,3 +71,10 @@ func test_heat_bar_only_in_lava() -> void:
 	run.enter_rover()
 	await wait_physics_frames(5)
 	assert_true(run.bars.is_shown("heat"))
+
+func test_heat_rises_at_half_speed_far_from_fissures() -> void:
+	# Condução normal na lava aquece (o ar da lava não arrefece o rover).
+	var h := RoverHeat.new()
+	for i in 120:
+		h.tick(0.5, 7.0, 0.5, INF, false)
+	assert_gt(h.heat, 100.0 * 0.6, "devia aquecer bem em ~1 min de condução normal")

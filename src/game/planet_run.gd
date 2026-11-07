@@ -410,8 +410,20 @@ func _apply_heat(delta: float) -> void:
 		return
 	var here := planet.to_local(rover.global_position)
 	var spd := rover.linear_velocity.length()
-	heat.tick(delta, spd, spd / rover.max_speed, planet.data.river_clearance(here), RoverHeat.in_shade(planet.data, here))
+	var clear := planet.data.river_clearance(here)
+	for h in rover.wheel_hits:
+		if h is Array and h.size() > 1 and h[0]:
+			clear = minf(clear, planet.data.river_clearance(planet.to_local(h[1])))
+	heat.tick(delta, spd, spd / rover.max_speed, clear, RoverHeat.in_shade(planet.data, here))
 	rover.speed_factor = heat.speed_factor()
+
+## Dano/s do rio ao rover: conta se o centro ou qualquer roda estiver no ácido/lava.
+func _rover_liquid_rate(d: PlanetData) -> float:
+	var best := AcidHazard.rover_damage_rate(d, planet.to_local(rover.global_position))
+	for h in rover.wheel_hits:
+		if h is Array and h.size() > 1 and h[0]:
+			best = maxf(best, AcidHazard.rover_damage_rate(d, planet.to_local(h[1])))
+	return best
 
 ## Perigos do ácido neste frame: dano a pé ou ao rover dentro do rio, bolhas de O₂.
 func _apply_hazards(delta: float) -> void:
@@ -419,7 +431,7 @@ func _apply_hazards(delta: float) -> void:
 	_apply_heat(delta)
 	# O rover estraga-se no ácido, conduzido ou estacionado.
 	if rover.alive:
-		var rr := AcidHazard.rover_damage_rate(d, planet.to_local(rover.global_position))
+		var rr := _rover_liquid_rate(d)
 		if rr > 0.0:
 			rover.take_damage(rr * delta)
 	if driving:
