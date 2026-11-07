@@ -104,8 +104,8 @@ func test_kit_props_and_rocks_get_biome_colours() -> void:
 	for r in p.get_children():
 		if not r.name.begins_with("Region"):
 			continue
-		for mmi: MultiMeshInstance3D in r.get_children():
-			if mmi.name.begins_with("Turf"):
+		for mmi in r.get_children():
+			if not mmi is MultiMeshInstance3D or mmi.name.begins_with("Turf"):
 				continue
 			var m := mmi.material_override as ShaderMaterial
 			if not m.get_shader_parameter("use_vertex_color"):

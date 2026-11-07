@@ -74,3 +74,16 @@ func test_region_visibility_math() -> void:
 	var surf := Vector3(0, 0, 61.5)
 	assert_true(PlanetCulling.region_visible(Vector3(0, 0, 1), surf, 60.0, 0.66))
 	assert_false(PlanetCulling.region_visible(Vector3(1, 0, 0), surf, 60.0, 0.66))
+
+func test_reliefs_have_mesh_and_collision_at_their_height() -> void:
+	assert_eq(planet.relief_meshes.size(), planet.data.reliefs.size())
+	await wait_physics_frames(2)
+	var space := planet.get_world_3d().direct_space_state
+	for r in planet.data.reliefs:
+		var dir: Vector3 = planet.data.relief_dir(r, 0.0, 0.0)
+		var q := PhysicsRayQueryParameters3D.create(dir * 200.0, Vector3.ZERO)
+		var hit := space.intersect_ray(q)
+		assert_false(hit.is_empty(), "relevo %s sem colisão" % r.kind)
+		if not hit.is_empty():
+			# A colisão é a malha da peça; o mapa de alturas tem células de 0,5 m.
+			assert_almost_eq((hit.position as Vector3).length(), planet.data.surface_point(dir).length(), 0.6, r.kind)

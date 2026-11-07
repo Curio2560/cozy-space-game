@@ -111,8 +111,61 @@ var lair_dir: Vector3
 ## Zonas aplanadas: [{dir, angle (rad), h}] — postos, posto avançado e covil.
 var flat_spots: Array[Dictionary] = []
 
-## Altura do terreno (m, acima do raio) na direção `dir`.
+## Peças de relevo (penhascos, colinas, montanhas): [{kind, dir, basis (x = lado, y = cima,
+##   z = frente, no plano tangente), scale (m por m da peça), height_scale, cos_reach}]
+var reliefs: Array[Dictionary] = []
+
+func add_relief(kind: String, dir: Vector3, yaw: float, scale: float, height_scale: float) -> void:
+	var pc := ReliefKit.piece(kind)
+	var reach: float = (pc.radius * scale + 0.5) / radius
+	reliefs.append({"kind": kind, "dir": dir.normalized(), "basis": SphereMath.basis_from_up(dir.normalized(), yaw),
+		"scale": scale, "height_scale": height_scale, "cos_reach": cos(reach)})
+
+## Ponto local (m da peça, sem escala) de `dir` na peça `r` (projeção gnomónica no plano tangente).
+func relief_local(r: Dictionary, dir: Vector3) -> Vector2:
+	var c: Vector3 = r.dir
+	var p := dir / dir.dot(c) - c
+	var b: Basis = r.basis
+	var k: float = radius / float(r.scale)
+	return Vector2(p.dot(b.x) * k, p.dot(b.z) * k)
+
+## Direção do ponto local (x, z) da peça `r` (inverso de relief_local).
+func relief_dir(r: Dictionary, x: float, z: float) -> Vector3:
+	var b: Basis = r.basis
+	var k: float = float(r.scale) / radius
+	return ((r.dir as Vector3) + (b.x * x + b.z * z) * k).normalized()
+
+## Altura somada pelas peças de relevo em `dir` (0 fora delas).
+func relief_height(dir: Vector3) -> float:
+	var d := dir.normalized()
+	var best := 0.0
+	for r in reliefs:
+		if d.dot(r.dir) < r.cos_reach:
+			continue
+		var l := relief_local(r, d)
+		var h := ReliefKit.sample(ReliefKit.piece(r.kind), l.x, l.y)
+		if h > 0.0:
+			best = maxf(best, h * float(r.height_scale))
+	return best
+
+## Dentro da área de alguma peça de relevo?
+func in_relief(dir: Vector3) -> bool:
+	var d := dir.normalized()
+	for r in reliefs:
+		if d.dot(r.dir) < r.cos_reach:
+			continue
+		var l := relief_local(r, d)
+		if ReliefKit.sample(ReliefKit.piece(r.kind), l.x, l.y) >= 0.0:
+			return true
+	return false
+
+## Altura do terreno (m, acima do raio) na direção `dir`, com o relevo.
 func height_at(dir: Vector3) -> float:
+	var d := dir.normalized()
+	return base_height_at(d) + relief_height(d)
+
+## Altura do chão por baixo do relevo (ruído + zonas aplanadas).
+func base_height_at(dir: Vector3) -> float:
 	var d := dir.normalized()
 	var h := noise.get_noise_3dv(d * radius) * height_amp
 	for s in flat_spots:

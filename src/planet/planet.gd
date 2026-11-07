@@ -41,6 +41,7 @@ func build(d: PlanetData) -> void:
 	_build_roads()
 	_build_dirt()
 	_build_props()
+	_build_reliefs() # depois de _build_props: precisa das regiões
 	_build_turf()
 	_build_spots()
 	built.emit()
@@ -50,7 +51,7 @@ func prop_instance_count() -> int:
 	var n := 0
 	for r in _regions:
 		for mmi in r.get_children():
-			if mmi.name.begins_with("Turf"):
+			if not mmi is MultiMeshInstance3D or mmi.name.begins_with("Turf"):
 				continue
 			n += (mmi as MultiMeshInstance3D).multimesh.instance_count
 	return n
@@ -270,7 +271,10 @@ func _build_terrain() -> void:
 	var verts := PackedVector3Array()
 	verts.resize(dirs.size())
 	for i in dirs.size():
-		verts[i] = data.surface_point(dirs[i])
+		var dir := dirs[i]
+		# Debaixo das peças de relevo o chão desce um pouco (a peça cobre-o).
+		var sink := RELIEF_SINK if data.in_relief(dir) else 0.0
+		verts[i] = dir * (data.radius + data.base_height_at(dir) - sink)
 	var normals := PackedVector3Array()
 	normals.resize(verts.size())
 	var faces := PackedVector3Array()
@@ -305,6 +309,86 @@ func _build_terrain() -> void:
 	var cs := CollisionShape3D.new()
 	cs.shape = shape
 	body.add_child(cs)
+
+const RELIEF_SINK := 0.35
+const RELIEF_SKIRT := 0.8 # m que a borda das peças desce para dentro do chão (sem frestas)
+var relief_meshes: Array[MeshInstance3D] = []
+
+## Peças de relevo: os triângulos da peça dobrados à curvatura (a altura da peça somada à do
+## chão), topo com a cor do chão e paredes com a cor de rocha do bioma, uma saia na borda que
+## entra no chão e colisão exata. Cada peça entra na região do seu centro (culling).
+func _build_reliefs() -> void:
+	relief_meshes.clear()
+	if data.reliefs.is_empty():
+		return
+	var b: Dictionary = PlanetGenerator.BIOMES[data.biome]
+	var top_col: Color = (b.ground as Color).lerp(b.palette.get("Grass", b.ground), 0.35)
+	var rock_col: Color = b.palette.get("Rock", Color("c4bccf"))
+	var i := 0
+	for r in data.reliefs:
+		var pc := ReliefKit.piece(r.kind)
+		var tris: PackedVector3Array = pc.tris
+		var verts := PackedVector3Array()
+		var norms := PackedVector3Array()
+		var cols := PackedColorArray()
+		var center: Vector3 = r.dir
+		for t in range(0, tris.size(), 3):
+			var a := _relief_point(r, tris[t])
+			var bb := _relief_point(r, tris[t + 1])
+			var c := _relief_point(r, tris[t + 2])
+			_relief_tri(verts, norms, cols, a, bb, c, top_col, rock_col, Vector3.ZERO)
+		var border := ReliefKit.border_edges(pc)
+		for e in range(0, border.size(), 2):
+			var a := _relief_point(r, border[e])
+			var bb := _relief_point(r, border[e + 1])
+			var a2 := a - a.normalized() * RELIEF_SKIRT
+			var b2 := bb - bb.normalized() * RELIEF_SKIRT
+			var out := ((a + bb) * 0.5 - center * center.dot((a + bb) * 0.5)).normalized()
+			_relief_tri(verts, norms, cols, a, bb, b2, top_col, rock_col, out)
+			_relief_tri(verts, norms, cols, a, b2, a2, top_col, rock_col, out)
+		var arrays := []
+		arrays.resize(Mesh.ARRAY_MAX)
+		arrays[Mesh.ARRAY_VERTEX] = verts
+		arrays[Mesh.ARRAY_NORMAL] = norms
+		arrays[Mesh.ARRAY_COLOR] = cols
+		var mesh := ArrayMesh.new()
+		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+		var mi := MeshInstance3D.new()
+		mi.name = "Relief%d" % i
+		mi.mesh = mesh
+		mi.material_override = CelShading.vertex_color_material(false)
+		_regions[_region_of(center)].add_child(mi)
+		relief_meshes.append(mi)
+		var shape := ConcavePolygonShape3D.new()
+		shape.set_faces(verts)
+		var cs := CollisionShape3D.new()
+		cs.name = "Relief%d" % i
+		cs.shape = shape
+		body.add_child(cs)
+		i += 1
+
+## Vértice local da peça no espaço do planeta.
+func _relief_point(r: Dictionary, v: Vector3) -> Vector3:
+	var dir := data.relief_dir(r, v.x, v.z)
+	return dir * (data.radius + data.base_height_at(dir) + v.y * float(r.height_scale))
+
+## Triângulo com normal plana (visual low-poly); a saia fica virada para `out`. Cor: chão se a face estiver virada para cima, rocha nas paredes.
+func _relief_tri(verts: PackedVector3Array, norms: PackedVector3Array, cols: PackedColorArray,
+		a: Vector3, b: Vector3, c: Vector3, top_col: Color, rock_col: Color, out: Vector3) -> void:
+	var n := (c - a).cross(b - a)
+	if n.length_squared() < 1e-10:
+		return
+	n = n.normalized()
+	# A ordem da peça já vem certa do importador; só a saia precisa de ser virada.
+	if out != Vector3.ZERO and n.dot(out) < 0.0:
+		var t := b
+		b = c
+		c = t
+		n = -n
+	var col := top_col if n.dot(a.normalized()) > 0.78 else rock_col
+	verts.append_array([a, b, c])
+	norms.append_array([n, n, n])
+	cols.append_array([col, col, col])
 
 const TERRAIN_SHADER := preload("res://shaders/terrain_grass.gdshader")
 ## Distância (m) até onde se desenha a relva procedimental (mais longe: a relva pintada no chão).
