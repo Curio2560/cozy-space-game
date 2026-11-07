@@ -68,7 +68,7 @@ func test_creature_push_does_not_launch_player() -> void:
 
 func test_dirt_patches_off_road_and_nothing_grows_on_them() -> void:
 	var d: PlanetData = run.planet.data
-	assert_gt(d.dirt_patches.size(), 60)
+	assert_gt(d.dirt_patches.size(), 40) # metade desde as estradas novas, e longe dos slots
 	for p in d.placements:
 		for patch in d.dirt_patches:
 			assert_gt(d.arc_m(p.dir, patch.dir), float(patch.radius) * 0.9, "%s em cima de uma mancha de terra" % p.kind)

@@ -5,7 +5,7 @@ extends RefCounted
 const DEFAULT_RADIUS := 60.0
 const POST_COUNT := 3
 const POST_CLEAR_M := 10.0 # raio aplanado e sem decoração à volta de cada posto
-const OUTPOST_CLEAR_M := 16.0
+const OUTPOST_CLEAR_M := 27.0 # base + praça + anel de slots do posto (#32)
 const LAIR_CLEAR_M := 10.0
 const MAX_SLOPE_DEG := 28.0
 
@@ -253,7 +253,7 @@ static func _place_o2_bubbles(d: PlanetData, b: Dictionary, p_seed: int) -> void
 ## Peças de relevo por planeta (raio 60; escala com a área). Largas e suaves: cabem poucas.
 const RELIEF_COUNT := [6, 9]
 const RELIEF_MIN_HEIGHT := 2.5 # m; mais baixas quase não se viam
-const RELIEF_TRIES := 600
+const RELIEF_TRIES := 1200
 const MAX_RELIEF_SLOPE_DEG := 26.0
 
 ## Penhascos, colinas e montanhas do terreno modular: longe das zonas aplanadas, das estradas
@@ -316,14 +316,59 @@ const SIDE_ROAD_WIDTH := 2.6
 const ROAD_STEP_M := 2.0
 const PATH_WIDTH := 2.0
 const SIDE_ROADS := 12
-const PATHS := 8
+const PATHS := 12 # alguns são descartados por correrem colados a outras estradas
 const CONNECTORS := 3
 ## Meia diagonal (m) das estruturas, para as estradas passarem à porta e as contornarem.
 const STRUCT_RADIUS := {"post": 3.4, "outpost": 6.8, "lair": 2.4} # casas 4×4 m e base 8×8 m (pack modular)
 
+## Anel dos slots do posto: SLOT_RING_M do centro da base, fora da praça. Dos candidatos à
+## volta, ficam os MAX_SLOTS sem estrada (as estradas da praça para os postos passam entre eles).
+const SLOT_RINGS_M := [17.0, 22.5]
+const SLOT_RADIUS_M := 2.8 # meia diagonal de um edifício de 4×4 m
+const SLOT_CANDIDATES := 20
+const SLOT_CORRIDOR_DEG := 20.0 # meia largura do corredor livre para cada estrada da praça
+
+static func _place_outpost_slots(d: PlanetData) -> void:
+	var ref := SphereMath.basis_from_up(d.outpost_dir).z
+	var c := d.outpost_dir
+	# Rumos (no plano tangente da base) para cada posto: aí passam as estradas da praça.
+	var corridors: Array[Vector3] = []
+	for door in d.post_doors:
+		corridors.append((door - c * door.dot(c)).normalized())
+	var ok: Array[Vector3] = []
+	for ring_i in SLOT_RINGS_M.size():
+		var ring: float = SLOT_RINGS_M[ring_i]
+		for i in SLOT_CANDIDATES:
+			if ok.size() >= Outpost.MAX_SLOTS:
+				break
+			var a := TAU * (i + 0.5 * ring_i) / SLOT_CANDIDATES # o 2.º anel desfasado
+			var t := ref.rotated(c, a)
+			var blocked := false
+			for cor in corridors:
+				if t.angle_to(cor) < deg_to_rad(SLOT_CORRIDOR_DEG):
+					blocked = true
+			if blocked:
+				continue
+			var p := d.toward_point(c, (t + c).normalized(), ring)
+			for q in ok:
+				if d.arc_m(p, q) < SLOT_RADIUS_M * 2.0 + 0.6:
+					blocked = true
+					break
+			if not blocked:
+				ok.append(p)
+	d.outpost_slots = ok
+
+static func _near_slot(d: PlanetData, dir: Vector3, margin: float) -> bool:
+	for sl in d.outpost_slots:
+		if d.arc_m(dir, sl) < SLOT_RADIUS_M + margin:
+			return true
+	return false
+
 ## Estruturas do planeta: [[direção, raio (m)], …].
 static func structures(d: PlanetData) -> Array:
 	var out := []
+	for sl in d.outpost_slots:
+		out.append([sl, SLOT_RADIUS_M])
 	for p in d.posts:
 		out.append([p, STRUCT_RADIUS.post])
 	out.append([d.outpost_dir, STRUCT_RADIUS.outpost])
@@ -340,6 +385,9 @@ static func _place_roads(d: PlanetData, rng: RandomNumberGenerator) -> void:
 	var hw := MAIN_ROAD_WIDTH * 0.5
 	for p in d.posts:
 		d.post_doors.append(d.toward_point(p, d.outpost_dir, STRUCT_RADIUS.post + hw + 1.2))
+	# Slots do posto antes das estradas: ficam corredores livres para os postos e as estradas
+	# contornam os slots (são estruturas).
+	_place_outpost_slots(d)
 	# Volta principal pelas portas dos postos.
 	for i in d.posts.size():
 		var a := d.post_doors[i]
@@ -408,20 +456,33 @@ static func _place_dirt(d: PlanetData, b: Dictionary, rng: RandomNumberGenerator
 			dir = ((st[0] as Vector3) + side2 * tan(((st[1] as float) + rng.randf_range(2.0, 7.0)) / d.radius)).normalized()
 		else:
 			dir = Vector3(rng.randfn(), rng.randfn(), rng.randfn()).normalized()
-		if d.in_relief(dir):
+		if d.in_relief(dir) or _near_slot(d, dir, r + 1.0):
 			continue
 		d.add_dirt_patch(dir, r, rng.randf() * TAU, rng.randi() % 4)
 
 ## Estrada que corre colada a outras (lado a lado) em vez de se afastar: ignora as pontas
 ## (onde é normal tocar na estrada de onde sai ou onde chega).
 const PARALLEL_GAP_M := 5.0
-static func _runs_along_roads(d: PlanetData, path: PackedVector3Array, width: float) -> bool:
+static func _runs_along_roads(d: PlanetData, path: PackedVector3Array, width: float, parent: Dictionary = {}) -> bool:
 	var n := path.size()
 	if n < 6:
 		return false
 	var close := 0
+	# Perto da estrada de onde sai, só conta depois do primeiro terço (no início é normal).
+	var skip_parent := 4 # ~8 m: o arranque junto à estrada-mãe
 	for i in range(3, n - 3):
-		if d.road_clearance(path[i]) < width * 0.5 + PARALLEL_GAP_M:
+		var near := false
+		for r in d.roads:
+			if r == parent and i < skip_parent:
+				continue
+			var lim: float = (width + float(r.width)) * 0.5 + PARALLEL_GAP_M
+			for q: Vector3 in r.points:
+				if d.arc_m(path[i], q) < lim:
+					near = true
+					break
+			if near:
+				break
+		if near:
 			close += 1
 	return close > (n - 6) * 0.25
 
@@ -452,26 +513,65 @@ static func _add_branch(d: PlanetData, parents: Array, rng: RandomNumberGenerato
 	var length := rng.randf_range(min_m, max_m) / d.radius
 	var to := (from + (side + tangent * rng.randf_range(-0.6, 0.6)).normalized() * tan(length)).normalized()
 	var path := _road(d, from, to, rng, 3.5, width)
-	if path.size() >= 3 and not _runs_along_roads(d, path, width):
+	if path.size() >= 3 and not _runs_along_roads(d, path, width, road):
 		d.add_road(path, width, false)
 
 ## Estrada de `a` a `b`: caminho com curvas e desviado de todas as estruturas.
 static func _road(d: PlanetData, a: Vector3, b: Vector3, rng: RandomNumberGenerator, wiggle_m: float, width: float) -> PackedVector3Array:
-	var path := road_path(d, a, b, rng, wiggle_m)
+	# Suavizar ANTES de afastar das estruturas (suavizar depois puxava-as para cima delas).
+	var path := _smooth(road_path(d, a, b, rng, wiggle_m), 4)
 	var hw := width * 0.5
-	for k in 2: # duas passagens resolvem estruturas próximas umas das outras
-		for i in path.size():
-			var p := path[i]
-			for st in structures(d):
-				var sd: Vector3 = st[0]
-				var need: float = (st[1] + hw + 0.8) / d.radius
-				if p.angle_to(sd) < need:
-					var away := p - sd * p.dot(sd)
-					if away.length() < 0.0001:
-						away = SphereMath.basis_from_up(sd).x
-					p = (sd + away.normalized() * tan(need)).normalized() # empurra para fora
-			path[i] = p
-	return _smooth(path, 4)
+	# Afastar e alisar alternados; no fim, preencher com pontos intermédios e afastar outra vez.
+	for k in 5:
+		if k in [1, 2]:
+			path = _smooth(path, 1)
+		if k >= 3:
+			path = _densify(path, ROAD_STEP_M)
+		for st in structures(d):
+			_go_around(d, path, st[0], st[1] + hw + 0.8)
+	return path
+
+## Empurra para fora do círculo (centro `sd`, raio `metres`) os pontos do caminho que lá
+## estão, TODOS para o mesmo lado (o lado por onde a estrada entra): assim a estrada contorna
+## a estrutura em vez de se partir ao meio.
+static func _go_around(d: PlanetData, path: PackedVector3Array, sd: Vector3, metres: float) -> void:
+	var need := metres / d.radius
+	var first := -1
+	for i in path.size():
+		if path[i].angle_to(sd) < need:
+			first = i
+			break
+	if first < 0:
+		return
+	var t := path[mini(first + 1, path.size() - 1)] - path[maxi(first - 1, 0)]
+	var n := sd.cross(t).normalized() # perpendicular à estrada, no plano tangente
+	if n.length() < 0.5:
+		n = SphereMath.basis_from_up(sd).x
+	var entry := path[maxi(first - 1, 0)] - sd
+	var side := 1.0 if entry.dot(n) >= 0.0 else -1.0
+	for i in path.size():
+		var p := path[i]
+		if p.angle_to(sd) >= need:
+			continue
+		var away := p - sd * p.dot(sd)
+		var along := away - n * away.dot(n) # componente ao longo da estrada
+		# Lado escolhido: o ponto vai para a borda do círculo desse lado, mantendo o avanço.
+		var off := clampf(along.length() / tan(need), 0.0, 1.0)
+		var dir := (along.normalized() * off + n * side * sqrt(maxf(1.0 - off * off, 0.0))) if along.length() > 1e-6 else n * side
+		path[i] = (sd + dir.normalized() * tan(need)).normalized()
+
+## Acrescenta pontos onde dois seguidos estão a mais de `max_m` metros.
+static func _densify(path: PackedVector3Array, max_m: float) -> PackedVector3Array:
+	var out := PackedVector3Array()
+	for i in path.size():
+		if i > 0:
+			var a := path[i - 1]
+			var b := path[i]
+			var n := int(ceil(a.angle_to(b) * DEFAULT_RADIUS / max_m))
+			for j in range(1, n):
+				out.append(a.slerp(b, float(j) / n).normalized())
+		out.append(path[i])
+	return out
 
 ## Suaviza um caminho (média com os vizinhos), mantendo as pontas.
 static func _smooth(path: PackedVector3Array, passes: int) -> PackedVector3Array:

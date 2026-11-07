@@ -144,6 +144,8 @@ var turf_yaws := PackedFloat32Array()
 ## Postos dos colonos (direções).
 var posts: Array[Vector3] = []
 var outpost_dir: Vector3
+## Slots de edifícios do posto (direções), à volta da base. Ver PlanetGenerator._place_outpost_slots.
+var outpost_slots: Array[Vector3] = []
 var lair_dir: Vector3
 ## Zonas aplanadas: [{dir, angle (rad), h}] — postos, posto avançado e covil.
 var flat_spots: Array[Dictionary] = []
