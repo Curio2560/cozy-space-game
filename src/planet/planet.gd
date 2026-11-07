@@ -557,6 +557,7 @@ func _build_props() -> void:
 	var groups := {} # Vector2i(região, id tipo) -> Array[Transform3D]
 	var kinds: Array[String] = []
 	var outline_of := {}
+	var collider_of := {}
 	for p in data.placements:
 		var kind: String = p.kind
 		var k := kinds.find(kind)
@@ -564,6 +565,7 @@ func _build_props() -> void:
 			kinds.append(kind)
 			k = kinds.size() - 1
 			outline_of[kind] = p.outline
+			collider_of[kind] = p.collider
 		var info := KitUtil.single_mesh(kind)
 		var key := Vector2i(_region_of(p.dir), k)
 		if not groups.has(key):
@@ -589,11 +591,12 @@ func _build_props() -> void:
 			# Paleta em textura (relva mdvl): cor do bioma por vértice.
 			var pal: Dictionary = PlanetGenerator.BIOMES[data.biome].palette
 			mm.mesh = CelShading.recolor_textured_mesh(info.mesh, info.texture, pal[info.recolor])
-			mmi.material_override = CelShading.vertex_color_material(with_outline)
+			mmi.material_override = CelShading.vertex_color_material(with_outline, wind_for(kind, collider_of[kind]))
 		elif info.palette:
 			# Pack de natureza: uma superfície com a cor da paleta do bioma por vértice.
 			mm.mesh = CelShading.palette_mesh(info.mesh, PlanetGenerator.BIOMES[data.biome].palette)
-			mmi.material_override = CelShading.vertex_color_material(with_outline)
+			var wind := wind_for(kind, collider_of[kind])
+			mmi.material_override = CelShading.vertex_color_material(with_outline, wind, is_tree(collider_of[kind]))
 		else:
 			# Modelos do kit (paleta em textura): tom do bioma por cima.
 			var biome_def: Dictionary = PlanetGenerator.BIOMES[data.biome]
@@ -607,6 +610,18 @@ func _build_props() -> void:
 			mm.set_instance_transform(j, xfs[j])
 		mmi.multimesh = mm
 		_regions[key.x].add_child(mmi)
+
+## Árvores e catos (colisor fino) ficam pontilhados quando tapam o jogador.
+static func is_tree(collider: float) -> bool:
+	return collider > 0.0 and collider < 0.3
+
+## Vento por tipo de decoração: árvores devagar, arbustos e plantas mais, rochas nada.
+static func wind_for(kind: String, collider: float) -> float:
+	if kind.begins_with("rocks/") or collider >= 0.3:
+		return 0.0
+	if is_tree(collider):
+		return 0.012
+	return 0.05
 
 func _prop_transform(p: Dictionary, info: Dictionary) -> Transform3D:
 	var dir: Vector3 = p.dir

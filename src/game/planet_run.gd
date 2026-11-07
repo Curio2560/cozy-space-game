@@ -41,6 +41,7 @@ var dust: CPUParticles3D
 var deliveries: DeliveryController
 var bubbles: O2Bubbles
 var heat := RoverHeat.new()
+var ambient: AmbientParticles
 
 func _ready() -> void:
 	for a in OS.get_cmdline_user_args():
@@ -158,6 +159,14 @@ func start(s: int) -> void:
 	bubbles.setup(planet.data)
 	heat.reset()
 	_apply_biome_sky()
+	if ambient:
+		ambient.queue_free()
+	ambient = AmbientParticles.new()
+	ambient.name = "Ambient"
+	add_child(ambient)
+	ambient.planet_center = planet.global_position
+	ambient.target = player
+	ambient.setup(biome)
 	player.planet_center = planet.global_position
 	camera.planet_center = planet.global_position
 	rover.planet_center = planet.global_position
@@ -559,6 +568,11 @@ func _build_world() -> void:
 
 ## Até existir o ciclo dia/noite (F4) o sol acompanha o jogador: é sempre de dia onde ele está.
 func _process(_delta: float) -> void:
+	# Árvores entre a câmara e quem se segue (a pé ou no rover) ficam pontilhadas.
+	var who: Node3D = rover if driving else player
+	CelShading.set_occlusion(camera.global_position, who.global_position + (who.global_position - planet.global_position).normalized() * 0.8)
+	if ambient:
+		ambient.target = who
 	var u := rover.planet_up() if driving else player.up()
 	var side := SphereMath.basis_from_up(u).x
 	var light_dir := -(u * 0.75 + side * 0.45 + camera.global_basis.z * 0.25).normalized()
