@@ -678,6 +678,29 @@ func _register_debug() -> void:
 	DebugMenu.default_tab = "DBG_TAB_WORLD"
 	DebugMenu.add_slider(self, "DBG_SKY_BRIGHT", 0.3, 2.0, 0.05, 1.0, func(v: float) -> void: _sky_mat.set_shader_parameter("brightness", v))
 	DebugMenu.add_slider(self, "DBG_SKY_NEBULA", 0.0, 1.0, 0.05, 0.55, func(v: float) -> void: _sky_mat.set_shader_parameter("nebula_strength", v))
+	# F2: relevo, ácido/lava, partículas.
+	DebugMenu.add_button(self, "DBG_GOTO_RELIEF", func() -> void:
+		var d := planet.data
+		if d.reliefs.is_empty():
+			return
+		var r: Dictionary = d.reliefs[randi() % d.reliefs.size()]
+		var foot: float = ReliefKit.piece(r.kind).radius * float(r.scale)
+		teleport(d.toward_point(r.dir, r.dir + SphereMath.basis_from_up(r.dir).z, foot + 3.0)))
+	DebugMenu.add_button(self, "DBG_GOTO_RIVER", func() -> void:
+		var d := planet.data
+		if d.rivers.is_empty():
+			return
+		var rv: Dictionary = d.rivers[randi() % d.rivers.size()]
+		var pts: PackedVector3Array = rv.points
+		var p := pts[pts.size() / 2]
+		var side := p.cross(pts[pts.size() / 2 + 1] - p).normalized()
+		teleport((p + side * tan((float(rv.width) * 0.5 + 3.0) / d.radius)).normalized()))
+	DebugMenu.add_toggle(self, "DBG_PARTICLES", true, func(on: bool) -> void:
+		if ambient:
+			ambient.visible = on)
+	DebugMenu.add_button(self, "DBG_HEAT", func() -> void:
+		heat.heat = minf(heat.heat + 50.0, RoverHeat.MAX - 0.01)
+		heat.changed.emit(), "DBG_TAB_ROVER")
 	DebugMenu.default_tab = "DBG_TAB_CREATURES"
 	DebugMenu.add_toggle(self, "DBG_CREATURES", true, func(on: bool) -> void:
 		for c in creatures:

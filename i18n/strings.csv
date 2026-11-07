@@ -104,3 +104,7 @@ BUILD_EXIT,Exit,Sair
 BUILD_COPY_SHORT,Copy,Copiar
 BAR_HEAT,Heat,Calor
 TOAST_OVERHEAT,Rover overheated! Stop in the shade to cool down.,Rover sobreaquecido! Para à sombra para arrefecer.
+DBG_GOTO_RELIEF,Go to a mountain,Ir a uma montanha
+DBG_GOTO_RIVER,Go to a river / fissure,Ir a um rio / fissura
+DBG_PARTICLES,Ambient particles,Partículas ambiente
+DBG_HEAT,Rover heat +50,Calor do rover +50
