@@ -21,6 +21,8 @@ const MODEL_WHEELS := {
 @export var gravity := 22.0
 @export var engine_force := 2600.0
 @export var max_speed := 15.0
+## Multiplicador da velocidade máxima (o sobreaquecimento na lava abranda o rover).
+var speed_factor := 1.0
 @export var reverse_factor := 0.5
 @export var turn_rate := 2.2 # rad/s em velocidade
 @export var spring_k := 4200.0
@@ -160,7 +162,8 @@ func _physics_process(delta: float) -> void:
 	var on_ground := grounded_wheels >= 2
 	if on_ground and driven:
 		var spd := speed()
-		var limit := max_speed if throttle >= 0.0 else max_speed * reverse_factor
+		var top := max_speed * speed_factor
+		var limit := top if throttle >= 0.0 else top * reverse_factor
 		var room := clampf(1.0 - absf(spd) / limit, 0.0, 1.0) if signf(spd) == signf(throttle) else 1.0
 		apply_central_force(fwd * throttle * engine_force * room)
 		# Direção arcade: velocidade angular à volta do "cima" do rover.

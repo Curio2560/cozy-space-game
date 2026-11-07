@@ -17,11 +17,11 @@ func test_rivers_are_deterministic() -> void:
 	for i in d.rivers.size():
 		assert_true((e.rivers[i].points[0] as Vector3).is_equal_approx(d.rivers[i].points[0]))
 
-func test_other_biomes_have_no_rivers() -> void:
-	for b in ["prado", "lava"]:
-		var p := PlanetGenerator.generate(2, b)
-		assert_eq(p.rivers.size(), 0, b)
-		assert_eq(p.o2_bubbles.size(), 0, b)
+func test_meadow_has_no_rivers_and_lava_no_bubbles() -> void:
+	var p := PlanetGenerator.generate(2, "prado")
+	assert_eq(p.rivers.size(), 0)
+	assert_eq(p.o2_bubbles.size(), 0)
+	assert_eq(PlanetGenerator.generate(2, "lava").o2_bubbles.size(), 0)
 
 func test_rivers_keep_out_of_spots() -> void:
 	for river in d.rivers:

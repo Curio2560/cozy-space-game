@@ -66,7 +66,8 @@ const BIOMES := {
 			]},
 		"kit_tint": Color("cdbcff"),
 		"o2_drain": 1.0, # O₂ por segundo a pé (100 = cheio)
-		"rivers": {"count": 6, "width": [2.2, 3.2], "length": [60.0, 130.0]},
+		"rivers": {"count": 6, "width": [2.2, 3.2], "length": [60.0, 130.0], "o2_near": 1.0,
+			"color": Color("8cff3a"), "wiggle": 9.0},
 		"o2_bubbles": 26,
 		"height_amp": 2.2,
 		"noise_freq": 0.035,
@@ -76,7 +77,6 @@ const BIOMES := {
 			"Black": Color("2c2438"), "Orange": Color("e8e44a"), "LightOrange": Color("cdf27a"),
 			"Berry": Color("c44ae6"), "Pink": Color("e07af0"), "Snow": Color("e8ffd0"),
 			"Grass": Color("a6d64a"), "Rock": Color("5c4c80"), "Road": Color("5a4c78"),
-			"Acid": Color("8cff3a"),
 		},
 		"props": [
 			{"kinds": ["nature/CommonTree_Dead_1", "nature/CommonTree_Dead_2", "nature/CommonTree_Dead_3", "nature/CommonTree_Dead_4", "nature/CommonTree_Dead_5",
@@ -103,6 +103,10 @@ const BIOMES := {
 				{"tex": "planeta_rosa", "dir": Vector3(-0.6, 0.45, 0.66), "size": 5.0, "fps": 1.8},
 			]},
 		"kit_tint": Color("ffb49c"),
+		# Fissuras de lava: curtas e estreitas; queimam a pé e aquecem o rover (#21).
+		"rivers": {"count": 16, "width": [1.2, 2.0], "length": [14.0, 38.0], "o2_near": 0.0,
+			"color": Color("ff7a1a"), "wiggle": 3.0, "spacing": 4.0},
+		"rover_heat": true,
 		"height_amp": 2.6,
 		"noise_freq": 0.04,
 		"palette": {
@@ -153,7 +157,7 @@ static func generate(p_seed: int, biome := "prado", radius := DEFAULT_RADIUS) ->
 	return d
 
 const RIVER_TRIES := 200
-const RIVER_WIGGLE_M := 9.0
+const RIVER_WIGGLE_M := 9.0 # por omissão; cada bioma pode dar "wiggle"
 const BRIDGE_MARGIN := 1 # pontos da estrada a mais de cada lado do rio
 
 ## Rios de ácido (biomas com "rivers"): caminhos estreitos e sinuosos longe das zonas
@@ -172,18 +176,18 @@ static func _place_rivers(d: PlanetData, b: Dictionary, p_seed: int) -> void:
 		var a := Vector3(rng.randfn(), rng.randfn(), rng.randfn()).normalized()
 		var toward := Vector3(rng.randfn(), rng.randfn(), rng.randfn()).normalized()
 		var bb := d.toward_point(a, toward, rng.randf_range(cfg.length[0], cfg.length[1]))
-		var path := _smooth(road_path(d, a, bb, rng, RIVER_WIGGLE_M), 2)
-		if _river_ok(d, path, width):
+		var path := _smooth(road_path(d, a, bb, rng, float(cfg.get("wiggle", RIVER_WIGGLE_M))), 2)
+		if _river_ok(d, path, width, float(cfg.get("spacing", 6.0))):
 			d.add_river(path, width)
 	_place_bridges(d)
 
-static func _river_ok(d: PlanetData, path: PackedVector3Array, width: float) -> bool:
+static func _river_ok(d: PlanetData, path: PackedVector3Array, width: float, spacing: float) -> bool:
 	var near_road := 0
 	for p in path:
 		for s in d.flat_spots:
 			if d.arc_m(p, s.dir) < s.angle * d.radius + width + 3.0:
 				return false
-		if d.river_clearance(p) < width + 6.0:
+		if d.river_clearance(p) < width + spacing:
 			return false # longe dos outros rios
 		if d.road_clearance(p) < width * 0.5 + 1.0:
 			near_road += 1

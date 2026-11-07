@@ -40,6 +40,7 @@ var explosion: RoverExplosion
 var dust: CPUParticles3D
 var deliveries: DeliveryController
 var bubbles: O2Bubbles
+var heat := RoverHeat.new()
 
 func _ready() -> void:
 	for a in OS.get_cmdline_user_args():
@@ -85,6 +86,9 @@ func _ready() -> void:
 	bars.set_value("rover", rover.health, rover.max_health)
 	bars.add_bar("health", "BAR_HEALTH", Color("ff6b8a"))
 	bars.add_bar("o2", "BAR_O2", Color("6fd6ff"))
+	bars.add_bar("heat", "BAR_HEAT", Color("ff5a2a"))
+	heat.changed.connect(func() -> void: bars.set_value("heat", heat.heat, RoverHeat.MAX))
+	heat.overheated.connect(func() -> void: deliveries.hud.toast(tr("TOAST_OVERHEAT")))
 	vitals.changed.connect(_update_vital_bars)
 	vitals.fainted.connect(_on_player_fainted)
 	_update_vital_bars()
@@ -152,6 +156,7 @@ func start(s: int) -> void:
 	bubbles.name = "O2Bubbles"
 	planet.add_child(bubbles) # planet.build apaga os filhos: recriar a cada planeta
 	bubbles.setup(planet.data)
+	heat.reset()
 	_apply_biome_sky()
 	player.planet_center = planet.global_position
 	camera.planet_center = planet.global_position
@@ -381,12 +386,28 @@ func _on_player_fainted() -> void:
 
 ## Taxa de gasto de O₂ onde o jogador está (a pé): o ar do bioma, mais junto aos rios de ácido.
 func o2_drain_here() -> float:
-	var base := float(PlanetGenerator.BIOMES[biome].get("o2_drain", 0.0))
-	return AcidHazard.o2_drain(planet.data, planet.to_local(player.global_position), base) + extra_o2_drain
+	var bd: Dictionary = PlanetGenerator.BIOMES[biome]
+	var base := float(bd.get("o2_drain", 0.0))
+	var near_k := float(bd.get("rivers", {}).get("o2_near", 1.0))
+	return AcidHazard.o2_drain(planet.data, planet.to_local(player.global_position), base, near_k) + extra_o2_drain
+
+## Calor do rover nos biomas com "rover_heat" (lava): aquece a andar e junto às fissuras,
+## arrefece parado e à sombra; sobreaquecido fica lento.
+func _apply_heat(delta: float) -> void:
+	var on := bool(PlanetGenerator.BIOMES[biome].get("rover_heat", false))
+	bars.show_bar("heat", on and (driving or heat.heat > 0.0))
+	if not on or not rover.alive:
+		rover.speed_factor = 1.0
+		return
+	var here := planet.to_local(rover.global_position)
+	var spd := rover.linear_velocity.length()
+	heat.tick(delta, spd, spd / rover.max_speed, planet.data.river_clearance(here), RoverHeat.in_shade(planet.data, here))
+	rover.speed_factor = heat.speed_factor()
 
 ## Perigos do ácido neste frame: dano a pé ou ao rover dentro do rio, bolhas de O₂.
 func _apply_hazards(delta: float) -> void:
 	var d := planet.data
+	_apply_heat(delta)
 	# O rover estraga-se no ácido, conduzido ou estacionado.
 	if rover.alive:
 		var rr := AcidHazard.rover_damage_rate(d, planet.to_local(rover.global_position))

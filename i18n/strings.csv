@@ -102,3 +102,5 @@ TOAST_FRAGILE,Careful! Fragile delivery,Cuidado! A encomenda é frágil
 BUILD_ENTER,Enter build mode,Entrar no modo construção
 BUILD_EXIT,Exit,Sair
 BUILD_COPY_SHORT,Copy,Copiar
+BAR_HEAT,Heat,Calor
+TOAST_OVERHEAT,Rover overheated! Stop in the shade to cool down.,Rover sobreaquecido! Para à sombra para arrefecer.

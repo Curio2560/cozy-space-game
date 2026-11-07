@@ -136,7 +136,7 @@ var bridge_nodes: Array[MeshInstance3D] = []
 const RIVER_LIFT := 0.14
 const ACID_SHADER := preload("res://shaders/acid.gdshader")
 
-## Rios de ácido: faixas como as estradas (seguem o relevo), com o shader de ácido.
+## Rios de ácido e fissuras de lava: faixas como as estradas (seguem o relevo), com o shader de ácido.
 func _build_rivers() -> void:
 	if data.rivers.is_empty():
 		return
@@ -180,7 +180,7 @@ func _build_rivers() -> void:
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
 	var mat := ShaderMaterial.new()
 	mat.shader = ACID_SHADER
-	var acid: Color = PlanetGenerator.BIOMES[data.biome].palette.get("Acid", Color("8cff3a"))
+	var acid: Color = PlanetGenerator.BIOMES[data.biome].get("rivers", {}).get("color", Color("8cff3a"))
 	mat.set_shader_parameter("acid", acid)
 	mat.set_shader_parameter("deep", acid.darkened(0.55))
 	rivers_mesh = MeshInstance3D.new()
