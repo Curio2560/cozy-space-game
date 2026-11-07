@@ -17,7 +17,11 @@ const PLANET := "res://scenes/dev/planet_view.tscn"
 func _ready() -> void:
 	_title.text = BuildInfo.game_name()
 	_version.text = "v" + BuildInfo.version()
-	_play.pressed.connect(func() -> void: get_tree().change_scene_to_file(PLAY))
+	# Jogar continua o jogo guardado (se houver); o save só fica ativo a partir daqui.
+	_play.pressed.connect(func() -> void:
+		SaveGame.active = true
+		get_tree().change_scene_to_file(PLAY))
+	_play.text = "BOOT_CONTINUE" if SaveGame.exists() else "BOOT_PLAY" # chaves: traduzidas sozinhas
 	_showcase.pressed.connect(func() -> void: get_tree().change_scene_to_file(SHOWCASE))
 	_controls.pressed.connect(func() -> void: get_tree().change_scene_to_file(CONTROLS))
 	_planet.pressed.connect(func() -> void: get_tree().change_scene_to_file(PLANET))

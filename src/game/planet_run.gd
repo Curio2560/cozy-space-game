@@ -93,7 +93,14 @@ func _ready() -> void:
 	vitals.changed.connect(_update_vital_bars)
 	vitals.fainted.connect(_on_player_fainted)
 	_update_vital_bars()
+	var saved := SaveGame.read() if SaveGame.active else {}
+	if not saved.is_empty():
+		var pl: Dictionary = saved.get("planet", {})
+		seed_value = int(pl.get("seed", seed_value))
+		biome = str(pl.get("biome", biome))
 	start(seed_value)
+	if not saved.is_empty():
+		apply_state(saved)
 	_register_debug()
 	builder.setup(self)
 	var args := OS.get_cmdline_user_args() # argumentos só para capturas de ecrã no PC
@@ -149,6 +156,37 @@ func _ready() -> void:
 		Input.action_press("move_forward", 1.0)
 		Input.action_press("move_right", 0.25)
 
+## Estado do jogo para o save. Cada sistema acrescenta a sua secção.
+func save_state() -> Dictionary:
+	return {
+		"planet": {"seed": seed_value, "biome": biome},
+		"wallet": wallet.to_dict(),
+		"deliveries": deliveries.session.to_dict(),
+	}
+
+## Repõe as secções de um save (o planeta já foi gerado com a seed guardada).
+func apply_state(state: Dictionary) -> void:
+	wallet.from_dict(state.get("wallet", {}))
+	deliveries.session.from_dict(state.get("deliveries", {}))
+	deliveries._update_keycards()
+
+## Guarda se o save estiver ativo (aberto pelo menu). Chamado ao entregar, construir e sair.
+func autosave() -> void:
+	if SaveGame.active:
+		SaveGame.write(save_state())
+
+func _notification(what: int) -> void:
+	if what in [NOTIFICATION_APPLICATION_FOCUS_OUT, NOTIFICATION_APPLICATION_PAUSED, NOTIFICATION_WM_CLOSE_REQUEST]:
+		if is_node_ready() and deliveries and deliveries.session:
+			autosave()
+
+## Começa um jogo novo: apaga o save, zera a carteira e gera um planeta novo (prado).
+func new_game() -> void:
+	SaveGame.erase()
+	wallet.from_dict({})
+	biome = "prado"
+	start(randi() % 100000)
+
 ## Gera o planeta `s` e põe o jogador junto ao posto avançado.
 func start(s: int) -> void:
 	seed_value = s
@@ -179,6 +217,8 @@ func start(s: int) -> void:
 	if deliveries:
 		deliveries.start_planet(planet.data)
 	_spawn_creatures()
+	deliveries.session.order_delivered.connect(func(_o: DeliveryOrder, _t: bool) -> void: autosave())
+	autosave()
 	if builder:
 		builder.clear()
 
@@ -634,6 +674,7 @@ func _build_ui() -> void:
 	pause_menu = PauseMenu.new()
 	pause_layer.add_child(pause_menu)
 	pause_menu.new_planet.connect(func() -> void: start(randi() % 100000))
+	pause_menu.new_game.connect(new_game)
 	pause_menu.quit_to_menu.connect(func() -> void: get_tree().change_scene_to_file("res://scenes/ui/boot.tscn"))
 	var fade_layer := CanvasLayer.new()
 	fade_layer.layer = 50

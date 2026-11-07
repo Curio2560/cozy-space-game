@@ -61,6 +61,19 @@ func _init(p_wallet: Wallet, post_distances: Array, p_seed: int) -> void:
 	refill_offers()
 
 ## Pagamento de `order` se for entregue com `elapsed` segundos. Nunca 0.
+## Estado para o save: amizade de cada colono e KeyCards.
+func to_dict() -> Dictionary:
+	return {"reputation": colonists.map(func(c: Dictionary) -> int: return int(c.reputation)),
+		"keycards": keycards, "important_given": important_given, "since_important": since_important}
+
+func from_dict(d: Dictionary) -> void:
+	var rep: Array = d.get("reputation", [])
+	for i in mini(rep.size(), colonists.size()):
+		colonists[i].reputation = int(rep[i])
+	keycards = int(d.get("keycards", 0))
+	important_given = int(d.get("important_given", 0))
+	since_important = int(d.get("since_important", 0))
+
 static func payment(base_pay: int, time_limit: float, elapsed: float) -> int:
 	if elapsed <= time_limit:
 		var spare := clampf(1.0 - elapsed / time_limit, 0.0, 1.0)

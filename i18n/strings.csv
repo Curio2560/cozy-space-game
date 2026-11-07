@@ -108,3 +108,8 @@ DBG_GOTO_RELIEF,Go to a mountain,Ir a uma montanha
 DBG_GOTO_RIVER,Go to a river / fissure,Ir a um rio / fissura
 DBG_PARTICLES,Ambient particles,Partículas ambiente
 DBG_HEAT,Rover heat +50,Calor do rover +50
+PAUSE_NEW_GAME,New game,Novo jogo
+NEW_GAME_CONFIRM,Start a new game? Your saved progress will be deleted.,Começar um jogo novo? O progresso guardado é apagado.
+NEW_GAME_YES,New game,Novo jogo
+NEW_GAME_NO,Cancel,Cancelar
+BOOT_CONTINUE,Continue,Continuar

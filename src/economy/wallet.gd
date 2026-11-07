@@ -48,3 +48,9 @@ func spend(cost: Dictionary) -> bool:
 
 func to_dict() -> Dictionary:
 	return _amounts.duplicate()
+
+## Repõe as quantidades (de um save). Tipos desconhecidos ignorados; nunca negativo.
+func from_dict(d: Dictionary) -> void:
+	for k in KINDS:
+		_amounts[k] = maxi(int(d.get(k, 0)), 0)
+	changed.emit()
