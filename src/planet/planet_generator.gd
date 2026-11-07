@@ -65,6 +65,9 @@ const BIOMES := {
 				{"tex": "planeta_verde_azul", "dir": Vector3(0.75, 0.2, 0.62), "size": 7.0, "fps": 1.2},
 			]},
 		"kit_tint": Color("cdbcff"),
+		"o2_drain": 1.0, # O₂ por segundo a pé (100 = cheio)
+		"rivers": {"count": 6, "width": [2.2, 3.2], "length": [60.0, 130.0]},
+		"o2_bubbles": 26,
 		"height_amp": 2.2,
 		"noise_freq": 0.035,
 		"palette": {
@@ -73,6 +76,7 @@ const BIOMES := {
 			"Black": Color("2c2438"), "Orange": Color("e8e44a"), "LightOrange": Color("cdf27a"),
 			"Berry": Color("c44ae6"), "Pink": Color("e07af0"), "Snow": Color("e8ffd0"),
 			"Grass": Color("a6d64a"), "Rock": Color("5c4c80"), "Road": Color("5a4c78"),
+			"Acid": Color("8cff3a"),
 		},
 		"props": [
 			{"kinds": ["nature/CommonTree_Dead_1", "nature/CommonTree_Dead_2", "nature/CommonTree_Dead_3", "nature/CommonTree_Dead_4", "nature/CommonTree_Dead_5",
@@ -139,12 +143,98 @@ static func generate(p_seed: int, biome := "prado", radius := DEFAULT_RADIUS) ->
 
 	_place_spots(d, rng, spin)
 	_place_roads(d, rng)
+	_place_rivers(d, b, p_seed)
 	_place_reliefs(d, p_seed)
 	_place_dirt(d, b, rng)
 	_place_props(d, b, rng, spin)
 	_place_obstacles(d)
 	_place_turf(d, b, p_seed)
+	_place_o2_bubbles(d, b, p_seed)
 	return d
+
+const RIVER_TRIES := 200
+const RIVER_WIGGLE_M := 9.0
+const BRIDGE_MARGIN := 1 # pontos da estrada a mais de cada lado do rio
+
+## Rios de ácido (biomas com "rivers"): caminhos estreitos e sinuosos longe das zonas
+## aplanadas, que cruzam as estradas (com pontes) mas não correm ao longo delas.
+static func _place_rivers(d: PlanetData, b: Dictionary, p_seed: int) -> void:
+	var cfg: Dictionary = b.get("rivers", {})
+	if cfg.is_empty():
+		return
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash(p_seed * 389 + 17)
+	var wanted := int(round(float(cfg.count) * pow(d.radius / DEFAULT_RADIUS, 2.0)))
+	var tries := 0
+	while d.rivers.size() < wanted and tries < RIVER_TRIES:
+		tries += 1
+		var width := rng.randf_range(cfg.width[0], cfg.width[1])
+		var a := Vector3(rng.randfn(), rng.randfn(), rng.randfn()).normalized()
+		var toward := Vector3(rng.randfn(), rng.randfn(), rng.randfn()).normalized()
+		var bb := d.toward_point(a, toward, rng.randf_range(cfg.length[0], cfg.length[1]))
+		var path := _smooth(road_path(d, a, bb, rng, RIVER_WIGGLE_M), 2)
+		if _river_ok(d, path, width):
+			d.add_river(path, width)
+	_place_bridges(d)
+
+static func _river_ok(d: PlanetData, path: PackedVector3Array, width: float) -> bool:
+	var near_road := 0
+	for p in path:
+		for s in d.flat_spots:
+			if d.arc_m(p, s.dir) < s.angle * d.radius + width + 3.0:
+				return false
+		if d.river_clearance(p) < width + 6.0:
+			return false # longe dos outros rios
+		if d.road_clearance(p) < width * 0.5 + 1.0:
+			near_road += 1
+	# Cruzar uma estrada gasta poucos pontos; correr ao lado dela gasta muitos.
+	return near_road <= maxi(3, int(path.size() * 0.12))
+
+## Uma ponte em cada sítio onde uma estrada passa por cima de um rio.
+static func _place_bridges(d: PlanetData) -> void:
+	for road in d.roads:
+		var pts: PackedVector3Array = road.points
+		var i := 0
+		while i < pts.size():
+			if d.river_clearance(pts[i]) >= 0.8:
+				i += 1
+				continue
+			var j := i
+			while j + 1 < pts.size() and d.river_clearance(pts[j + 1]) < 0.8:
+				j += 1
+			var from := maxi(0, i - BRIDGE_MARGIN)
+			var to := mini(pts.size() - 1, j + BRIDGE_MARGIN)
+			d.add_bridge(pts.slice(from, to + 1), float(road.width) + 0.8)
+			i = j + 1
+
+## Bolhas de O₂: a maioria junto aos rios (onde se gasta mais), algumas espalhadas.
+static func _place_o2_bubbles(d: PlanetData, b: Dictionary, p_seed: int) -> void:
+	var n := int(round(float(b.get("o2_bubbles", 0)) * pow(d.radius / DEFAULT_RADIUS, 2.0)))
+	if n == 0:
+		return
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash(p_seed * 151 + 3)
+	var tries := 0
+	while d.o2_bubbles.size() < n and tries < n * 30:
+		tries += 1
+		var dir: Vector3
+		if rng.randf() < 0.7 and not d.rivers.is_empty():
+			var river: Dictionary = d.rivers[rng.randi() % d.rivers.size()]
+			var pts: PackedVector3Array = river.points
+			var p := pts[rng.randi() % pts.size()]
+			var side := SphereMath.basis_from_up(p, rng.randf() * TAU).z
+			dir = (p + side * tan((float(river.width) * 0.5 + rng.randf_range(1.5, 5.0)) / d.radius)).normalized()
+		else:
+			dir = Vector3(rng.randfn(), rng.randfn(), rng.randfn()).normalized()
+		if d.in_acid(dir) or d.river_clearance(dir) < 1.0 or d.in_relief(dir) or _in_spot(d, dir, 0.0):
+			continue
+		var close := false
+		for o in d.o2_bubbles:
+			if d.arc_m(o, dir) < 8.0:
+				close = true
+				break
+		if not close:
+			d.o2_bubbles.append(dir)
 
 ## Peças de relevo por planeta (raio 60; escala com a área).
 const RELIEF_COUNT := [8, 12]

@@ -27,18 +27,60 @@ const ROAD_CELL := 6.0
 ## Distância (m) do ponto `dir` à berma da estrada mais próxima (negativa = em cima da estrada).
 ## Devolve INF se não houver estrada por perto.
 func road_clearance(dir: Vector3) -> float:
+	return _clearance(_road_grid, dir)
+
+## Rios de ácido: [{points: PackedVector3Array (direções ao longo do eixo), width: float (m)}].
+## Também entram na grelha das estradas, para a decoração e o relevo se afastarem deles.
+var rivers: Array[Dictionary] = []
+## Pontes onde as estradas cruzam os rios: [{points (direções da estrada), width (m)}].
+var bridges: Array[Dictionary] = []
+## Bolhas de O₂ (direções).
+var o2_bubbles: Array[Vector3] = []
+var _river_grid := {}
+var _bridge_grid := {}
+
+func add_river(points: PackedVector3Array, width: float) -> void:
+	rivers.append({"points": points, "width": width})
+	_index_points(_river_grid, points, width)
+	_index_road(points, width)
+
+func add_bridge(points: PackedVector3Array, width: float) -> void:
+	bridges.append({"points": points, "width": width})
+	_index_points(_bridge_grid, points, width)
+
+## Distância (m) à margem do rio mais próximo (negativa = dentro do rio; INF = longe).
+func river_clearance(dir: Vector3) -> float:
+	return _clearance(_river_grid, dir)
+
+## Distância (m) à borda da ponte mais próxima (negativa = em cima da ponte).
+func bridge_clearance(dir: Vector3) -> float:
+	return _clearance(_bridge_grid, dir)
+
+## No ácido (dentro de um rio e fora das pontes)?
+func in_acid(dir: Vector3) -> bool:
+	return river_clearance(dir) < 0.0 and bridge_clearance(dir) > 0.0
+
+func _clearance(grid: Dictionary, dir: Vector3) -> float:
 	var p := dir.normalized() * radius
 	var k := Vector3i((p / ROAD_CELL).floor())
 	var best := INF
 	for x in range(-1, 2):
 		for y in range(-1, 2):
 			for z in range(-1, 2):
-				var cell = _road_grid.get(k + Vector3i(x, y, z))
+				var cell = grid.get(k + Vector3i(x, y, z))
 				if cell == null:
 					continue
 				for e in cell:
 					best = minf(best, p.distance_to(e[0]) - e[1])
 	return best
+
+func _index_points(grid: Dictionary, points: PackedVector3Array, width: float) -> void:
+	for d in points:
+		var p := d * radius
+		var k := Vector3i((p / ROAD_CELL).floor())
+		if not grid.has(k):
+			grid[k] = []
+		grid[k].append([p, width * 0.5])
 
 func road_cell_of(dir: Vector3) -> Vector3i:
 	return Vector3i((dir.normalized() * radius / ROAD_CELL).floor())
@@ -54,12 +96,7 @@ func road_cells() -> Dictionary:
 	return out
 
 func _index_road(points: PackedVector3Array, width: float) -> void:
-	for d in points:
-		var p := d * radius
-		var k := Vector3i((p / ROAD_CELL).floor())
-		if not _road_grid.has(k):
-			_road_grid[k] = []
-		_road_grid[k].append([p, width * 0.5])
+	_index_points(_road_grid, points, width)
 
 func add_road(points: PackedVector3Array, width: float, main: bool, closed := false) -> void:
 	roads.append({"points": points, "width": width, "main": main, "closed": closed})

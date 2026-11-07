@@ -87,3 +87,19 @@ func test_reliefs_have_mesh_and_collision_at_their_height() -> void:
 		if not hit.is_empty():
 			# A colisão é a malha da peça; o mapa de alturas tem células de 0,5 m.
 			assert_almost_eq((hit.position as Vector3).length(), planet.data.surface_point(dir).length(), 0.6, r.kind)
+
+func test_acid_planet_builds_rivers_and_bridges_with_collision() -> void:
+	var p := Planet.new()
+	p.culling_enabled = false
+	add_child_autofree(p)
+	p.build(PlanetGenerator.generate(2, "acido"))
+	assert_not_null(p.rivers_mesh)
+	assert_eq(p.bridge_nodes.size(), p.data.bridges.size())
+	await wait_physics_frames(2)
+	var space := p.get_world_3d().direct_space_state
+	var br: Dictionary = p.data.bridges[0]
+	var mid: Vector3 = br.points[br.points.size() / 2]
+	var hit := space.intersect_ray(PhysicsRayQueryParameters3D.create(mid * 200.0, Vector3.ZERO))
+	assert_false(hit.is_empty())
+	# O tabuleiro fica acima do chão.
+	assert_gt((hit.position as Vector3).length(), p.data.surface_point(mid).length() + 0.1)

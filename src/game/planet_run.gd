@@ -39,6 +39,7 @@ const RAM_SPEED := 6.0 # o rover a esta velocidade atropela e afugenta
 var explosion: RoverExplosion
 var dust: CPUParticles3D
 var deliveries: DeliveryController
+var bubbles: O2Bubbles
 
 func _ready() -> void:
 	for a in OS.get_cmdline_user_args():
@@ -147,6 +148,10 @@ func _ready() -> void:
 func start(s: int) -> void:
 	seed_value = s
 	planet.build(PlanetGenerator.generate(s, biome))
+	bubbles = O2Bubbles.new()
+	bubbles.name = "O2Bubbles"
+	planet.add_child(bubbles) # planet.build apaga os filhos: recriar a cada planeta
+	bubbles.setup(planet.data)
 	_apply_biome_sky()
 	player.planet_center = planet.global_position
 	camera.planet_center = planet.global_position
@@ -372,9 +377,27 @@ func _on_player_fainted() -> void:
 		return
 	await _respawn_at_base()
 
-## Taxa de gasto de O₂ onde o jogador está (a pé). Os perigos dos biomas (#20) somam-lhe.
+## Taxa de gasto de O₂ onde o jogador está (a pé): o ar do bioma, mais junto aos rios de ácido.
 func o2_drain_here() -> float:
-	return float(PlanetGenerator.BIOMES[biome].get("o2_drain", 0.0)) + extra_o2_drain
+	var base := float(PlanetGenerator.BIOMES[biome].get("o2_drain", 0.0))
+	return AcidHazard.o2_drain(planet.data, planet.to_local(player.global_position), base) + extra_o2_drain
+
+## Perigos do ácido neste frame: dano a pé ou ao rover dentro do rio, bolhas de O₂.
+func _apply_hazards(delta: float) -> void:
+	var d := planet.data
+	# O rover estraga-se no ácido, conduzido ou estacionado.
+	if rover.alive:
+		var rr := AcidHazard.rover_damage_rate(d, planet.to_local(rover.global_position))
+		if rr > 0.0:
+			rover.take_damage(rr * delta)
+	if driving:
+		return
+	var here := planet.to_local(player.global_position)
+	vitals.damage(AcidHazard.foot_damage_rate(d, here) * delta)
+	if bubbles:
+		var got := bubbles.collect(here)
+		if got > 0.0:
+			vitals.add_o2(got)
 
 ## Gasto extra definido pelos perigos ou pelo DBG.
 var extra_o2_drain := 0.0
@@ -452,6 +475,7 @@ func _physics_process(delta: float) -> void:
 		# A cabine do rover protege: lá dentro o O₂ não se gasta.
 		vitals.o2_drain = 0.0 if driving else o2_drain_here()
 		vitals.tick(delta)
+		_apply_hazards(delta)
 	if respawning:
 		_hint.text = ""
 		return

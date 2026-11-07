@@ -39,6 +39,8 @@ func build(d: PlanetData) -> void:
 	add_child(body)
 	_build_terrain()
 	_build_roads()
+	_build_rivers()
+	_build_bridges()
 	_build_dirt()
 	_build_props()
 	_build_reliefs() # depois de _build_props: precisa das regiões
@@ -128,6 +130,131 @@ func _build_roads() -> void:
 	roads_mesh.material_override = _road_mat
 	roads_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(roads_mesh)
+
+var rivers_mesh: MeshInstance3D
+var bridge_nodes: Array[MeshInstance3D] = []
+const RIVER_LIFT := 0.14
+const ACID_SHADER := preload("res://shaders/acid.gdshader")
+
+## Rios de ácido: faixas como as estradas (seguem o relevo), com o shader de ácido.
+func _build_rivers() -> void:
+	if data.rivers.is_empty():
+		return
+	var verts := PackedVector3Array()
+	var norms := PackedVector3Array()
+	var uvs := PackedVector2Array()
+	var idx := PackedInt32Array()
+	var w := ROAD_ACROSS.size()
+	for river in data.rivers:
+		var pts: PackedVector3Array = river.points
+		var hw: float = river.width * 0.5
+		var base := verts.size()
+		var along := 0.0
+		for i in pts.size():
+			if i > 0:
+				along += data.arc_m(pts[i - 1], pts[i])
+			var p := pts[i]
+			var t := pts[mini(i + 1, pts.size() - 1)] - pts[maxi(i - 1, 0)]
+			t = (t - p * t.dot(p)).normalized()
+			var side := p.cross(t).normalized()
+			# Pontas arredondadas: o rio estreita nos dois últimos pontos.
+			var taper := minf(1.0, minf(float(i), float(pts.size() - 1 - i)) * 0.5 + 0.2)
+			for k in w:
+				var q: Vector3 = (p + side * (float(ROAD_ACROSS[k]) * hw * taper / data.radius)).normalized()
+				verts.append(data.surface_point(q) + q * RIVER_LIFT)
+				norms.append(q)
+				uvs.append(Vector2((float(ROAD_ACROSS[k]) + 1.0) * 0.5, along))
+		for i in pts.size() - 1:
+			for k in w - 1:
+				var a := base + i * w + k
+				var b := a + w
+				_tri(idx, verts, a, b, a + 1)
+				_tri(idx, verts, a + 1, b, b + 1)
+	var arrays := []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = verts
+	arrays[Mesh.ARRAY_NORMAL] = norms
+	arrays[Mesh.ARRAY_TEX_UV] = uvs
+	arrays[Mesh.ARRAY_INDEX] = idx
+	var mesh := ArrayMesh.new()
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	var mat := ShaderMaterial.new()
+	mat.shader = ACID_SHADER
+	var acid: Color = PlanetGenerator.BIOMES[data.biome].palette.get("Acid", Color("8cff3a"))
+	mat.set_shader_parameter("acid", acid)
+	mat.set_shader_parameter("deep", acid.darkened(0.55))
+	rivers_mesh = MeshInstance3D.new()
+	rivers_mesh.name = "Rivers"
+	rivers_mesh.mesh = mesh
+	rivers_mesh.material_override = mat
+	rivers_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(rivers_mesh)
+
+const BRIDGE_DECK := 0.22 # espessura do tabuleiro (m)
+const BRIDGE_RAIL := 0.55
+
+## Pontes de madeira: tabuleiro reto da primeira à última ponta, acima do ponto mais alto do
+## chão por baixo, com guardas dos lados. Colisão por caixas.
+func _build_bridges() -> void:
+	bridge_nodes.clear()
+	var pal: Dictionary = PlanetGenerator.BIOMES[data.biome].palette
+	var wood: Color = pal.get("LightWood", Color("c99a74"))
+	var dark: Color = pal.get("Wood", Color("a8735a"))
+	var i := 0
+	for br in data.bridges:
+		var pts: PackedVector3Array = br.points
+		var a := data.surface_point(pts[0])
+		var b := data.surface_point(pts[pts.size() - 1])
+		var top := 0.0
+		for p in pts:
+			top = maxf(top, data.surface_point(p).length())
+		var mid_dir := (a + b).normalized()
+		var length := maxf(a.distance_to(b) + 1.0, 5.0) # rios até 3,2 m de largura
+		var up := mid_dir
+		var fwd := ((b - a) - up * (b - a).dot(up)).normalized()
+		var basis := Basis(up.cross(fwd), up, fwd)
+		var center := mid_dir * (top + RIVER_LIFT + BRIDGE_DECK * 0.5)
+		var width: float = br.width
+		var st := SurfaceTool.new()
+		st.begin(Mesh.PRIMITIVE_TRIANGLES)
+		var boxes := [
+			[Vector3(0, 0, 0), Vector3(width, BRIDGE_DECK, length), wood],
+			[Vector3(-width * 0.5 + 0.1, BRIDGE_RAIL * 0.5 + BRIDGE_DECK * 0.5, 0), Vector3(0.18, BRIDGE_RAIL, length), dark],
+			[Vector3(width * 0.5 - 0.1, BRIDGE_RAIL * 0.5 + BRIDGE_DECK * 0.5, 0), Vector3(0.18, BRIDGE_RAIL, length), dark],
+		]
+		var xf := Transform3D(basis, center)
+		for bx in boxes:
+			_add_box(st, xf * Transform3D(Basis.IDENTITY, bx[0]), bx[1], bx[2])
+			var cs := CollisionShape3D.new()
+			var shape := BoxShape3D.new()
+			shape.size = bx[1]
+			cs.shape = shape
+			cs.transform = xf * Transform3D(Basis.IDENTITY, bx[0])
+			body.add_child(cs)
+		# Tábuas: riscas escuras de 0,6 em 0,6 m por cima do tabuleiro.
+		var z := -length * 0.5 + 0.3
+		while z < length * 0.5:
+			_add_box(st, xf * Transform3D(Basis.IDENTITY, Vector3(0, BRIDGE_DECK * 0.5, z)), Vector3(width - 0.4, 0.03, 0.08), dark)
+			z += 0.6
+		var mi := MeshInstance3D.new()
+		mi.name = "Bridge%d" % i
+		mi.mesh = st.commit()
+		mi.material_override = CelShading.vertex_color_material(false)
+		add_child(mi)
+		bridge_nodes.append(mi)
+		i += 1
+
+static func _add_box(st: SurfaceTool, xf: Transform3D, size: Vector3, col: Color) -> void:
+	var bm := BoxMesh.new()
+	bm.size = size
+	var arr := bm.get_mesh_arrays()
+	var v: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
+	var n: PackedVector3Array = arr[Mesh.ARRAY_NORMAL]
+	var ix: PackedInt32Array = arr[Mesh.ARRAY_INDEX]
+	for k in ix:
+		st.set_color(col)
+		st.set_normal((xf.basis * n[k]).normalized())
+		st.add_vertex(xf * v[k])
 
 var dirt_mesh: MeshInstance3D
 const DIRT_RINGS := [0.35, 0.7, 1.0]
