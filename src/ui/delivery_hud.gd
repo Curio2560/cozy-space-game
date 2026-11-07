@@ -5,6 +5,15 @@ extends Control
 
 var credits_label: Label
 var keycards_label: Label
+var resources_label: Label
+
+## Linha dos recursos (minério, cristal, colheitas, dados); vazia se não houver nenhum.
+func set_resources(w: Wallet) -> void:
+	var parts := []
+	for k in [Wallet.ORE, Wallet.CRYSTAL, Wallet.CROPS, Wallet.DATA]:
+		if w.amount(k) > 0:
+			parts.append("%s %d" % [tr("RES_" + k.to_upper()), w.amount(k)])
+	resources_label.text = "  ·  ".join(parts)
 var order_label: Label
 var arrow: NavArrow
 var _toast: Label
@@ -20,6 +29,9 @@ func _ready() -> void:
 	credits_label = _label(30, Color("ffc857"))
 	credits_label.position = Vector2(104, 26)
 	add_child(credits_label)
+	resources_label = _label(20, Color("fff6ea"))
+	resources_label.position = Vector2(104, 66)
+	add_child(resources_label)
 	keycards_label = _label(22, Color("b79cff"))
 	keycards_label.position = Vector2(200, 30)
 	add_child(keycards_label)

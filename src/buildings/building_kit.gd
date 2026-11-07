@@ -149,4 +149,6 @@ static func outpost() -> Array:
 	parts.append({"m": "Props_Pod", "p": Vector3(5.6, 0, 3.0), "r": -30})
 	parts.append({"m": "Props_Crate", "p": Vector3(1.2, 0, 5.0), "r": 10})
 	parts.append({"m": "Props_Teleporter_2", "p": Vector3(-5.0, 0, -3.0), "r": 0})
+	# Terminal do posto (OutpostController.TERMINAL_LOCAL), ao lado da porta.
+	parts.append({"m": "Props_Computer", "p": Vector3(3.0, 0, 5.6), "r": 180})
 	return parts

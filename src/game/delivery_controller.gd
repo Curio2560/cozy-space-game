@@ -167,7 +167,7 @@ func _physics_process(delta: float) -> void:
 	if session == null:
 		return
 	_action.update(Input.is_action_pressed("action"), delta)
-	if _action.consume() and not board_open and near_board():
+	if _action.consume() and not board_open and near_board() and not (run.outpost and (run.outpost.near_terminal() or run.outpost.menu_open)):
 		open_board()
 	session.tick(delta)
 	_bump_hint_cd = maxf(_bump_hint_cd - delta, 0.0)
@@ -259,3 +259,4 @@ func _update_hud() -> void:
 func _update_credits() -> void:
 	if hud and hud.credits_label:
 		hud.credits_label.text = "%d ¢" % wallet.credits()
+		hud.set_resources(wallet)

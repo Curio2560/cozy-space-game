@@ -40,6 +40,7 @@ var explosion: RoverExplosion
 var dust: CPUParticles3D
 var deliveries: DeliveryController
 var bubbles: O2Bubbles
+var outpost: OutpostController
 var heat := RoverHeat.new()
 var ambient: AmbientParticles
 
@@ -80,6 +81,10 @@ func _ready() -> void:
 	deliveries.name = "Deliveries"
 	add_child(deliveries)
 	deliveries.setup(self, wallet, _hud_layer)
+	outpost = OutpostController.new()
+	outpost.name = "Outpost"
+	add_child(outpost)
+	outpost.setup(self, _hud_layer)
 	bars = StatusBars.new()
 	_hud_layer.add_child(bars)
 	bars.add_bar("rover", "BAR_ROVER", Color("ff9f5a"))
@@ -564,7 +569,7 @@ func _physics_process(delta: float) -> void:
 		_hint.text = ""
 		return
 	_vehicle_btn.update(Input.is_action_pressed("vehicle"), delta)
-	if _vehicle_btn.consume() and not deliveries.board_open:
+	if _vehicle_btn.consume() and not deliveries.board_open and not outpost.menu_open:
 		if driving:
 			exit_rover()
 		elif can_enter_rover():
@@ -575,7 +580,10 @@ func _physics_process(delta: float) -> void:
 		rover.steer = m.x
 	var h := tr("HINT_EXIT_ROVER") if driving else (tr("HINT_ENTER_ROVER") if can_enter_rover() else "")
 	var dh := deliveries.hint()
-	_hint.text = "" if deliveries.board_open else (dh if dh != "" and not driving else (h if h != "" else dh))
+	var oh := outpost.hint()
+	if oh != "":
+		dh = oh # o terminal está mesmo ao lado: tem prioridade sobre o quadro
+	_hint.text = "" if deliveries.board_open or outpost.menu_open else (dh if dh != "" and not driving else (h if h != "" else dh))
 
 var _env: Environment
 var sky_planets: SkyPlanets
