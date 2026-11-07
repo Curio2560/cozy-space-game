@@ -46,3 +46,22 @@
 17. Português e inglês desde o início (traduções do Godot).
 18. Música/som: placeholders CC0 até ao fim da F4.
 19. Telemóvel de teste: o mesmo do Deriva Estelar.
+
+## Ronda 3 (06 nov 2026)
+1. Apagar só os ramos antigos; manter as releases.
+2. Relva "mdvl": pack gratuito do Sketchfab (nome esquecido; conta Epic Games). **Mais relva no mundo.**
+3. Rios de ácido estreitos e sinuosos; atravessar por pontes ou a saltar.
+4. O ar do planeta ácido gasta O₂ a pé, mais depressa junto aos rios; bolhas repõem; tocar no rio tira vida.
+5. Sem O₂ ou sem vida: desmaias e acordas no posto avançado; a encomenda atual falha (paga 0); nada mais se perde.
+6. A cabine do rover protege do O₂; atravessar ácido estraga o rover, reparável no posto.
+7. Lava: o rover aquece com a velocidade e perto de fissuras; sobreaquecido fica lento; arrefece à sombra ou parado.
+8. Criaturas: **empurram e tiram um pouco de vida; às vezes roubam a encomenda (e fogem com ela); um empurrão faz a encomenda perder valor.**
+9. Sem combate a pé (combate no mech, à noite e no boss).
+10. Monstros do pack: criaturas de todos os mundos, cor ajustada a cada bioma.
+11. Ordem dos planetas fixa no início (Prado → Ácido → Lava), depois mais variada.
+12. 3 KeyCards por planeta.
+13. Amizade 1–5 por colono; pagam mais; encomendas especiais a partir do nível 3.
+14. Árvores entre a câmara e o jogador ficam semitransparentes.
+15. FPS no telemóvel: **120 fps**.
+16. Controlos e câmara: bons.
+17. Rover e entregas: divertidos, velocidade e tempos bons. **Quer física mais bouncy (dá para capotar o rover); o rover tem vida e, quando acaba, explode e renasces na base.**

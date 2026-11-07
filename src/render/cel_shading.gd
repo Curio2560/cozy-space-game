@@ -6,18 +6,22 @@ extends RefCounted
 
 const CEL_SHADER := preload("res://shaders/cel.gdshader")
 const OUTLINE_SHADER := preload("res://shaders/outline.gdshader")
+## Variantes com o pontilhado (discard) para as árvores; os outros modelos não pagam o custo.
+const CEL_FADE_SHADER := preload("res://shaders/cel_fade.gdshader")
+const OUTLINE_FADE_SHADER := preload("res://shaders/outline_fade.gdshader")
 
 static var _cache: Dictionary = {} # chave da paleta -> ShaderMaterial
 static var _mesh_cache: Dictionary = {} # Mesh original -> ArrayMesh com normais suaves na tangente
 
 ## Substitui os materiais de todas as MeshInstance3D sob `root`. Devolve quantas superfícies mudou.
-static func apply(root: Node) -> int:
+## `tint` multiplica a cor (p. ex. o tom do bioma nas criaturas).
+static func apply(root: Node, tint := Color.WHITE) -> int:
 	var count := 0
 	for mi in _mesh_instances(root):
 		mi.mesh = outline_ready_mesh(mi.mesh)
 		for i in mi.mesh.get_surface_count():
 			var src := mi.get_active_material(i)
-			mi.set_surface_override_material(i, material_for(src, true))
+			mi.set_surface_override_material(i, material_for(src, true, tint))
 			count += 1
 	return count
 
@@ -100,22 +104,40 @@ static func palette_mesh(mesh: Mesh, palette: Dictionary) -> ArrayMesh:
 		_palette_cache[key] = _merge_with_palette(mesh, palette)
 	return _palette_cache[key]
 
-## Material partilhado para malhas com cor por vértice.
-static func vertex_color_material(outline := true) -> ShaderMaterial:
-	var key := "vcolor|" + str(outline)
+## Material partilhado para malhas com cor por vértice. `wind` = inclinação com o vento
+## (0 = parado); `fade` = fica pontilhado entre a câmara e o jogador (árvores).
+static func vertex_color_material(outline := true, wind := 0.0, fade := false) -> ShaderMaterial:
+	var key := "vcolor|%s|%.3f|%s" % [outline, wind, fade]
 	if _cache.has(key):
 		return _cache[key]
 	var m := ShaderMaterial.new()
-	m.shader = CEL_SHADER
+	m.shader = CEL_FADE_SHADER if fade else CEL_SHADER
 	m.set_shader_parameter("use_vertex_color", true)
+	_set_wind_fade(m, wind, fade)
 	if outline:
 		var o := ShaderMaterial.new()
-		o.shader = OUTLINE_SHADER
+		o.shader = OUTLINE_FADE_SHADER if fade else OUTLINE_SHADER
 		o.set_shader_parameter("use_vertex_color", true)
 		o.set_shader_parameter("use_tangent_normals", true)
+		_set_wind_fade(o, wind, fade)
 		m.next_pass = o
 	_cache[key] = m
 	return m
+
+## Materiais que ficam pontilhados entre a câmara e o jogador (atualizados a cada frame).
+static var _fade_mats: Array[ShaderMaterial] = []
+
+static func _set_wind_fade(m: ShaderMaterial, wind: float, fade: bool) -> void:
+	m.set_shader_parameter("wind_strength", wind)
+	m.set_shader_parameter("fade_occluder", fade)
+	if fade:
+		_fade_mats.append(m)
+
+## Posições (mundo) da câmara e do jogador para o pontilhado das árvores no caminho.
+static func set_occlusion(camera_pos: Vector3, player_pos: Vector3) -> void:
+	for m in _fade_mats:
+		m.set_shader_parameter("occlude_from", camera_pos)
+		m.set_shader_parameter("occlude_to", player_pos)
 
 static func _merge_with_palette(mesh: Mesh, palette: Dictionary) -> ArrayMesh:
 	var verts := PackedVector3Array()
@@ -273,6 +295,20 @@ static func terrain(c: Color) -> ShaderMaterial:
 	m.set_shader_parameter("rim_strength", 0.0)
 	m.set_shader_parameter("spec_strength", 0.0)
 	# A normal do terreno varia devagar: com suavização normal as bandas ficariam esbatidas.
+	m.set_shader_parameter("band_softness", 0.004)
+	_cache[key] = m
+	return m
+
+## Material de terreno com cor por vértice (estradas): sem rim, sem brilho, bandas nítidas.
+static func terrain_vertex_color() -> ShaderMaterial:
+	var key := "terrain_vcolor"
+	if _cache.has(key):
+		return _cache[key]
+	var m := ShaderMaterial.new()
+	m.shader = CEL_SHADER
+	m.set_shader_parameter("use_vertex_color", true)
+	m.set_shader_parameter("rim_strength", 0.0)
+	m.set_shader_parameter("spec_strength", 0.0)
 	m.set_shader_parameter("band_softness", 0.004)
 	_cache[key] = m
 	return m

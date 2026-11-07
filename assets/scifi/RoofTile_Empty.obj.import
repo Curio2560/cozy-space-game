@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://ni4jk4jxtlol"
+path="res://.godot/imported/RoofTile_Empty.obj-997fffea2de9155a1d323da82e2b885e.mesh"
+
+[deps]
+
+files=["res://.godot/imported/RoofTile_Empty.obj-997fffea2de9155a1d323da82e2b885e.mesh"]
+
+source_file="res://assets/scifi/RoofTile_Empty.obj"
+dest_files=["res://.godot/imported/RoofTile_Empty.obj-997fffea2de9155a1d323da82e2b885e.mesh", "res://.godot/imported/RoofTile_Empty.obj-997fffea2de9155a1d323da82e2b885e.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

@@ -42,3 +42,69 @@ DBG_TIME_SCALE,Time speed,Velocidade do tempo
 DBG_RENDER_SCALE,3D resolution,Resolução 3D
 DBG_GOTO_OUTPOST,Go to outpost,Ir ao posto avançado
 DBG_NEXT_BIOME,Next biome,Bioma seguinte
+BAR_ROVER,Rover,Rover
+TOAST_ORDER_LOST,Delivery lost!,Encomenda perdida!
+DBG_ROVER_DAMAGE,Damage rover (40),Danificar o rover (40)
+DBG_ROVER_BOUNCE,Rover damping (low = bouncy),Amortecimento (baixo = saltitão)
+DBG_ROVER_SPIN,Rover spin damping,Travão de rotação do rover
+DBG_ROVER_AIR,Rover air alignment,Alinhamento no ar
+DBG_SKY_BRIGHT,Sky brightness,Brilho do céu
+DBG_SKY_NEBULA,Nebula strength,Intensidade da nebulosa
+TOAST_ROVER_EXPLODED,The rover exploded!,O rover explodiu!
+BAR_HEALTH,Health,Vida
+BAR_O2,O₂,O₂
+TOAST_FAINTED,You fainted!,Desmaiaste!
+DBG_HURT,Hurt astronaut (30),Ferir o astronauta (30)
+DBG_O2_DRAIN,Drain O₂ (test),Gastar O₂ (teste)
+TOAST_STOLEN,A creature stole the delivery! Catch it!,Uma criatura roubou a encomenda! Apanha-a!
+TOAST_BUMPED,The delivery got bumped (worth less),A encomenda levou um encontrão (vale menos)
+TOAST_DROPPED,The box fell! Pick it up,A caixa caiu! Apanha-a
+TOAST_RECOVERED,Box recovered!,Caixa recuperada!
+"HUD_THIEF","Catch the thief · %d m · %s","Apanha o ladrão · %d m · %s"
+"HUD_DROPPED","Pick up the box · %d m · %s","Apanha a caixa · %d m · %s"
+DBG_CREATURES,Creatures,Criaturas
+DBG_CREATURE_HERE,Bring a creature here,Trazer uma criatura para aqui
+PAUSE_TITLE,PAUSE,PAUSA
+PAUSE_RESUME,Resume,Continuar
+PAUSE_NEW_PLANET,New planet,Novo planeta
+PAUSE_LANGUAGE,Language: English,Idioma: Português
+PAUSE_EXIT,Exit,Sair
+DBG_TAB_GENERAL,General,Geral
+DBG_TAB_WORLD,World,Mundo
+DBG_TAB_PLAYER,Player,Jogador
+DBG_TAB_ROVER,Rover,Rover
+DBG_TAB_CREATURES,Creatures,Criaturas
+DBG_TAB_BUILD,Build,Construir
+BUILD_PLACE,Place,Colocar
+BUILD_ROTATE,Rotate 90°,Rodar 90°
+BUILD_UNDO,Undo,Desfazer
+BUILD_UP,Floor +,Andar +
+BUILD_DOWN,Floor −,Andar −
+BUILD_CLEAR,Clear,Limpar
+BUILD_COPY,Copy layout,Copiar montagem
+BUILD_GHOST,Show preview,Mostrar pré-visualização
+"BUILD_INFO","%s · %d° · floor %d · %d pieces","%s · %d° · andar %d · %d peças"
+BUILD_COPIED,Layout copied (%d pieces),Montagem copiada (%d peças)
+KIND_NORMAL,Normal,Normal
+KIND_URGENT,Urgent,Urgente
+KIND_FRAGILE,Fragile,Frágil
+KIND_PERISHABLE,Perishable,Perecível
+KIND_IMPORTANT,Important,Importante
+KIND_SPECIAL,Special,Especial
+FRIEND_LEVEL,lv,nv
+"HUD_KEYCARDS","KeyCards %d/%d","KeyCards %d/%d"
+HUD_FRESH,fresh %d%%,frescura %d%%
+HUD_CONDITION,condition %d%%,estado %d%%
+"TOAST_KEYCARD","KeyCard! (%d/%d)","KeyCard! (%d/%d)"
+TOAST_LAIR_OPEN,The lair is open!,O covil abriu!
+"TOAST_FRIEND","Friendship with %s: level %d!","Amizade com %s: nível %d!"
+TOAST_FRAGILE,Careful! Fragile delivery,Cuidado! A encomenda é frágil
+BUILD_ENTER,Enter build mode,Entrar no modo construção
+BUILD_EXIT,Exit,Sair
+BUILD_COPY_SHORT,Copy,Copiar
+BAR_HEAT,Heat,Calor
+TOAST_OVERHEAT,Rover overheated! Stop in the shade to cool down.,Rover sobreaquecido! Para à sombra para arrefecer.
+DBG_GOTO_RELIEF,Go to a mountain,Ir a uma montanha
+DBG_GOTO_RIVER,Go to a river / fissure,Ir a um rio / fissura
+DBG_PARTICLES,Ambient particles,Partículas ambiente
+DBG_HEAT,Rover heat +50,Calor do rover +50
