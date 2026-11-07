@@ -65,3 +65,21 @@
 15. FPS no telemóvel: **120 fps**.
 16. Controlos e câmara: bons.
 17. Rover e entregas: divertidos, velocidade e tempos bons. **Quer física mais bouncy (dá para capotar o rover); o rover tem vida e, quando acaba, explode e renasces na base.**
+
+## Ronda 5 — F3: economia, posto e quinta (07 nov 2026)
+
+1. Ordem: save → carteira/venda → slots e edifícios → quinta → upgrades do rover → tripulação.
+2. Construção em slots fixos (tocar num slot → menu de edifícios); o construtor livre fica no DBG.
+3. 6 slots no início, +2 com um upgrade (até 10).
+4. Edifícios da F3: mineiro, laboratório (minério → cristal), centro de pesquisa (dados), painel solar, armazém, talhões da quinta.
+5. Energia: cada edifício gasta 1, cada painel dá 3; sem energia suficiente produzem a 50%.
+6. Produção: mineiro 1 minério / 20 s; lab 1 cristal / 40 s (gasta 2 minério); pesquisa 1 dado / 60 s; armazém de 20 por edifício.
+7. O mineiro produz sozinho no slot (sem depósitos no mapa).
+8. Quinta: 4 talhões; 3 culturas (rápida 2 min, média 4 min, lenta 7 min; pagam mais as mais lentas); plantar e colher com um toque.
+9. Algumas encomendas perecíveis pedem colheitas da quinta.
+10. Upgrades do rover: velocidade, carga, escudo, suspensão; 3 níveis; 150 / 400 / 900 ¢ (+ cristal no nível 3).
+11. Terminal no posto avançado: construir, upgrades, vender, tripulação (um menu com separadores).
+12. Venda: minério 4 ¢, cristal 15 ¢, colheitas 6–20 ¢ conforme a cultura.
+13. Tripulação: os 4 disponíveis já; troca no terminal; vantagem pequena que cresce com o nível; XP por entrega.
+14. Save automático (ao sair da app, a cada entrega e a cada construção); um só espaço; "Novo jogo" no menu.
+15. Dano e reparação de edifícios: F4.
