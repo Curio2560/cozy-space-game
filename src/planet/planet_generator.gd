@@ -236,9 +236,11 @@ static func _place_o2_bubbles(d: PlanetData, b: Dictionary, p_seed: int) -> void
 		if not close:
 			d.o2_bubbles.append(dir)
 
-## Peças de relevo por planeta (raio 60; escala com a área).
-const RELIEF_COUNT := [8, 12]
+## Peças de relevo por planeta (raio 60; escala com a área). Largas e suaves: cabem poucas.
+const RELIEF_COUNT := [6, 9]
+const RELIEF_MIN_HEIGHT := 2.5 # m; mais baixas quase não se viam
 const RELIEF_TRIES := 600
+const MAX_RELIEF_SLOPE_DEG := 26.0
 
 ## Penhascos, colinas e montanhas do terreno modular: longe das zonas aplanadas, das estradas
 ## e umas das outras. RNG próprio para não mudar o resto do planeta.
@@ -252,10 +254,15 @@ static func _place_reliefs(d: PlanetData, p_seed: int) -> void:
 		tries += 1
 		var kind: String = ReliefKit.KINDS[rng.randi() % ReliefKit.KINDS.size()]
 		var pc := ReliefKit.piece(kind)
-		# As peças grandes encolhem nos planetas pequenos e quando já falhou muita coisa.
-		var fit := minf(1.0, d.radius * 0.28 / float(pc.radius))
-		var scale := rng.randf_range(0.75, 1.1) * fit * lerpf(1.0, 0.6, float(tries) / RELIEF_TRIES)
-		var hscale := scale * rng.randf_range(1.5, 2.0) # o pack é baixo para um planeta: exagerar a altura
+		# Largas: esticadas na horizontal; as grandes encolhem nos planetas pequenos e quando
+		# já falhou muita coisa.
+		var fit := minf(1.0, d.radius * 0.5 / float(pc.radius))
+		var scale := rng.randf_range(1.7, 2.3) * fit * lerpf(1.0, 0.6, float(tries) / RELIEF_TRIES)
+		# Altura limitada para nenhuma encosta passar de MAX_RELIEF_SLOPE_DEG (o rover sobe).
+		var max_h := scale * tan(deg_to_rad(MAX_RELIEF_SLOPE_DEG)) / maxf(float(pc.grad), 0.01)
+		var hscale := minf(scale * rng.randf_range(1.0, 1.4), max_h)
+		if float(pc.top) * hscale < RELIEF_MIN_HEIGHT:
+			continue
 		var dir := Vector3(rng.randfn(), rng.randfn(), rng.randfn()).normalized()
 		var foot: float = pc.radius * scale
 		if not _relief_fits(d, dir, foot):
@@ -279,7 +286,7 @@ static func _relief_fits(d: PlanetData, dir: Vector3, foot: float) -> bool:
 ## Nenhuma estrada passa por cima da peça (amostras de 3 em 3 m sobre a área dela).
 static func _relief_clear_of_roads(d: PlanetData, r: Dictionary, pc: Dictionary) -> bool:
 	var half: float = pc.half
-	var step := 3.0 / float(r.scale)
+	var step := 2.5 / float(r.scale)
 	var x := -half
 	while x <= half:
 		var z := -half

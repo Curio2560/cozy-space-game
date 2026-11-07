@@ -438,12 +438,14 @@ func _build_terrain() -> void:
 	body.add_child(cs)
 
 const RELIEF_SINK := 0.35
-const RELIEF_SKIRT := 0.8 # m que a borda das peças desce para dentro do chão (sem frestas)
+const RELIEF_LIFT := 0.03
+const RELIEF_STEP := 2 # células do mapa por quadrado da malha (1 m na escala 1)
+const RELIEF_TOP_COS := 0.92 # faces mais deitadas do que ~23° têm a cor do chão
 var relief_meshes: Array[MeshInstance3D] = []
 
-## Peças de relevo: os triângulos da peça dobrados à curvatura (a altura da peça somada à do
-## chão), topo com a cor do chão e paredes com a cor de rocha do bioma, uma saia na borda que
-## entra no chão e colisão exata. Cada peça entra na região do seu centro (culling).
+## Peças de relevo: o mapa de alturas suavizado da peça em malha (quadrados de RELIEF_STEP
+## células), dobrado à curvatura e somado à altura do chão. Faces quase planas com a cor do
+## chão, encostas com a cor de rocha. Colisão = a mesma malha. Entra na região do seu centro.
 func _build_reliefs() -> void:
 	relief_meshes.clear()
 	if data.reliefs.is_empty():
@@ -454,25 +456,35 @@ func _build_reliefs() -> void:
 	var i := 0
 	for r in data.reliefs:
 		var pc := ReliefKit.piece(r.kind)
-		var tris: PackedVector3Array = pc.tris
+		var n: int = pc.n
+		var g: PackedFloat32Array = pc.grid
+		var half: float = pc.half
 		var verts := PackedVector3Array()
 		var norms := PackedVector3Array()
 		var cols := PackedColorArray()
-		var center: Vector3 = r.dir
-		for t in range(0, tris.size(), 3):
-			var a := _relief_point(r, tris[t])
-			var bb := _relief_point(r, tris[t + 1])
-			var c := _relief_point(r, tris[t + 2])
-			_relief_tri(verts, norms, cols, a, bb, c, top_col, rock_col, Vector3.ZERO)
-		var border := ReliefKit.border_edges(pc)
-		for e in range(0, border.size(), 2):
-			var a := _relief_point(r, border[e])
-			var bb := _relief_point(r, border[e + 1])
-			var a2 := a - a.normalized() * RELIEF_SKIRT
-			var b2 := bb - bb.normalized() * RELIEF_SKIRT
-			var out := ((a + bb) * 0.5 - center * center.dot((a + bb) * 0.5)).normalized()
-			_relief_tri(verts, norms, cols, a, bb, b2, top_col, rock_col, out)
-			_relief_tri(verts, norms, cols, a, b2, a2, top_col, rock_col, out)
+		var pts := {} # (ix, iz) -> ponto no planeta
+		var at := func(ix: int, iz: int) -> Vector3:
+			var key := Vector2i(ix, iz)
+			if not pts.has(key):
+				var h := g[iz * n + ix]
+				var dir := data.relief_dir(r, ix * ReliefKit.CELL - half, iz * ReliefKit.CELL - half)
+				pts[key] = dir * (data.radius + data.base_height_at(dir) + (h if h > ReliefKit.EDGE else 0.0) * float(r.height_scale) + RELIEF_LIFT)
+			return pts[key]
+		var iz := 0
+		while iz + RELIEF_STEP < n:
+			var ix := 0
+			while ix + RELIEF_STEP < n:
+				var x2 := ix + RELIEF_STEP
+				var z2 := iz + RELIEF_STEP
+				if maxf(maxf(g[iz * n + ix], g[iz * n + x2]), maxf(g[z2 * n + ix], g[z2 * n + x2])) > ReliefKit.EDGE:
+					var p00: Vector3 = at.call(ix, iz)
+					var p10: Vector3 = at.call(x2, iz)
+					var p01: Vector3 = at.call(ix, z2)
+					var p11: Vector3 = at.call(x2, z2)
+					_relief_tri(verts, norms, cols, p00, p10, p11, top_col, rock_col)
+					_relief_tri(verts, norms, cols, p00, p11, p01, top_col, rock_col)
+				ix += RELIEF_STEP
+			iz += RELIEF_STEP
 		var arrays := []
 		arrays.resize(Mesh.ARRAY_MAX)
 		arrays[Mesh.ARRAY_VERTEX] = verts
@@ -484,35 +496,31 @@ func _build_reliefs() -> void:
 		mi.name = "Relief%d" % i
 		mi.mesh = mesh
 		mi.material_override = CelShading.vertex_color_material(false)
-		_regions[_region_of(center)].add_child(mi)
+		_regions[_region_of(r.dir)].add_child(mi)
 		relief_meshes.append(mi)
 		var shape := ConcavePolygonShape3D.new()
 		shape.set_faces(verts)
+		shape.backface_collision = true # nunca deixar passar por baixo
 		var cs := CollisionShape3D.new()
 		cs.name = "Relief%d" % i
 		cs.shape = shape
 		body.add_child(cs)
 		i += 1
 
-## Vértice local da peça no espaço do planeta.
-func _relief_point(r: Dictionary, v: Vector3) -> Vector3:
-	var dir := data.relief_dir(r, v.x, v.z)
-	return dir * (data.radius + data.base_height_at(dir) + v.y * float(r.height_scale))
-
-## Triângulo com normal plana (visual low-poly); a saia fica virada para `out`. Cor: chão se a face estiver virada para cima, rocha nas paredes.
+## Triângulo com normal plana (visual low-poly) virado para fora do planeta. Cor: chão nas
+## faces quase deitadas, rocha nas encostas.
 func _relief_tri(verts: PackedVector3Array, norms: PackedVector3Array, cols: PackedColorArray,
-		a: Vector3, b: Vector3, c: Vector3, top_col: Color, rock_col: Color, out: Vector3) -> void:
+		a: Vector3, b: Vector3, c: Vector3, top_col: Color, rock_col: Color) -> void:
 	var n := (c - a).cross(b - a)
 	if n.length_squared() < 1e-10:
 		return
 	n = n.normalized()
-	# A ordem da peça já vem certa do importador; só a saia precisa de ser virada.
-	if out != Vector3.ZERO and n.dot(out) < 0.0:
+	if n.dot(a) < 0.0:
 		var t := b
 		b = c
 		c = t
 		n = -n
-	var col := top_col if n.dot(a.normalized()) > 0.78 else rock_col
+	var col := top_col if n.dot(a.normalized()) > RELIEF_TOP_COS else rock_col
 	verts.append_array([a, b, c])
 	norms.append_array([n, n, n])
 	cols.append_array([col, col, col])

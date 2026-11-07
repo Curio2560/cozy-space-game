@@ -37,6 +37,11 @@ const MODEL_WHEELS := {
 @export var crash_threshold := 3.0 # m/s de mudança brusca num passo = choque
 
 var planet_center := Vector3.ZERO
+## Raio do chão (m, a partir do centro do planeta) por baixo de uma posição global. Se o rover
+## ficar abaixo do chão (atravessou o terreno), volta a ser posto em cima.
+var ground_radius := Callable()
+const UNSTUCK_DEPTH := 0.25
+const RAY_LIFT := 0.4 # os raios das rodas partem daqui acima, para não nascerem dentro do chão
 ## Quem conduz trata do input; sem condutor o rover trava.
 var driven := false
 var throttle := 0.0
@@ -68,6 +73,7 @@ func _ready() -> void:
 	center_of_mass_mode = RigidBody3D.CENTER_OF_MASS_MODE_CUSTOM
 	center_of_mass = Vector3(0, -0.1, 0)
 	can_sleep = false
+	continuous_cd = true # não atravessar o terreno a alta velocidade
 	_k = LENGTH / MODEL_LENGTH
 	wheel_radius = (MODEL_WHEEL_Y - MODEL_WHEEL_BOTTOM) * _k
 	var visual := Node3D.new()
@@ -116,7 +122,8 @@ func _physics_process(delta: float) -> void:
 	var u := planet_up()
 	var b := global_basis
 	var r_up := b.y.normalized()
-	var ray_len := rest_length + wheel_radius
+	_unstuck(u)
+	var ray_len := rest_length + wheel_radius + RAY_LIFT
 	var space := get_world_3d().direct_space_state
 	grounded_wheels = 0
 	wheel_hits.resize(_anchors.size())
@@ -126,7 +133,7 @@ func _physics_process(delta: float) -> void:
 	apply_central_force(-u * gravity * mass)
 
 	for i in _anchors.size():
-		var from := global_transform * _anchors[i]
+		var from := global_transform * _anchors[i] + r_up * RAY_LIFT
 		var to := from - r_up * ray_len
 		var q := PhysicsRayQueryParameters3D.create(from, to)
 		q.exclude = [get_rid()]
@@ -148,7 +155,7 @@ func _physics_process(delta: float) -> void:
 			if not driven:
 				var long_v := point_vel.dot(fwd)
 				apply_force(-fwd * long_v * grip * 0.5 * mass / _anchors.size(), offset)
-		_update_wheel_visual(i, dist)
+		_update_wheel_visual(i, dist - RAY_LIFT)
 
 	var on_ground := grounded_wheels >= 2
 	if on_ground and driven:
@@ -170,6 +177,18 @@ func _physics_process(delta: float) -> void:
 	_check_bump(delta, u)
 	_check_flip(delta, u)
 	_spin += speed() * delta / maxf(wheel_radius, 0.01)
+
+## Se o rover estiver abaixo do chão, põe-no em cima e tira-lhe a velocidade para dentro.
+func _unstuck(u: Vector3) -> void:
+	if not ground_radius.is_valid():
+		return
+	var gr: float = ground_radius.call(global_position)
+	if (global_position - planet_center).length() < gr - UNSTUCK_DEPTH:
+		global_position = planet_center + u * (gr + 0.6)
+		var inward := linear_velocity.dot(u)
+		if inward < 0.0:
+			linear_velocity -= u * inward
+		_bump_cd = 0.4
 
 func _update_wheel_visual(i: int, dist: float) -> void:
 	var w := _wheel_nodes[i]

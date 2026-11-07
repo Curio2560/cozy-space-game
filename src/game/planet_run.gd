@@ -156,6 +156,8 @@ func start(s: int) -> void:
 	player.planet_center = planet.global_position
 	camera.planet_center = planet.global_position
 	rover.planet_center = planet.global_position
+	rover.ground_radius = func(pos: Vector3) -> float:
+		return planet.data.surface_point(planet.to_local(pos)).length()
 	if driving:
 		exit_rover()
 	spawn_near(planet.data.outpost_dir, planet.data.posts[0], 10.5)

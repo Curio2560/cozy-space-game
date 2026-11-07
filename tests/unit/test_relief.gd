@@ -1,10 +1,12 @@
 extends GutTest
 ## Relevo modular (#19): peças dobradas ao planeta, longe de postos e estradas, determinístico.
 
-func test_eight_to_twelve_reliefs_per_planet() -> void:
+func test_six_to_nine_reliefs_per_planet() -> void:
 	for s in [1, 2, 3, 99]:
 		var d := PlanetGenerator.generate(s)
-		assert_between(d.reliefs.size(), 8, 12, "seed %d" % s)
+		assert_between(d.reliefs.size(), 6, 9, "seed %d" % s)
+		for r in d.reliefs:
+			assert_gte(ReliefKit.piece(r.kind).top * r.height_scale, PlanetGenerator.RELIEF_MIN_HEIGHT - 0.001)
 
 func test_reliefs_are_deterministic() -> void:
 	var a := PlanetGenerator.generate(5, "lava")
@@ -48,10 +50,26 @@ func test_spots_and_roads_stay_flat() -> void:
 			for p: Vector3 in road.points:
 				assert_eq(d.relief_height(p), 0.0, "estrada por cima de relevo (seed %d)" % s)
 
-func test_relief_borders_sit_on_the_ground() -> void:
-	for kind in ReliefKit.KINDS:
-		var pc := ReliefKit.piece(kind)
-		var border := ReliefKit.border_edges(pc)
-		assert_gt(border.size(), 0, kind)
-		for p in border:
-			assert_lt(p.y, 0.05, "%s: borda acima do chão" % kind)
+func test_relief_slopes_are_climbable() -> void:
+	# Encostas suaves para o rover: nada acima de MAX_RELIEF_SLOPE_DEG (mais uns graus do
+	# ruído do chão por baixo).
+	for s in [3, 99]:
+		var d := PlanetGenerator.generate(s)
+		for r in d.reliefs:
+			var pc := ReliefKit.piece(r.kind)
+			var half: float = pc.half
+			var x := -half
+			while x <= half:
+				var z := -half
+				while z <= half:
+					if ReliefKit.sample(pc, x, z) > 0.0:
+						var dir := d.relief_dir(r, x, z)
+						assert_lt(d.slope_deg(dir), PlanetGenerator.MAX_RELIEF_SLOPE_DEG + 8.0, "%s demasiado inclinado" % r.kind)
+					z += 1.5
+				x += 1.5
+
+func test_reliefs_are_wide() -> void:
+	var d := PlanetGenerator.generate(3)
+	for r in d.reliefs:
+		var foot: float = ReliefKit.piece(r.kind).radius * float(r.scale)
+		assert_gt(foot, 11.0, "%s estreito" % r.kind)

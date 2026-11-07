@@ -97,3 +97,54 @@ func test_cannot_enter_rover_from_far_away() -> void:
 	assert_false(run.can_enter_rover())
 	await _tap_vehicle()
 	assert_false(run.driving)
+
+func test_rover_below_ground_is_put_back_on_top() -> void:
+	var rover: Rover = run.rover
+	var d: PlanetData = run.planet.data
+	var dir: Vector3 = run.planet.to_local(rover.global_position).normalized()
+	rover.global_position = run.planet.to_global(dir * (d.radius + d.height_at(dir) - 1.5))
+	await wait_physics_frames(30)
+	assert_gt(_height(rover), -0.1, "o rover ficou preso debaixo do chão")
+
+func test_rover_climbs_a_relief() -> void:
+	# Conduz em linha reta até ao topo de uma peça de relevo.
+	var d: PlanetData = run.planet.data
+	var r: Dictionary = d.reliefs[0]
+	var foot: float = ReliefKit.piece(r.kind).radius * float(r.scale)
+	var top_dir: Vector3 = r.dir
+	# Rumo sem árvores nem pedregulhos (colisores) no caminho até ao topo.
+	var start := Vector3.ZERO
+	for h in 16:
+		var cand := d.toward_point(top_dir, top_dir + SphereMath.basis_from_up(top_dir, TAU * h / 16.0).z, foot + 4.0)
+		var clear := d.road_clearance(cand) > 3.0
+		for p in d.placements:
+			if p.collider <= 0.0 or not clear:
+				continue
+			# Distância do obstáculo ao segmento início→topo (aprox. no plano tangente).
+			var ab := (top_dir - cand) * d.radius
+			var ap := ((p.dir as Vector3) - cand) * d.radius
+			var u := clampf(ap.dot(ab) / ab.length_squared(), 0.0, 1.0)
+			if (ap - ab * u).length() < 3.5:
+				clear = false
+		if clear:
+			start = cand
+			break
+	if start == Vector3.ZERO:
+		pass_test("sem rumo livre até ao topo nesta seed")
+		return
+	run.teleport(start)
+	await wait_physics_frames(10)
+	run.rover.place_at(run.planet.to_global(d.surface_point(start) + start * 1.0), run.planet.global_basis * (top_dir - start))
+	await wait_physics_frames(30)
+	await _tap_vehicle()
+	await wait_physics_frames(10)
+	var best := INF
+	for k in 12:
+		var here: Vector3 = run.planet.to_local(run.rover.global_position).normalized()
+		var to_top: Vector3 = run.planet.global_basis * (top_dir - here)
+		var f: Vector3 = run.rover.forward()
+		Input.action_press("move_forward", 1.0)
+		Input.action_press("move_right", clampf(f.cross(to_top).dot(run.rover.planet_up()) * -3.0, -1.0, 1.0))
+		await wait_physics_frames(30)
+		best = minf(best, d.arc_m(run.planet.to_local(run.rover.global_position).normalized(), top_dir))
+	assert_lt(best, foot * 0.35, "o rover não chegou perto do topo (%s)" % r.kind)

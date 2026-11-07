@@ -1,10 +1,13 @@
 class_name ReliefKit
 extends RefCounted
-## Peças do terreno modular (assets/terrain/*.obj, assentes em Y=0 com a borda toda a Y=0):
-## triângulos no espaço local da peça e um mapa de alturas visto de cima, para o planeta somar
-## a altura da peça à do chão. Em cache por tipo.
+## Peças do terreno modular (assets/terrain/*.obj, assentes em Y=0 com a borda toda a Y=0)
+## transformadas num mapa de alturas visto de cima e SUAVIZADO: as paredes a pique do pack
+## viram encostas, para o rover conseguir subir. O planeta soma esta altura à do chão, e a
+## malha, a colisão e height_at saem todos deste mesmo mapa. Em cache por tipo.
 
-const CELL := 0.5 # m por célula do mapa de alturas
+const CELL := 0.5 # m por célula do mapa de alturas (escala 1)
+const BLUR_CELLS := 6 # raio do desfoque (células), aplicado 2 vezes
+const EDGE := 0.02 # abaixo disto conta como fora da peça
 
 ## Peças usadas no planeta (as de "Terrain_" quase não têm relevo e ficavam invisíveis).
 const KINDS := [
@@ -16,9 +19,9 @@ const KINDS := [
 
 static var _cache := {}
 
-## {tris: PackedVector3Array (3 vértices por triângulo, m), half: float (meia largura),
-##  radius: float (raio que contém a peça), top: float, n: int, grid: PackedFloat32Array
-##  (altura por célula; -1 = fora da peça)}
+## {half: float (meia largura do mapa), radius: float (raio que contém a peça), top: float,
+##  n: int, grid: PackedFloat32Array (altura por célula, 0 fora), grad: float (maior
+##  inclinação do mapa, dy/dx)}
 static func piece(kind: String) -> Dictionary:
 	if _cache.has(kind):
 		return _cache[kind]
@@ -34,25 +37,39 @@ static func piece(kind: String) -> Dictionary:
 		else:
 			for i in idx:
 				tris.append(v[i])
-	var half := 0.0
-	var radius := 0.0
-	var top := 0.0
+	var src_half := 0.0
 	for p in tris:
-		half = maxf(half, maxf(absf(p.x), absf(p.z)))
-		radius = maxf(radius, Vector2(p.x, p.z).length())
-		top = maxf(top, p.y)
+		src_half = maxf(src_half, maxf(absf(p.x), absf(p.z)))
+	# Margem para o desfoque espalhar a peça para fora da borda original.
+	var half := src_half + BLUR_CELLS * 2 * CELL
 	var n := int(ceil(half * 2.0 / CELL)) + 1
 	var grid := PackedFloat32Array()
 	grid.resize(n * n)
-	grid.fill(-1.0)
+	grid.fill(0.0)
 	for t in range(0, tris.size(), 3):
 		_raster(grid, n, half, tris[t], tris[t + 1], tris[t + 2])
-	var out := {"tris": tris, "half": half, "radius": radius, "top": top, "n": n, "grid": grid}
+	for k in 2:
+		grid = _blur(grid, n, BLUR_CELLS)
+	var top := 0.0
+	var radius := 0.0
+	var grad := 0.0
+	for iz in n:
+		for ix in n:
+			var h := grid[iz * n + ix]
+			top = maxf(top, h)
+			if h > EDGE:
+				radius = maxf(radius, Vector2(ix * CELL - half, iz * CELL - half).length() + CELL)
+			if ix + 1 < n and iz + 1 < n:
+				# Inclinação em qualquer direção (gradiente completo, não só pelos eixos).
+				var gx := (grid[iz * n + ix + 1] - h) / CELL
+				var gz := (grid[(iz + 1) * n + ix] - h) / CELL
+				grad = maxf(grad, sqrt(gx * gx + gz * gz))
+	var out := {"half": half, "radius": radius, "top": top, "n": n, "grid": grid, "grad": grad}
 	_cache[kind] = out
 	return out
 
-## Altura da peça (m, escala 1) no ponto local (x, z); -1 fora da peça. Bilinear; as células
-## de fora contam como 0 (a borda da peça está a Y=0).
+## Altura da peça (m, escala 1) no ponto local (x, z), bilinear; -1 fora do mapa ou onde a
+## peça já não tem altura.
 static func sample(pc: Dictionary, x: float, z: float) -> float:
 	var half: float = pc.half
 	var n: int = pc.n
@@ -65,40 +82,27 @@ static func sample(pc: Dictionary, x: float, z: float) -> float:
 	var tx := fx - ix
 	var tz := fz - iz
 	var g: PackedFloat32Array = pc.grid
-	var a := g[iz * n + ix]
-	var b := g[iz * n + ix + 1]
-	var c := g[(iz + 1) * n + ix]
-	var d := g[(iz + 1) * n + ix + 1]
-	if a < 0.0 and b < 0.0 and c < 0.0 and d < 0.0:
-		return -1.0
-	return lerpf(lerpf(maxf(a, 0.0), maxf(b, 0.0), tx), lerpf(maxf(c, 0.0), maxf(d, 0.0), tx), tz)
+	var h := lerpf(lerpf(g[iz * n + ix], g[iz * n + ix + 1], tx), lerpf(g[(iz + 1) * n + ix], g[(iz + 1) * n + ix + 1], tx), tz)
+	return h if h > EDGE else -1.0
 
-## Arestas da borda (usadas por um só triângulo): [a, b, a, b, …] em espaço local.
-static func border_edges(pc: Dictionary) -> PackedVector3Array:
-	if pc.has("border"):
-		return pc.border
-	var tris: PackedVector3Array = pc.tris
-	var count := {}
-	var key := func(p: Vector3) -> Vector3i: return Vector3i((p * 1000.0).round())
-	for t in range(0, tris.size(), 3):
-		for k in 3:
-			var a: Vector3 = tris[t + k]
-			var b: Vector3 = tris[t + (k + 1) % 3]
-			var ka: Vector3i = key.call(a)
-			var kb: Vector3i = key.call(b)
-			var e := [ka, kb] if str(ka) < str(kb) else [kb, ka]
-			var ek := str(e)
-			if count.has(ek):
-				count[ek][0] += 1
-			else:
-				count[ek] = [1, a, b]
-	var out := PackedVector3Array()
-	for ek in count:
-		var c: Array = count[ek]
-		if c[0] == 1:
-			out.append(c[1])
-			out.append(c[2])
-	pc.border = out
+## Desfoque de caixa separável (horizontal e depois vertical).
+static func _blur(g: PackedFloat32Array, n: int, r: int) -> PackedFloat32Array:
+	var tmp := PackedFloat32Array()
+	tmp.resize(n * n)
+	for iz in n:
+		for ix in n:
+			var s := 0.0
+			for k in range(-r, r + 1):
+				s += g[iz * n + clampi(ix + k, 0, n - 1)]
+			tmp[iz * n + ix] = s / (2 * r + 1)
+	var out := PackedFloat32Array()
+	out.resize(n * n)
+	for iz in n:
+		for ix in n:
+			var s := 0.0
+			for k in range(-r, r + 1):
+				s += tmp[clampi(iz + k, 0, n - 1) * n + ix]
+			out[iz * n + ix] = s / (2 * r + 1)
 	return out
 
 static func _raster(grid: PackedFloat32Array, n: int, half: float, a: Vector3, b: Vector3, c: Vector3) -> void:
