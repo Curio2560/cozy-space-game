@@ -18,7 +18,7 @@ const MAX_SLOPE_DEG := 28.0
 ## (escala com a área); size = altura em m [min, max]; clear = raio livre em m.
 const BIOMES := {
 	"prado": {
-		"dirt": 140,
+		"dirt": 70,
 		"ground": Color("8fd3a0"),
 		"turf": {"density": 1.9, "size": [0.38, 0.85]},
 		"creatures": 16,
@@ -37,7 +37,7 @@ const BIOMES := {
 			"Wood": Color("a8735a"), "LightWood": Color("c99a74"), "White": Color("efe9dc"),
 			"Black": Color("3a3346"), "Orange": Color("ff9f5a"), "LightOrange": Color("ffc07a"),
 			"Berry": Color("e8546e"), "Pink": Color("ff9ecf"), "Snow": Color("f4f8ff"),
-			"Grass": Color("5fb873"), "Rock": Color("c4bccf"), "Road": Color("e2cfa2"),
+			"Grass": Color("5fb873"), "Rock": Color("c4bccf"), "Road": Color("b88a62"),
 		},
 		"props": [
 			{"kinds": ["nature/BirchTree_1", "nature/BirchTree_2", "nature/BirchTree_3", "nature/BirchTree_4", "nature/BirchTree_5",
@@ -53,7 +53,7 @@ const BIOMES := {
 		],
 	},
 	"acido": {
-		"dirt": 120,
+		"dirt": 60,
 		"ground": Color("8a7bb8"),
 		"turf": {"density": 1.5, "size": [0.3, 0.7]},
 		"ground_grass": 0.6,
@@ -91,7 +91,7 @@ const BIOMES := {
 		],
 	},
 	"lava": {
-		"dirt": 170,
+		"dirt": 90,
 		"ground": Color("6e4a4e"),
 		"turf": {"density": 0.3, "size": [0.25, 0.45]},
 		"ground_grass": 0.25,
@@ -338,9 +338,15 @@ static func _place_roads(d: PlanetData, rng: RandomNumberGenerator) -> void:
 	# Praça à volta da base e estradas da praça para cada posto.
 	d.plaza_radius_m = STRUCT_RADIUS.outpost + hw + 2.5
 	d.add_road(_ring(d, d.outpost_dir, d.plaza_radius_m), MAIN_ROAD_WIDTH, true, true)
+	var spokes := 0
 	for door in d.post_doors:
 		var start := d.toward_point(d.outpost_dir, door, d.plaza_radius_m)
-		d.add_road(_road(d, start, door, rng, 6.0, MAIN_ROAD_WIDTH), MAIN_ROAD_WIDTH, true)
+		var spoke := _road(d, start, door, rng, 6.0, MAIN_ROAD_WIDTH)
+		# Se correr ao lado da volta principal, sobra: a porta já está ligada pela volta.
+		if spokes > 0 and _runs_along_roads(d, spoke, MAIN_ROAD_WIDTH):
+			continue
+		d.add_road(spoke, MAIN_ROAD_WIDTH, true)
+		spokes += 1
 	var mains := d.roads.duplicate()
 	# Covil: a sua porta fica virada para a estrada principal mais próxima.
 	var near := _nearest_road_point(d, d.lair_dir)
@@ -359,7 +365,9 @@ static func _place_roads(d: PlanetData, rng: RandomNumberGenerator) -> void:
 		var pa: Vector3 = _mid_point(ra.points, rng)
 		var pb: Vector3 = _mid_point(rb.points, rng)
 		if d.arc_m(pa, pb) > 15.0 and d.arc_m(pa, pb) < 90.0:
-			d.add_road(_road(d, pa, pb, rng, 6.0, SIDE_ROAD_WIDTH), SIDE_ROAD_WIDTH, false)
+			var link := _road(d, pa, pb, rng, 6.0, SIDE_ROAD_WIDTH)
+			if not _runs_along_roads(d, link, SIDE_ROAD_WIDTH):
+				d.add_road(link, SIDE_ROAD_WIDTH, false)
 
 ## Obstáculos que as criaturas contornam: decoração com colisor e as estruturas.
 static func _place_obstacles(d: PlanetData) -> void:
@@ -378,12 +386,12 @@ static func _place_dirt(d: PlanetData, b: Dictionary, rng: RandomNumberGenerator
 		var r := rng.randf_range(1.2, 3.5)
 		var roll := rng.randf()
 		var dir: Vector3
-		if roll < 0.55 and not d.roads.is_empty():
+		if roll < 0.2 and not d.roads.is_empty():
 			var road: Dictionary = d.roads[rng.randi() % d.roads.size()]
 			var pts: PackedVector3Array = road.points
 			var p := pts[rng.randi() % pts.size()]
 			var side := SphereMath.basis_from_up(p, rng.randf() * TAU).z
-			dir = (p + side * tan((road.width * 0.5 + rng.randf_range(0.5, 4.0)) / d.radius)).normalized()
+			dir = (p + side * tan((road.width * 0.5 + rng.randf_range(3.0, 6.0)) / d.radius)).normalized()
 		elif roll < 0.8:
 			var st: Array = structs[rng.randi() % structs.size()]
 			var side2 := SphereMath.basis_from_up(st[0], rng.randf() * TAU).z
@@ -393,6 +401,19 @@ static func _place_dirt(d: PlanetData, b: Dictionary, rng: RandomNumberGenerator
 		if d.in_relief(dir):
 			continue
 		d.add_dirt_patch(dir, r, rng.randf() * TAU, rng.randi() % 4)
+
+## Estrada que corre colada a outras (lado a lado) em vez de se afastar: ignora as pontas
+## (onde é normal tocar na estrada de onde sai ou onde chega).
+const PARALLEL_GAP_M := 5.0
+static func _runs_along_roads(d: PlanetData, path: PackedVector3Array, width: float) -> bool:
+	var n := path.size()
+	if n < 6:
+		return false
+	var close := 0
+	for i in range(3, n - 3):
+		if d.road_clearance(path[i]) < width * 0.5 + PARALLEL_GAP_M:
+			close += 1
+	return close > (n - 6) * 0.25
 
 ## Círculo de raio `metres` à volta de `center` (estrada fechada).
 static func _ring(d: PlanetData, center: Vector3, metres: float) -> PackedVector3Array:
@@ -421,7 +442,7 @@ static func _add_branch(d: PlanetData, parents: Array, rng: RandomNumberGenerato
 	var length := rng.randf_range(min_m, max_m) / d.radius
 	var to := (from + (side + tangent * rng.randf_range(-0.6, 0.6)).normalized() * tan(length)).normalized()
 	var path := _road(d, from, to, rng, 3.5, width)
-	if path.size() >= 3:
+	if path.size() >= 3 and not _runs_along_roads(d, path, width):
 		d.add_road(path, width, false)
 
 ## Estrada de `a` a `b`: caminho com curvas e desviado de todas as estruturas.
@@ -440,7 +461,7 @@ static func _road(d: PlanetData, a: Vector3, b: Vector3, rng: RandomNumberGenera
 						away = SphereMath.basis_from_up(sd).x
 					p = (sd + away.normalized() * tan(need)).normalized() # empurra para fora
 			path[i] = p
-	return _smooth(path, 2)
+	return _smooth(path, 4)
 
 ## Suaviza um caminho (média com os vizinhos), mantendo as pontas.
 static func _smooth(path: PackedVector3Array, passes: int) -> PackedVector3Array:
@@ -471,7 +492,7 @@ static func road_path(d: PlanetData, a: Vector3, b: Vector3, rng: RandomNumberGe
 	var axis := a.cross(b).normalized()
 	if axis.length() < 0.5:
 		axis = a.cross(Vector3.UP if absf(a.y) < 0.9 else Vector3.RIGHT).normalized()
-	var freq := rng.randf_range(1.0, 2.5)
+	var freq := rng.randf_range(0.5, 1.3) # curvas largas (estilo estrada de rali), não ziguezagues
 	var phase := rng.randf() * TAU
 	var amp := wiggle_m / d.radius
 	for i in n + 1:

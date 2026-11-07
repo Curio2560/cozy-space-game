@@ -45,7 +45,7 @@ func test_no_road_over_any_structure() -> void:
 				assert_gt(d.arc_m(p, st[0]), st[1] + hw * 0.5, "estrada por cima de uma estrutura")
 
 func test_many_branching_roads() -> void:
-	assert_gte(d.roads.size(), 20, "devia haver muitos caminhos")
+	assert_gte(d.roads.size(), 16, "devia haver muitos caminhos (sem os que correm colados a outros)")
 	var paths := d.roads.filter(func(r: Dictionary) -> bool: return r.width <= PlanetGenerator.PATH_WIDTH)
 	assert_gte(paths.size(), 4, "devia haver caminhos pequenos")
 
@@ -84,3 +84,21 @@ func test_planet_builds_road_mesh_above_ground() -> void:
 		var dir := verts[i].normalized()
 		assert_gt(verts[i].length(), d.radius + d.height_at(dir), "estrada abaixo do chão")
 	p.free()
+
+func test_side_roads_do_not_run_alongside_others() -> void:
+	# Caminhos secundários não correm colados a outra estrada (lado a lado).
+	var d := PlanetGenerator.generate(7)
+	for r in d.roads:
+		if r.main:
+			continue
+		var pts: PackedVector3Array = r.points
+		var close := 0
+		for i in range(3, pts.size() - 3):
+			for o in d.roads:
+				if o == r:
+					continue
+				for q: Vector3 in o.points:
+					if d.arc_m(pts[i], q) < float(r.width) * 0.5 + 2.0:
+						close += 1
+						break
+		assert_lte(close, maxi(2, int((pts.size() - 6) * 0.35)))

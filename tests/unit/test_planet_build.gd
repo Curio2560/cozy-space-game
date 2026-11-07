@@ -80,7 +80,7 @@ func test_reliefs_have_mesh_and_collision_at_their_height() -> void:
 	await wait_physics_frames(2)
 	var space := planet.get_world_3d().direct_space_state
 	for r in planet.data.reliefs:
-		var dir: Vector3 = planet.data.relief_dir(r, 0.0, 0.0)
+		var dir: Vector3 = planet.data.relief_dir(r, 0.37, 0.21) # fora de um vértice da malha
 		var q := PhysicsRayQueryParameters3D.create(dir * 200.0, Vector3.ZERO)
 		var hit := space.intersect_ray(q)
 		assert_false(hit.is_empty(), "relevo %s sem colisão" % r.kind)

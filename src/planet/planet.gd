@@ -62,7 +62,23 @@ var roads_mesh: MeshInstance3D
 const ROAD_LIFT := 0.1
 const ROAD_ACROSS := [-1.0, -0.55, 0.0, 0.55, 1.0]
 const ROAD_SHADER := preload("res://shaders/road.gdshader")
+const ROAD_DIRT := preload("res://assets/terrain/road/dirt.png")
+const RUT_MIN_WIDTH := 4.0 # só as estradas principais têm sulcos de rodas
+## Cor média da textura de terra: o tom do bioma é Road / isto (prado fica com a textura tal e qual).
+const DIRT_REF := Color("b0703f")
 static var _road_mat: ShaderMaterial
+
+static func road_material() -> ShaderMaterial:
+	if _road_mat == null:
+		_road_mat = ShaderMaterial.new()
+		_road_mat.shader = ROAD_SHADER
+		_road_mat.set_shader_parameter("dirt", ROAD_DIRT)
+	return _road_mat
+
+## Tom que multiplica a textura de terra no bioma (cor "Road" da paleta / cor média da textura).
+static func road_tint(biome: String) -> Color:
+	var col: Color = PlanetGenerator.BIOMES[biome].palette.get("Road", DIRT_REF)
+	return Color(minf(col.r / DIRT_REF.r, 1.6), minf(col.g / DIRT_REF.g, 1.6), minf(col.b / DIRT_REF.b, 1.6))
 
 ## Estradas: uma faixa por estrada (5 vértices de largura) que segue o relevo, ligeiramente
 ## acima do chão. A textura (terra, pedrinhas, bermas irregulares) vem do shader
@@ -70,11 +86,12 @@ static var _road_mat: ShaderMaterial
 func _build_roads() -> void:
 	if data.roads.is_empty():
 		return
-	var col: Color = PlanetGenerator.BIOMES[data.biome].palette.get("Road", Color("d9c49b"))
+	var col := road_tint(data.biome)
 	var verts := PackedVector3Array()
 	var norms := PackedVector3Array()
 	var cols := PackedColorArray()
 	var uvs := PackedVector2Array()
+	var uv2s := PackedVector2Array()
 	var idx := PackedInt32Array()
 	var w := ROAD_ACROSS.size()
 	var road_i := 0
@@ -99,8 +116,10 @@ func _build_roads() -> void:
 				var q: Vector3 = (p + side * (float(ROAD_ACROSS[k]) * hw / data.radius)).normalized()
 				verts.append(data.surface_point(q) + q * lift)
 				norms.append(q) # normal "para cima": estradas sobrepostas com a mesma luz
-				cols.append(col)
+				cols.append(Color(col.r, col.g, col.b, 1.0 if road.width >= RUT_MIN_WIDTH else 0.0))
 				uvs.append(Vector2((float(ROAD_ACROSS[k]) + 1.0) * 0.5, along))
+				# Metros no plano da estrada; cada estrada com um deslocamento próprio na textura.
+				uv2s.append(Vector2(float(ROAD_ACROSS[k]) * hw + road_i * 7.3, along))
 		for i in pts.size() - 1:
 			for k in w - 1:
 				var a := base + i * w + k
@@ -118,16 +137,14 @@ func _build_roads() -> void:
 	arrays[Mesh.ARRAY_NORMAL] = norms
 	arrays[Mesh.ARRAY_COLOR] = cols
 	arrays[Mesh.ARRAY_TEX_UV] = uvs
+	arrays[Mesh.ARRAY_TEX_UV2] = uv2s
 	arrays[Mesh.ARRAY_INDEX] = idx
 	var mesh := ArrayMesh.new()
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
-	if _road_mat == null:
-		_road_mat = ShaderMaterial.new()
-		_road_mat.shader = ROAD_SHADER
 	roads_mesh = MeshInstance3D.new()
 	roads_mesh.name = "Roads"
 	roads_mesh.mesh = mesh
-	roads_mesh.material_override = _road_mat
+	roads_mesh.material_override = road_material()
 	roads_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(roads_mesh)
 
@@ -258,33 +275,41 @@ static func _add_box(st: SurfaceTool, xf: Transform3D, size: Vector3, col: Color
 
 var dirt_mesh: MeshInstance3D
 const DIRT_RINGS := [0.35, 0.7, 1.0]
-const DIRT_SEGMENTS := 20
+const DIRT_SEGMENTS := 32
 
 ## Manchas de terra: discos irregulares que seguem o relevo (como as estradas), com o mesmo
 ## shader de terra. UV.x vai de 0,5 no centro a 0 na borda (borda irregular do shader).
 func _build_dirt() -> void:
 	if data.dirt_patches.is_empty():
 		return
-	var col: Color = PlanetGenerator.BIOMES[data.biome].palette.get("Road", Color("d9c49b"))
-	col = Color(col.r * 0.94, col.g * 0.92, col.b * 0.9)
+	var col := road_tint(data.biome)
+	col = Color(col.r * 0.94, col.g * 0.92, col.b * 0.9, 0.0) # sem sulcos
 	var verts := PackedVector3Array()
 	var norms := PackedVector3Array()
 	var cols := PackedColorArray()
 	var uvs := PackedVector2Array()
+	var uv2s := PackedVector2Array()
 	var idx := PackedInt32Array()
+	var patch_i := 0
 	for patch in data.dirt_patches:
+		patch_i += 1
 		var center: Vector3 = patch.dir
 		var b := SphereMath.basis_from_up(center, patch.yaw)
 		var rng := RandomNumberGenerator.new()
 		rng.seed = int(patch.shape) * 97 + 13
 		var radii := PackedFloat32Array()
+		# Forma orgânica: soma de ondas suaves (sem arestas aos saltos entre segmentos).
+		var ph := [rng.randf() * TAU, rng.randf() * TAU, rng.randf() * TAU]
 		for k in DIRT_SEGMENTS:
-			radii.append(rng.randf_range(0.65, 1.0)) # forma irregular
+			var a := TAU * k / DIRT_SEGMENTS
+			radii.append(0.82 + 0.1 * sin(a * 2.0 + ph[0]) + 0.06 * sin(a * 3.0 + ph[1]) + 0.03 * sin(a * 5.0 + ph[2]))
 		var base := verts.size()
 		verts.append(data.surface_point(center) + center * ROAD_LIFT)
 		norms.append(center)
 		cols.append(col)
 		uvs.append(Vector2(0.5, 0.0))
+		var shift := Vector2(patch_i * 3.1, patch_i * 5.7)
+		uv2s.append(shift)
 		for ring in DIRT_RINGS.size():
 			var rr: float = DIRT_RINGS[ring]
 			for k in DIRT_SEGMENTS:
@@ -295,6 +320,8 @@ func _build_dirt() -> void:
 				norms.append(q)
 				cols.append(col)
 				uvs.append(Vector2(0.5 * (1.0 - rr), ang * float(patch.radius)))
+				var rm: float = float(patch.radius) * rr * radii[k]
+				uv2s.append(shift + Vector2(cos(ang), sin(ang)) * rm)
 		for k in DIRT_SEGMENTS:
 			var k2 := (k + 1) % DIRT_SEGMENTS
 			_tri(idx, verts, base, base + 1 + k, base + 1 + k2)
@@ -309,16 +336,14 @@ func _build_dirt() -> void:
 	arrays[Mesh.ARRAY_NORMAL] = norms
 	arrays[Mesh.ARRAY_COLOR] = cols
 	arrays[Mesh.ARRAY_TEX_UV] = uvs
+	arrays[Mesh.ARRAY_TEX_UV2] = uv2s
 	arrays[Mesh.ARRAY_INDEX] = idx
 	var mesh := ArrayMesh.new()
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
-	if _road_mat == null:
-		_road_mat = ShaderMaterial.new()
-		_road_mat.shader = ROAD_SHADER
 	dirt_mesh = MeshInstance3D.new()
 	dirt_mesh.name = "Dirt"
 	dirt_mesh.mesh = mesh
-	dirt_mesh.material_override = _road_mat
+	dirt_mesh.material_override = road_material()
 	dirt_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(dirt_mesh)
 
