@@ -88,11 +88,14 @@ static func build(parts: Array, palette: Dictionary, with_collision := true) -> 
 	mi.material_override = CelShading.vertex_color_material(true)
 	root.add_child(mi)
 	if with_collision:
+		# Caixa simples em vez da malha completa: milhares de faces por edifício pesam no telemóvel.
+		var aabb := mi.mesh.get_aabb()
 		var body := StaticBody3D.new()
 		var cs := CollisionShape3D.new()
-		var shape := ConcavePolygonShape3D.new()
-		shape.set_faces(mi.mesh.get_faces())
+		var shape := BoxShape3D.new()
+		shape.size = aabb.size
 		cs.shape = shape
+		cs.position = aabb.get_center()
 		body.add_child(cs)
 		root.add_child(body)
 	return root
@@ -134,7 +137,7 @@ static func colonist_house() -> Array:
 	parts.append({"m": "Props_Crate", "p": Vector3(-1.5, 0, 2.8), "r": 20})
 	return parts
 
-## Base (posto avançado): 8×8 m, porta dupla, janelas compridas, cápsula e caixotes à porta.
+## Base (posto avançado): 8×8 m, porta dupla, janelas compridas, cápsula e um caixote à porta (adereços pesados retirados por performance).
 static func outpost() -> Array:
 	var parts := room(2, 2, {
 		"front": ["DoorDouble_Wall_SideA", "LongWindow_Wall_SideA"], "back": ["Wall_2", "Wall_4"],
@@ -145,7 +148,5 @@ static func outpost() -> Array:
 		parts.append({"m": "Column_3", "p": Vector3(x * 0.0 + 0.0, 0, x), "r": 0})
 	parts.append({"m": "Props_Pod", "p": Vector3(5.6, 0, 3.0), "r": -30})
 	parts.append({"m": "Props_Crate", "p": Vector3(1.2, 0, 5.0), "r": 10})
-	parts.append({"m": "Props_CrateLong", "p": Vector3(2.6, 0, 5.2), "r": -15})
-	parts.append({"m": "Props_ContainerFull", "p": Vector3(-5.4, 0, 2.0), "r": 90})
 	parts.append({"m": "Props_Teleporter_2", "p": Vector3(-5.0, 0, -3.0), "r": 0})
 	return parts
