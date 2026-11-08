@@ -5,6 +5,8 @@ extends RigidBody3D
 ## e endireita-se sozinho se capotar. Regista embates (para as encomendas frágeis).
 
 signal bumped(strength: float)
+signal health_changed(value: float, max_value: float)
+signal destroyed
 
 const MODEL := "veiculos/Rover_1"
 const LENGTH := 2.8 # m
@@ -19,16 +21,29 @@ const MODEL_WHEELS := {
 @export var gravity := 22.0
 @export var engine_force := 2600.0
 @export var max_speed := 15.0
+## Multiplicador da velocidade máxima (o sobreaquecimento na lava abranda o rover).
+var speed_factor := 1.0
 @export var reverse_factor := 0.5
 @export var turn_rate := 2.2 # rad/s em velocidade
-@export var spring_k := 5200.0
-@export var spring_damp := 420.0
+@export var spring_k := 4200.0
+@export var spring_damp := 260.0 # pouco amortecimento = mais saltitão
 @export var rest_length := 0.35
 @export var grip := 9.0
-@export var air_align := 6.0
-@export var bump_threshold := 28.0 # m/s² acima do esperado conta como embate
+@export var air_align := 1.6 # baixo: no ar dá para dar cambalhotas
+@export var spin_damp := 0.6 # amortecimento da rotação (baixo = capota mais)
+@export var max_health := 100.0
+@export var safe_impact := 6.0 # m/s: impactos mais lentos não fazem dano
+@export var impact_damage := 4.5 # vida por m/s acima de safe_impact
+@export var max_impact_damage := 80.0
+@export var bump_cooldown := 0.35
+@export var crash_threshold := 3.0 # m/s de mudança brusca num passo = choque
 
 var planet_center := Vector3.ZERO
+## Raio do chão (m, a partir do centro do planeta) por baixo de uma posição global. Se o rover
+## ficar abaixo do chão (atravessou o terreno), volta a ser posto em cima.
+var ground_radius := Callable()
+const UNSTUCK_DEPTH := 0.25
+const RAY_LIFT := 0.4 # os raios das rodas partem daqui acima, para não nascerem dentro do chão
 ## Quem conduz trata do input; sem condutor o rover trava.
 var driven := false
 var throttle := 0.0
@@ -36,7 +51,13 @@ var steer := 0.0
 var wheel_radius: float
 var grounded_wheels := 0
 var bump_total := 0.0
+var health := 100.0
+var alive := true
+var _bump_cd := 0.0
+var _was_airborne := false
 
+## Contacto de cada roda no último passo de física: [tocando (bool), ponto (global), normal].
+var wheel_hits: Array = []
 var _anchors: Array[Vector3] = []
 var _wheel_nodes: Array[Node3D] = []
 var _wheel_rest_y: Array[float] = []
@@ -49,10 +70,12 @@ func _ready() -> void:
 	mass = 150.0
 	gravity_scale = 0.0
 	linear_damp = 0.05
-	angular_damp = 2.5
+	angular_damp = spin_damp
+	health = max_health
 	center_of_mass_mode = RigidBody3D.CENTER_OF_MASS_MODE_CUSTOM
 	center_of_mass = Vector3(0, -0.1, 0)
 	can_sleep = false
+	continuous_cd = true # não atravessar o terreno a alta velocidade
 	_k = LENGTH / MODEL_LENGTH
 	wheel_radius = (MODEL_WHEEL_Y - MODEL_WHEEL_BOTTOM) * _k
 	var visual := Node3D.new()
@@ -95,28 +118,33 @@ func place_at(pos: Vector3, facing: Vector3) -> void:
 	linear_velocity = Vector3.ZERO
 	angular_velocity = Vector3.ZERO
 	_prev_velocity = Vector3.ZERO
+	_bump_cd = 0.4 # pousar o rover não conta como embate
 
 func _physics_process(delta: float) -> void:
 	var u := planet_up()
 	var b := global_basis
 	var r_up := b.y.normalized()
-	var ray_len := rest_length + wheel_radius
+	_unstuck(u)
+	var ray_len := rest_length + wheel_radius + RAY_LIFT
 	var space := get_world_3d().direct_space_state
 	grounded_wheels = 0
+	wheel_hits.resize(_anchors.size())
 	var fwd := forward()
 	var right := b.x.normalized()
 
 	apply_central_force(-u * gravity * mass)
 
 	for i in _anchors.size():
-		var from := global_transform * _anchors[i]
+		var from := global_transform * _anchors[i] + r_up * RAY_LIFT
 		var to := from - r_up * ray_len
 		var q := PhysicsRayQueryParameters3D.create(from, to)
 		q.exclude = [get_rid()]
 		var hit := space.intersect_ray(q)
 		var dist := ray_len
+		wheel_hits[i] = [false, Vector3.ZERO, Vector3.UP]
 		if not hit.is_empty():
 			grounded_wheels += 1
+			wheel_hits[i] = [true, hit.position, hit.normal]
 			dist = from.distance_to(hit.position)
 			var compression := ray_len - dist
 			var offset := from - global_position
@@ -129,12 +157,13 @@ func _physics_process(delta: float) -> void:
 			if not driven:
 				var long_v := point_vel.dot(fwd)
 				apply_force(-fwd * long_v * grip * 0.5 * mass / _anchors.size(), offset)
-		_update_wheel_visual(i, dist)
+		_update_wheel_visual(i, dist - RAY_LIFT)
 
 	var on_ground := grounded_wheels >= 2
 	if on_ground and driven:
 		var spd := speed()
-		var limit := max_speed if throttle >= 0.0 else max_speed * reverse_factor
+		var top := max_speed * speed_factor
+		var limit := top if throttle >= 0.0 else top * reverse_factor
 		var room := clampf(1.0 - absf(spd) / limit, 0.0, 1.0) if signf(spd) == signf(throttle) else 1.0
 		apply_central_force(fwd * throttle * engine_force * room)
 		# Direção arcade: velocidade angular à volta do "cima" do rover.
@@ -146,9 +175,23 @@ func _physics_process(delta: float) -> void:
 		# No ar: tende a alinhar com o planeta para aterrar de rodas.
 		apply_torque(r_up.cross(u) * air_align * mass)
 
+	angular_damp = spin_damp
+	_bump_cd = maxf(_bump_cd - delta, 0.0)
 	_check_bump(delta, u)
 	_check_flip(delta, u)
 	_spin += speed() * delta / maxf(wheel_radius, 0.01)
+
+## Se o rover estiver abaixo do chão, põe-no em cima e tira-lhe a velocidade para dentro.
+func _unstuck(u: Vector3) -> void:
+	if not ground_radius.is_valid():
+		return
+	var gr: float = ground_radius.call(global_position)
+	if (global_position - planet_center).length() < gr - UNSTUCK_DEPTH:
+		global_position = planet_center + u * (gr + 0.6)
+		var inward := linear_velocity.dot(u)
+		if inward < 0.0:
+			linear_velocity -= u * inward
+		_bump_cd = 0.4
 
 func _update_wheel_visual(i: int, dist: float) -> void:
 	var w := _wheel_nodes[i]
@@ -158,16 +201,101 @@ func _update_wheel_visual(i: int, dist: float) -> void:
 	w.position.y = _wheel_rest_y[i] - drop
 	w.rotation.x = _spin
 
+## Dano que escala com a velocidade do impacto:
+## - aterragem: velocidade de queda quando as rodas voltam a tocar no chão;
+## - choque: mudança brusca de velocidade num passo (bater numa árvore, rocha, casa).
 func _check_bump(delta: float, u: Vector3) -> void:
 	if delta <= 0.0:
 		return
-	var accel := (linear_velocity - _prev_velocity) / delta + u * gravity
+	var dv := (linear_velocity - _prev_velocity + u * gravity * delta).length()
+	var landing := 0.0
+	if _was_airborne and grounded_wheels > 0:
+		landing = maxf(-_prev_velocity.dot(u), 0.0)
+	_was_airborne = grounded_wheels == 0
 	_prev_velocity = linear_velocity
-	var a := accel.length()
-	if a > bump_threshold:
-		var strength := (a - bump_threshold) / bump_threshold
-		bump_total += strength
-		bumped.emit(strength)
+	var impact := maxf(landing, dv if dv > crash_threshold else 0.0)
+	if impact <= 0.0:
+		return
+	var strength := impact / 10.0
+	bump_total += strength
+	bumped.emit(strength)
+	if _bump_cd <= 0.0 and impact > safe_impact:
+		_bump_cd = bump_cooldown
+		take_damage(impact_to_damage(impact))
+
+## Vida perdida num impacto a `speed` m/s (0 abaixo de safe_impact).
+func impact_to_damage(speed: float) -> float:
+	return clampf((speed - safe_impact) * impact_damage, 0.0, max_impact_damage)
+
+## Tira vida ao rover (embates, ácido, criaturas). A 0 emite `destroyed` (uma vez).
+func take_damage(amount: float) -> void:
+	if not alive or amount <= 0.0:
+		return
+	health = maxf(health - amount, 0.0)
+	health_changed.emit(health, max_health)
+	if health <= 0.0:
+		alive = false
+		destroyed.emit()
+
+func repair(amount: float) -> void:
+	if not alive or health >= max_health:
+		return
+	health = minf(health + amount, max_health)
+	health_changed.emit(health, max_health)
+
+## Destroços: o rover salta pelo ar a rodopiar e fica carbonizado (para se ver a explosão).
+func wreck() -> void:
+	driven = false
+	throttle = 0.0
+	steer = 0.0
+	_set_charred(true)
+	var u := planet_up()
+	apply_central_impulse(u * mass * 9.0 + forward() * mass * 1.5)
+	apply_torque_impulse((global_basis.x * 1.2 + global_basis.z * 0.6) * mass * 2.5)
+
+## Volta a pôr o rover inteiro (depois de explodir).
+func restore() -> void:
+	alive = true
+	health = max_health
+	_bump_cd = 1.0
+	visible = true
+	freeze = false
+	_set_charred(false)
+	for w in _wheel_nodes:
+		if w:
+			w.visible = true
+	health_changed.emit(health, max_health)
+
+## Esconde as rodas e devolve [[MeshInstance3D da roda, transformação global], …] para a
+## explosão as soltar como peças. `restore()` volta a mostrá-las.
+func detach_wheels() -> Array:
+	var out := []
+	for w in _wheel_nodes:
+		if w and w.visible:
+			out.append([w, w.global_transform])
+			w.visible = false
+	return out
+
+func wheels_attached() -> bool:
+	return _wheel_nodes.all(func(w: Node3D) -> bool: return w == null or w.visible)
+
+static var _char_mat: StandardMaterial3D
+
+func is_charred() -> bool:
+	return has_meta(&"charred")
+
+func _set_charred(on: bool) -> void:
+	if _char_mat == null:
+		_char_mat = StandardMaterial3D.new()
+		_char_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		_char_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		_char_mat.albedo_color = Color(0.08, 0.05, 0.06, 0.72)
+	for mi in find_children("*", "MeshInstance3D", true, false):
+		(mi as MeshInstance3D).material_overlay = _char_mat if on else null
+	if on:
+		set_meta(&"charred", true)
+	elif has_meta(&"charred"):
+		remove_meta(&"charred")
 
 func _check_flip(delta: float, u: Vector3) -> void:
 	if global_basis.y.normalized().dot(u) < 0.35 and linear_velocity.length() < 4.0:

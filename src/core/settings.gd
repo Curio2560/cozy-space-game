@@ -9,6 +9,12 @@ signal locale_changed(locale: String)
 var _cfg := ConfigFile.new()
 
 func _ready() -> void:
+	# Tema néon para toda a interface: junta-se ao tema base do motor (o tema da janela não
+	# chega aos controlos dentro de CanvasLayers).
+	var f := CozyTheme.font()
+	ThemeDB.get_default_theme().merge_with(CozyTheme.make())
+	ThemeDB.get_default_theme().default_font = f
+	ThemeDB.fallback_font = f # também para Label3D (nomes dos colonos) e desenho direto
 	_cfg.load(PATH)
 	var loc := str(_cfg.get_value("ui", "locale", ""))
 	if loc == "":

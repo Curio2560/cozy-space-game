@@ -73,7 +73,7 @@ func test_props_keep_out_of_spots_and_steep_slopes() -> void:
 func test_terrain_height_stays_within_amplitude() -> void:
 	var d := PlanetGenerator.generate(13)
 	for dir in PlanetGenerator.fibonacci_dirs(400):
-		assert_lte(absf(d.height_at(dir)), d.height_amp + 0.001)
+		assert_lte(absf(d.base_height_at(dir)), d.height_amp + 0.001)
 
 func test_density_scales_with_planet_area() -> void:
 	var small := PlanetGenerator.generate(4, "prado", 40.0)

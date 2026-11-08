@@ -74,3 +74,32 @@ func test_region_visibility_math() -> void:
 	var surf := Vector3(0, 0, 61.5)
 	assert_true(PlanetCulling.region_visible(Vector3(0, 0, 1), surf, 60.0, 0.66))
 	assert_false(PlanetCulling.region_visible(Vector3(1, 0, 0), surf, 60.0, 0.66))
+
+func test_reliefs_have_mesh_and_collision_at_their_height() -> void:
+	assert_eq(planet.relief_meshes.size(), planet.data.reliefs.size())
+	await wait_physics_frames(2)
+	var space := planet.get_world_3d().direct_space_state
+	for r in planet.data.reliefs:
+		var dir: Vector3 = planet.data.relief_dir(r, 0.37, 0.21) # fora de um vértice da malha
+		var q := PhysicsRayQueryParameters3D.create(dir * 200.0, Vector3.ZERO)
+		var hit := space.intersect_ray(q)
+		assert_false(hit.is_empty(), "relevo %s sem colisão" % r.kind)
+		if not hit.is_empty():
+			# A colisão é a malha da peça; o mapa de alturas tem células de 0,5 m.
+			assert_almost_eq((hit.position as Vector3).length(), planet.data.surface_point(dir).length(), 0.6, r.kind)
+
+func test_acid_planet_builds_rivers_and_bridges_with_collision() -> void:
+	var p := Planet.new()
+	p.culling_enabled = false
+	add_child_autofree(p)
+	p.build(PlanetGenerator.generate(2, "acido"))
+	assert_not_null(p.rivers_mesh)
+	assert_eq(p.bridge_nodes.size(), p.data.bridges.size())
+	await wait_physics_frames(2)
+	var space := p.get_world_3d().direct_space_state
+	var br: Dictionary = p.data.bridges[0]
+	var mid: Vector3 = br.points[br.points.size() / 2]
+	var hit := space.intersect_ray(PhysicsRayQueryParameters3D.create(mid * 200.0, Vector3.ZERO))
+	assert_false(hit.is_empty())
+	# O tabuleiro fica acima do chão.
+	assert_gt((hit.position as Vector3).length(), p.data.surface_point(mid).length() + 0.1)

@@ -15,7 +15,10 @@ noturna com mechs. Godot 4.7.2 · renderer Compatibility · paisagem · cel-shad
 | `assets/kit/` | Quaternius **Ultimate Platformer Pack** (personagens, mechs, naves, rovers, base, pickups, natureza) |
 | `assets/nature/` | Quaternius **Ultimate Nature Pack** (árvores, arbustos, catos) — recoloridos por bioma |
 | `assets/mdvl/` | Relva "mdvl" (paleta em textura) — recolorida por bioma |
-| `assets/monsters/` | Quaternius **Ultimate Monsters** — criaturas (à espera da textura e da versão glTF com animações) |
+| `assets/rocks/` | Rochas estilizadas — espalhadas, em pedregulhos e em montes, tingidas por bioma |
+| `assets/terrain/` | Terreno modular (penhascos, colinas, montanhas) — relevo carimbado nos planetas |
+| `assets/sky/` | Planetas animados do céu (SBS Tiny Planet Pack, CC0) |
+| `assets/monsters/` | Quaternius **Ultimate Monsters** — 50 criaturas animadas (big, blob, flying) |
 | `assets/icon/` | Ícone da app (gerado por `tools/`) |
 | `entrada/` | **Onde pôr assets novos** (ver `entrada/LEIA-ME.md`) |
 | `src/` | Código: `planet/` (geração), `player/`, `vehicle/`, `camera/`, `delivery/`, `economy/`, `render/` (cel-shading), `input/`, `ui/`, `debug/`, `game/`, `dev/` |
@@ -38,5 +41,9 @@ e em `export_presets.cfg`; um teste garante que coincidem.
 
 ## Créditos
 
-- Ultimate Platformer Pack e Ultimate Nature Pack — Quaternius (CC0 1.0).
-- Relva `mdvl_nature_grass_01` — enviada pelo autor do projeto (origem/licença a confirmar).
+- Ultimate Platformer Pack, Ultimate Nature Pack e Ultimate Monsters — Quaternius (CC0 1.0).
+- SBS – Tiny Planet Pack — Screaming Brain Studios (CC0).
+- Relva `mdvl_nature_grass_01`, **Free Pack – Modular Terrain** e **Free Pack – Rocks Stylized** — Sketchfab
+  (downloads gratuitos; autor e licença exata a confirmar na página de cada modelo).
+- Fonte **Matcha Style** — Khurasan Studio (grátis para uso pessoal e comercial) — `assets/fonts`.
+- Sci-Fi Game UI FREE — SunGraphica (licença a confirmar); Simple Space — Kenney (CC0) — `assets/ui`.

@@ -100,6 +100,7 @@ func _build_ui() -> void:
 	_info = Label.new()
 	_info.position = Vector2(24, 92)
 	_info.add_theme_font_size_override("font_size", 20)
+	_info.add_theme_color_override("font_color", CozyTheme.CREAM)
 	_info.add_theme_color_override("font_outline_color", Color.BLACK)
 	_info.add_theme_constant_override("outline_size", 5)
 	hud.add_child(_info)

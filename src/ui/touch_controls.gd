@@ -11,10 +11,10 @@ const BUTTONS := [
 	["vehicle", "BTN_VEHICLE", Vector2(-0.12, -0.44), 0.075],
 ]
 const STICK_ZONE := 0.45 # fração da largura do ecrã reservada ao joystick
-const COLOR_BASE := Color(1, 0.965, 0.918, 0.22)
-const COLOR_KNOB := Color(1, 0.965, 0.918, 0.75)
-const COLOR_BTN := Color(1, 0.62, 0.48, 0.55)
-const COLOR_BTN_DOWN := Color(1, 0.78, 0.34, 0.9)
+const COLOR_BASE := Color(1, 0.965, 0.918, 0.28) # estilo cel (CozyTheme)
+const COLOR_KNOB := Color(1, 0.965, 0.918, 0.9)
+const COLOR_BTN := Color(1, 0.965, 0.918, 0.85)
+const COLOR_BTN_DOWN := Color(1.0, 0.78, 0.34, 0.95)
 
 var stick := VirtualStick.new()
 var _stick_finger := -1
@@ -132,16 +132,23 @@ func _draw() -> void:
 	var c := stick.center if stick.active else _idle_stick_center()
 	var k := stick.knob if stick.active else c
 	draw_circle(c, stick.radius, COLOR_BASE)
-	draw_arc(c, stick.radius, 0, TAU, 48, COLOR_KNOB, 3.0, true)
+	draw_arc(c, stick.radius, 0, TAU, 48, CozyTheme.INK, 4.0, true)
+	draw_circle(k + Vector2(0, 5), stick.radius * 0.42, CozyTheme.INK) # sombra cel
 	draw_circle(k, stick.radius * 0.42, COLOR_KNOB)
+	draw_arc(k, stick.radius * 0.42, 0, TAU, 32, CozyTheme.INK, 4.0, true)
 	var down := _button_fingers.values()
 	for i in BUTTONS.size():
 		var b: Array = BUTTONS[i]
 		var center := button_rect_center(i)
 		var r := button_radius(i)
-		draw_circle(center, r, COLOR_BTN_DOWN if b[0] in down else COLOR_BTN)
-		draw_arc(center, r, 0, TAU, 48, Color(0.16, 0.12, 0.25, 0.8), 3.0, true)
+		var pressed: bool = b[0] in down
+		if not pressed:
+			draw_circle(center + Vector2(0, 6), r, CozyTheme.INK) # sombra cel (afunda ao carregar)
+		var at := center + (Vector2(0, 4) if pressed else Vector2.ZERO)
+		draw_circle(at, r, COLOR_BTN_DOWN if pressed else COLOR_BTN)
+		draw_arc(at, r, 0, TAU, 48, CozyTheme.INK, 4.0, true)
+		center = at
 		var label := tr(b[1])
 		var fs := maxi(int(r * 0.42), 8)
 		var w := _font.get_string_size(label, HORIZONTAL_ALIGNMENT_CENTER, -1, fs).x
-		draw_string(_font, center + Vector2(-w * 0.5, fs * 0.35), label, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color(0.16, 0.12, 0.25))
+		draw_string(_font, center + Vector2(-w * 0.5, fs * 0.35), label, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, CozyTheme.INK)
