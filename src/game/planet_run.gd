@@ -44,6 +44,7 @@ var outpost: OutpostController
 var farm: FarmController
 var tutorial: Tutorial
 var upgrades := Upgrades.new()
+var crew := Crew.new()
 var _tut_walk := 0.0
 var _tut_last := Vector3.INF
 var _tut_jumped := false
@@ -116,6 +117,12 @@ func _ready() -> void:
 	upg_page.run = self
 	outpost.menu.add_page("TERMINAL_TAB_UPGRADES", upg_page)
 	upgrades.changed.connect(apply_upgrades)
+	var crew_page := CrewPage.new()
+	crew_page.run = self
+	outpost.menu.add_page("TERMINAL_TAB_CREW", crew_page)
+	crew.changed.connect(apply_crew)
+	crew.leveled.connect(func(m: String, lv: int) -> void:
+		deliveries.hud.toast(tr("TOAST_CREW_LEVEL") % [tr("CREW_" + m.to_upper()), lv]))
 	var saved := SaveGame.read() if SaveGame.active else {}
 	if not saved.is_empty():
 		var pl: Dictionary = saved.get("planet", {})
@@ -236,6 +243,15 @@ func buy_upgrade(line: String) -> bool:
 	return true
 
 ## Passa os efeitos das melhorias para o rover e para as entregas.
+## Vantagens do tripulante ativo: modelo do astronauta, salto/andar, rover, quinta.
+func apply_crew() -> void:
+	player.set_crew(crew.active)
+	player.walk_factor = crew.walk_factor()
+	player.jump_factor = crew.jump_factor()
+	rover.drive_factor = crew.drive_factor()
+	if farm:
+		farm.farm.growth_speed = crew.farm_speed()
+
 func apply_upgrades() -> void:
 	rover.upgrade_speed = upgrades.speed_factor()
 	rover.damage_factor = upgrades.shield_factor()
@@ -253,6 +269,7 @@ func save_state() -> Dictionary:
 		"farm": farm.farm.to_dict(),
 		"tutorial": tutorial.to_dict(),
 		"upgrades": upgrades.to_dict(),
+		"crew": crew.to_dict(),
 	}
 
 ## Repõe as secções de um save (o planeta já foi gerado com a seed guardada).
@@ -268,6 +285,8 @@ func apply_state(state: Dictionary) -> void:
 		farm.load_state(state.farm)
 	if state.has("tutorial"):
 		tutorial.from_dict(state.tutorial)
+	if state.has("crew"):
+		crew.from_dict(state.crew)
 
 ## Guarda se o save estiver ativo (aberto pelo menu). Chamado ao entregar, construir e sair.
 func autosave() -> void:
@@ -284,6 +303,7 @@ func new_game() -> void:
 	SaveGame.erase()
 	wallet.from_dict({})
 	upgrades.from_dict({})
+	crew.from_dict({})
 	tutorial.restart()
 	biome = "prado"
 	start(randi() % 100000)
@@ -327,7 +347,10 @@ func start(s: int) -> void:
 	apply_upgrades()
 	if farm:
 		farm.start_planet()
-	deliveries.session.order_delivered.connect(func(_o: DeliveryOrder, _t: bool) -> void: autosave())
+	apply_crew()
+	deliveries.session.order_delivered.connect(func(_o: DeliveryOrder, on_time: bool) -> void:
+		crew.on_delivery(on_time)
+		autosave())
 	autosave()
 	if builder:
 		builder.clear()
@@ -548,7 +571,7 @@ func o2_drain_here() -> float:
 	var bd: Dictionary = PlanetGenerator.BIOMES[biome]
 	var base := float(bd.get("o2_drain", 0.0))
 	var near_k := float(bd.get("rivers", {}).get("o2_near", 1.0))
-	return AcidHazard.o2_drain(planet.data, planet.to_local(player.global_position), base, near_k) + extra_o2_drain
+	return AcidHazard.o2_drain(planet.data, planet.to_local(player.global_position), base, near_k) * crew.o2_factor() + extra_o2_drain
 
 ## Calor do rover nos biomas com "rover_heat" (lava): aquece a andar e junto às fissuras,
 ## arrefece parado e à sombra; sobreaquecido fica lento.
@@ -587,7 +610,7 @@ func _apply_hazards(delta: float) -> void:
 	if driving:
 		return
 	var here := planet.to_local(player.global_position)
-	vitals.damage(AcidHazard.foot_damage_rate(d, here) * delta)
+	vitals.damage(AcidHazard.foot_damage_rate(d, here) * crew.acid_factor() * delta)
 	if bubbles:
 		var got := bubbles.collect(here)
 		if got > 0.0:

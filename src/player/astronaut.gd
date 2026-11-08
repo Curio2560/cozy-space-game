@@ -17,6 +17,9 @@ const HEIGHT := 1.7
 @export var jump_velocity := 8.5
 @export var gravity := 22.0
 @export var crew := "FinnTheFrog"
+## Vantagens do tripulante (Crew): multiplicam a velocidade a pé e o salto.
+var walk_factor := 1.0
+var jump_factor := 1.0
 
 ## Centro do planeta em coordenadas globais.
 var planet_center := Vector3.ZERO
@@ -58,6 +61,24 @@ func _ready() -> void:
 	visual = Node3D.new()
 	visual.name = "Visual"
 	add_child(visual)
+	_build_model()
+	hand_crate = Node3D.new()
+	hand_crate.name = "HandCrate"
+	hand_crate.position = HAND_CRATE_POS
+	hand_crate.visible = false
+	visual.add_child(hand_crate)
+	var crate: Node3D = (load("res://assets/kit/pickups/Pickup_Crate.gltf") as PackedScene).instantiate()
+	hand_crate.add_child(crate)
+	KitUtil.fit_height(crate, 0.5)
+	CelShading.apply(crate)
+
+var _model: Node3D
+
+## (Re)cria o modelo do tripulante `crew` (cel-shading, animações, braços para a caixa).
+func _build_model() -> void:
+	if _model:
+		_model.free()
+	_anim_name = ""
 	var model: Node3D = (load("res://assets/kit/" + CREW_MODELS[crew] + ".gltf") as PackedScene).instantiate()
 	visual.add_child(model)
 	KitUtil.fit_height(model, HEIGHT)
@@ -76,15 +97,15 @@ func _ready() -> void:
 		_arms.name = "CarryArms"
 		_arms.influence = 0.0
 		sks[0].add_child(_arms)
-	hand_crate = Node3D.new()
-	hand_crate.name = "HandCrate"
-	hand_crate.position = HAND_CRATE_POS
-	hand_crate.visible = false
-	visual.add_child(hand_crate)
-	var crate: Node3D = (load("res://assets/kit/pickups/Pickup_Crate.gltf") as PackedScene).instantiate()
-	hand_crate.add_child(crate)
-	KitUtil.fit_height(crate, 0.5)
-	CelShading.apply(crate)
+	_model = model
+
+## Troca de tripulante: muda o modelo (a caixa nas mãos e o resto mantêm-se).
+func set_crew(member: String) -> void:
+	if member == crew or not CREW_MODELS.has(member):
+		return
+	crew = member
+	if visual:
+		_build_model()
 
 func up() -> Vector3:
 	return (global_position - planet_center).normalized()
@@ -105,11 +126,11 @@ func _physics_process(delta: float) -> void:
 	var wish := move_direction(input, u)
 	var vert := u * velocity.dot(u)
 	var hor := velocity - vert
-	hor = hor.move_toward(wish * walk_speed, (accel if is_on_floor() else air_accel) * delta)
+	hor = hor.move_toward(wish * walk_speed * walk_factor, (accel if is_on_floor() else air_accel) * delta)
 
 	_jump.update(controllable and Input.is_action_pressed("jump"), delta)
 	if is_on_floor() and _jump.consume():
-		vert = u * jump_velocity
+		vert = u * jump_velocity * jump_factor
 		_jumped = true
 	else:
 		vert -= u * gravity * delta

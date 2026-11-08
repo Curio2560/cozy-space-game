@@ -198,3 +198,16 @@ UPG_SUSPENSION,Suspension,Suspensão
 UPG_SUSPENSION_INFO,Takes harder landings without damage,Aguenta aterragens mais fortes sem dano
 UPG_SLOTS,Outpost slots,Slots do posto
 UPG_SLOTS_INFO,+2 building slots,+2 slots de edifícios
+CREW_LEVEL,Level,Nível
+CREW_NEXT,%d XP to next,faltam %d XP
+CREW_ACTIVE,Active,Ativo
+CREW_SELECT,Choose,Escolher
+TOAST_CREW_LEVEL,%s reached level %d!,%s chegou ao nível %d!
+CREW_FINNTHEFROG,Finn (frog),Finn (sapo)
+CREW_FINNTHEFROG_PERK,Resists acid: less acid damage and O₂ use,Resiste ao ácido: menos dano do ácido e menos gasto de O₂
+CREW_BARBARATHEBEE,Barbara (bee),Barbara (abelha)
+CREW_BARBARATHEBEE_PERK,Green thumb: crops grow faster,Mão verde: as culturas crescem mais depressa
+CREW_FERNANDOTHEFLAMINGO,Fernando (flamingo),Fernando (flamingo)
+CREW_FERNANDOTHEFLAMINGO_PERK,Agile: jumps higher and walks faster,Ágil: salta mais alto e anda mais depressa
+CREW_RAETHEREDPANDA,Rae (red panda),Rae (panda-vermelho)
+CREW_RAETHEREDPANDA_PERK,Driver: faster rover with better steering,Condutora: rover mais rápido e com melhor direção
