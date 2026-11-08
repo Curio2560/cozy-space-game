@@ -36,8 +36,8 @@ var aim: Creature
 var _model: Node3D
 var _anim: AnimationPlayer
 var _anim_name := ""
-var _tracers: Array[MeshInstance3D] = []
-var _tracer_i := 0
+var beams: Beams
+var _shot_i := 0
 var _shoot_t := 0.0
 
 func _ready() -> void:
@@ -54,10 +54,10 @@ func _ready() -> void:
 	visual = Node3D.new()
 	visual.name = "Visual"
 	add_child(visual)
-	for i in 4:
-		var t := _make_tracer()
-		add_child(t)
-		_tracers.append(t)
+	beams = Beams.new()
+	beams.name = "Beams"
+	add_child(beams)
+	beams.setup(4, Color("ffe27a"))
 
 func set_crew(member: String) -> void:
 	if member == crew or not MODELS.has(member):
@@ -147,54 +147,15 @@ func _physics_process(delta: float) -> void:
 	_shoot_t = maxf(_shoot_t - delta, 0.0)
 	if alive():
 		_update_anim(hor.length())
-	_fade_tracers(delta)
 
 func _fire_at(c: Creature) -> void:
 	if c == null:
 		return
 	c.take_hit(MechGun.DAMAGE)
 	_shoot_t = 0.25
-	var from := visual.global_transform * (MUZZLE + Vector3((0.6 if _tracer_i % 2 == 0 else -0.6), 0, 0))
-	var to := c.global_position + up() * 0.9
-	_show_tracer(from, to)
-
-func _make_tracer() -> MeshInstance3D:
-	var mi := MeshInstance3D.new()
-	var cm := CylinderMesh.new()
-	cm.top_radius = 0.06
-	cm.bottom_radius = 0.06
-	cm.height = 1.0
-	cm.radial_segments = 6
-	cm.rings = 1
-	var mat := StandardMaterial3D.new()
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mat.albedo_color = Color("ffe27a")
-	cm.material = mat
-	mi.mesh = cm
-	mi.top_level = true
-	mi.visible = false
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	return mi
-
-func _show_tracer(from: Vector3, to: Vector3) -> void:
-	var t := _tracers[_tracer_i % _tracers.size()]
-	_tracer_i += 1
-	var mid := (from + to) * 0.5
-	var len := from.distance_to(to)
-	if len < 0.05:
-		return
-	var y := (to - from) / len
-	var x := y.cross(Vector3.UP if absf(y.y) < 0.95 else Vector3.RIGHT).normalized()
-	t.global_transform = Transform3D(Basis(x, y * len, x.cross(y)), mid)
-	t.visible = true
-	t.set_meta("life", 0.07)
-
-func _fade_tracers(delta: float) -> void:
-	for t in _tracers:
-		if t.visible:
-			var life: float = float(t.get_meta("life", 0.0)) - delta
-			t.set_meta("life", life)
-			t.visible = life > 0.0
+	_shot_i += 1
+	var from := visual.global_transform * (MUZZLE + Vector3((0.6 if _shot_i % 2 == 0 else -0.6), 0, 0))
+	beams.fire(from, c.global_position + up() * 0.9)
 
 func _turn_visual() -> void:
 	var local := global_basis.inverse() * facing

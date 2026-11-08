@@ -237,3 +237,12 @@ HINT_MECH_NIGHT_ONLY,The mech only wakes up at night,O mech só acorda à noite
 TOAST_MECH_BROKEN,The mech broke down! It will be repaired by morning.,O mech avariou! De manhã está reparado.
 TOAST_GUN_HOT,Gun overheated!,Arma sobreaquecida!
 BTN_MECH,Mech,Mech
+BUILDING_TURRET,Laser turret,Torre laser
+BUILDING_TURRET_INFO,Shoots night creatures by itself. Uses 1 energy.,Dispara sozinha nas criaturas da noite. Gasta 1 de energia.
+TURRET_LEVEL,Level %d,Nível %d
+TURRET_STATS,%.0f damage/s · range %.0f m,%.0f de dano/s · alcance %.0f m
+TURRET_NEXT,Level %d (%s): %.0f damage/s · range %.0f m,Nível %d (%s): %.0f de dano/s · alcance %.0f m
+TURRET_UPGRADE,Upgrade,Melhorar
+TURRET_MAX,Max level,Nível máximo
+HINT_TURRET,Action: laser turret (level %d),Ação: torre laser (nível %d)
+TOAST_TURRET_UP,Turret upgraded to level %d!,Torre melhorada para o nível %d!

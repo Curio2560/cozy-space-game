@@ -23,6 +23,8 @@ var label: Label
 ## Diz se o edifício do slot `i` ainda pode ser atacado (o #41 desliga os destruídos).
 var building_alive: Callable = func(_i: int) -> bool: return true
 var _rng := RandomNumberGenerator.new()
+var beams: Beams
+var _turret_cd := {}
 
 func setup(p_run: Node3D, hud_layer: CanvasLayer) -> void:
 	run = p_run
@@ -32,6 +34,10 @@ func setup(p_run: Node3D, hud_layer: CanvasLayer) -> void:
 		run.deliveries.hud.toast(tr("TOAST_WAVE") % [w, NightWaves.WAVES, n]))
 	waves.wave_cleared.connect(func(w: int) -> void:
 		run.deliveries.hud.toast(tr("TOAST_WAVE_CLEARED") % w))
+	beams = Beams.new()
+	beams.name = "TurretBeams"
+	add_child(beams)
+	beams.setup(8, Color("ff5fa2"), 0.09, 0.1)
 	label = Label.new()
 	label.name = "WaveLabel"
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -82,6 +88,45 @@ func clear() -> void:
 
 func _physics_process(delta: float) -> void:
 	waves.tick(delta)
+	_tick_turrets(delta)
+
+## Torres laser: apontam e disparam na criatura da noite mais perto ao alcance.
+func _tick_turrets(delta: float) -> void:
+	if raiders.is_empty() or run.outpost == null:
+		return
+	var st: Outpost = run.outpost.state
+	var live := raiders.filter(func(c: Creature) -> bool: return is_instance_valid(c) and not c.dead)
+	var pos := live.map(func(c: Creature) -> Vector3: return c.global_position)
+	for i in st.turrets():
+		if not building_alive.call(i):
+			continue
+		var head: Node3D = run.outpost.turret_heads.get(i)
+		if head == null or not is_instance_valid(head):
+			continue
+		_turret_cd[i] = float(_turret_cd.get(i, 0.0)) - delta
+		var stats := st.turret_stats(i)
+		var k := MechGun.nearest(head.global_position, pos, stats.range)
+		if k < 0:
+			continue
+		var c: Creature = live[k]
+		aim_head(head, c.global_position)
+		if _turret_cd[i] <= 0.0:
+			_turret_cd[i] = stats.interval
+			var up: Vector3 = (c.global_position - run.planet.global_position).normalized()
+			beams.fire(head.global_position, c.global_position + up * 0.9)
+			c.take_hit(stats.damage)
+
+## Roda a cabeça da torre (só à volta da vertical) para o canhão (-X do modelo) apontar.
+static func aim_head(head: Node3D, at: Vector3) -> void:
+	var b := head.global_basis
+	var s := b.get_scale()
+	var u := b.y.normalized()
+	var t := at - head.global_position
+	t = t - u * t.dot(u)
+	if t.length() < 0.01:
+		return
+	var x := -t.normalized()
+	head.global_basis = Basis(x, u, x.cross(u)).scaled(s)
 
 func _spawn_wave(count: int, hp: float) -> void:
 	var d: PlanetData = run.planet.data

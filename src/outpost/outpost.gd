@@ -21,16 +21,29 @@ const BUILDINGS := {
 	"research": {"cost": {Wallet.CREDITS: 300}, "produces": Wallet.DATA, "period": 60.0, "consumes": {}, "energy": -1},
 	"solar": {"cost": {Wallet.CREDITS: 80}, "produces": "", "period": 0.0, "consumes": {}, "energy": 3},
 	"storage": {"cost": {Wallet.CREDITS: 150}, "produces": "", "period": 0.0, "consumes": {}, "energy": -1},
+	"turret": {"cost": {Wallet.CREDITS: 200}, "produces": "", "period": 0.0, "consumes": {}, "energy": -1},
 }
-const ORDER := ["miner", "lab", "research", "solar", "storage"]
+const ORDER := ["miner", "lab", "research", "solar", "storage", "turret"]
+
+## Torre laser (#40): estatísticas por nível (1..3). Sem energia que chegue dispara a metade.
+const TURRET_LEVELS := [
+	{"damage": 5.0, "interval": 0.5, "range": 20.0},
+	{"damage": 8.0, "interval": 0.4, "range": 24.0},
+	{"damage": 12.0, "interval": 0.3, "range": 28.0},
+]
+## Custo para subir ao nível 2 e ao nível 3.
+const TURRET_UPGRADE := [
+	{Wallet.CREDITS: 300, Wallet.ORE: 10},
+	{Wallet.CREDITS: 600, Wallet.CRYSTAL: 5},
+]
 
 var slot_count := START_SLOTS
-## Um por slot (até MAX_SLOTS): {kind: "" (vazio) ou tipo, stored: int, progress: float}
+## Um por slot (até MAX_SLOTS): {kind: "" (vazio) ou tipo, stored: int, progress: float, level: int}
 var slots: Array[Dictionary] = []
 
 func _init() -> void:
 	for i in MAX_SLOTS:
-		slots.append({"kind": "", "stored": 0, "progress": 0.0})
+		slots.append(_empty_slot())
 
 func is_empty(i: int) -> bool:
 	return slots[i].kind == ""
@@ -71,9 +84,44 @@ func build(i: int, kind: String, wallet: Wallet) -> bool:
 		return false
 	if not wallet.spend(BUILDINGS[kind].cost):
 		return false
-	slots[i] = {"kind": kind, "stored": 0, "progress": 0.0}
+	slots[i] = {"kind": kind, "stored": 0, "progress": 0.0, "level": 1}
 	changed.emit()
 	return true
+
+static func _empty_slot() -> Dictionary:
+	return {"kind": "", "stored": 0, "progress": 0.0, "level": 1}
+
+func level(i: int) -> int:
+	return int(slots[i].get("level", 1))
+
+## Custo da próxima melhoria do slot `i` ({} se não der: não é torre ou já está no máximo).
+func upgrade_cost(i: int) -> Dictionary:
+	if i < 0 or i >= slot_count or slots[i].kind != "turret" or level(i) >= TURRET_LEVELS.size():
+		return {}
+	return TURRET_UPGRADE[level(i) - 1]
+
+## Sobe a torre do slot `i` um nível, se houver dinheiro. Atómico.
+func upgrade(i: int, wallet: Wallet) -> bool:
+	var cost := upgrade_cost(i)
+	if cost.is_empty() or not wallet.spend(cost):
+		return false
+	slots[i].level = level(i) + 1
+	changed.emit()
+	return true
+
+## Estatísticas da torre do slot `i` agora (dano, intervalo, alcance), com a energia.
+func turret_stats(i: int) -> Dictionary:
+	var st: Dictionary = TURRET_LEVELS[clampi(level(i), 1, TURRET_LEVELS.size()) - 1].duplicate()
+	st.interval = float(st.interval) / power_factor()
+	return st
+
+## Índices dos slots com torre.
+func turrets() -> Array[int]:
+	var out: Array[int] = []
+	for i in slot_count:
+		if slots[i].kind == "turret":
+			out.append(i)
+	return out
 
 ## Avança a produção `delta` segundos. O laboratório gasta minério da carteira por unidade
 ## (se não houver, espera).
@@ -132,7 +180,8 @@ func from_dict(d: Dictionary) -> void:
 	var arr: Array = d.get("slots", [])
 	for i in MAX_SLOTS:
 		if i < arr.size() and arr[i] is Dictionary and (arr[i].get("kind", "") == "" or BUILDINGS.has(arr[i].kind)):
-			slots[i] = {"kind": str(arr[i].get("kind", "")), "stored": int(arr[i].get("stored", 0)), "progress": float(arr[i].get("progress", 0.0))}
+			slots[i] = {"kind": str(arr[i].get("kind", "")), "stored": int(arr[i].get("stored", 0)), "progress": float(arr[i].get("progress", 0.0)),
+				"level": clampi(int(arr[i].get("level", 1)), 1, TURRET_LEVELS.size())}
 		else:
-			slots[i] = {"kind": "", "stored": 0, "progress": 0.0}
+			slots[i] = _empty_slot()
 	changed.emit()

@@ -220,6 +220,21 @@ func _ready() -> void:
 		rover.take_damage(999.0)
 	if "night" in args:
 		cycle.skip_to_night()
+	if "turret" in args: # torre no slot 0, de noite, com criaturas perto (capturas)
+		wallet.add(Wallet.CREDITS, 1000)
+		outpost.build(0, "turret")
+		cycle.skip_to_night()
+		defense.waves.launch_next()
+		var d0 := planet.data
+		var s0 := d0.outpost_slots[0]
+		teleport(d0.toward_point(s0, d0.outpost_dir, -13.0))
+		player.facing = (planet.to_global(d0.surface_point(s0)) - player.global_position).normalized()
+		camera.set_target(player, player.facing)
+		var side := d0.toward_point(s0, d0.outpost_dir.cross(s0), 9.0)
+		for i in defense.raiders.size():
+			var c0: Creature = defense.raiders[i]
+			c0.teleport_to(d0.toward_point(side, s0, -2.5 * i))
+			c0.raid_target = func() -> Array: return []
 	if "mech" in args: # noite, dentro do mech, a disparar (capturas)
 		cycle.skip_to_night()
 		player.place_at(mech.global_position + mech.facing * 3.0 + mech.up() * 0.5)
