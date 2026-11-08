@@ -52,6 +52,8 @@ var _tut_terminal := false
 var _tut_built := false
 var _tut_collected := false
 var heat := RoverHeat.new()
+var cycle := DayCycle.new()
+var day_clock: DayClock
 var ambient: AmbientParticles
 
 func _ready() -> void:
@@ -123,6 +125,13 @@ func _ready() -> void:
 	crew.changed.connect(apply_crew)
 	crew.leveled.connect(func(m: String, lv: int) -> void:
 		deliveries.hud.toast(tr("TOAST_CREW_LEVEL") % [tr("CREW_" + m.to_upper()), lv]))
+	cycle.dusk_warning.connect(func() -> void: deliveries.hud.toast(tr("TOAST_DUSK")))
+	cycle.night_started.connect(func(_d: int) -> void:
+		deliveries.hud.toast(tr("TOAST_NIGHT"))
+		autosave())
+	cycle.morning.connect(func(d: int) -> void:
+		deliveries.hud.toast(tr("TOAST_MORNING") % d)
+		autosave())
 	var saved := SaveGame.read() if SaveGame.active else {}
 	if not saved.is_empty():
 		var pl: Dictionary = saved.get("planet", {})
@@ -179,6 +188,10 @@ func _ready() -> void:
 		enter_rover()
 		await get_tree().create_timer(1.0).timeout
 		rover.take_damage(999.0)
+	if "night" in args:
+		cycle.skip_to_night()
+	if "dusk" in args:
+		cycle.from_dict({"day": 1, "time": DayCycle.DAY_LEN - 10.0})
 	if "perf" in args:
 		_perf_log()
 	if "drive" in args:
@@ -270,6 +283,7 @@ func save_state() -> Dictionary:
 		"tutorial": tutorial.to_dict(),
 		"upgrades": upgrades.to_dict(),
 		"crew": crew.to_dict(),
+		"cycle": cycle.to_dict(),
 	}
 
 ## Repõe as secções de um save (o planeta já foi gerado com a seed guardada).
@@ -287,6 +301,8 @@ func apply_state(state: Dictionary) -> void:
 		tutorial.from_dict(state.tutorial)
 	if state.has("crew"):
 		crew.from_dict(state.crew)
+	if state.has("cycle"):
+		cycle.from_dict(state.cycle)
 
 ## Guarda se o save estiver ativo (aberto pelo menu). Chamado ao entregar, construir e sair.
 func autosave() -> void:
@@ -304,6 +320,7 @@ func new_game() -> void:
 	wallet.from_dict({})
 	upgrades.from_dict({})
 	crew.from_dict({})
+	cycle.from_dict({})
 	tutorial.restart()
 	biome = "prado"
 	start(randi() % 100000)
@@ -716,6 +733,7 @@ func _physics_process(delta: float) -> void:
 var _env: Environment
 var sky_planets: SkyPlanets
 var _sky_mat: ShaderMaterial
+var _sky_bright := 1.0
 
 ## Céu e luz ambiente de cada bioma.
 func _apply_biome_sky() -> void:
@@ -727,6 +745,8 @@ func _apply_biome_sky() -> void:
 	sky_planets.setup(sky.get("planets", []))
 	_env.ambient_light_color = sky.get("ambient", Color("b9a8e8"))
 	sun.light_color = sky.get("sun", Color("fff1dc"))
+	_sky_day = {"sun": sun.light_color, "ambient": _env.ambient_light_color}
+	_last_dl = -1.0
 
 func _build_world() -> void:
 	var env := Environment.new()
@@ -754,9 +774,13 @@ func _build_world() -> void:
 	sun.light_energy = 1.15
 	add_child(sun)
 
-## Até existir o ciclo dia/noite (F4) o sol acompanha o jogador: é sempre de dia onde ele está.
-func _process(_delta: float) -> void:
+## O sol acompanha o jogador (o planeta é pequeno: o relógio é global, não depende do sítio);
+## o ciclo dia/noite baixa-o, escurece-o e tinge a luz e o céu de azul à noite.
+func _process(delta: float) -> void:
 	_track_tutorial()
+	cycle.tick(delta)
+	if deliveries and deliveries.session:
+		deliveries.session.pay_factor = cycle.pay_factor()
 	# Árvores entre a câmara e quem se segue (a pé ou no rover) ficam pontilhadas.
 	var who: Node3D = rover if driving else player
 	CelShading.set_occlusion(camera.global_position, who.global_position + (who.global_position - planet.global_position).normalized() * 0.8)
@@ -764,8 +788,31 @@ func _process(_delta: float) -> void:
 		ambient.target = who
 	var u := rover.planet_up() if driving else player.up()
 	var side := SphereMath.basis_from_up(u).x
-	var light_dir := -(u * 0.75 + side * 0.45 + camera.global_basis.z * 0.25).normalized()
+	var dl := cycle.daylight()
+	var elev := lerpf(0.35, 0.75, dl) # ao anoitecer o sol desce (sombras compridas)
+	var light_dir := -(u * elev + side * 0.45 + camera.global_basis.z * 0.25).normalized()
 	sun.look_at_from_position(Vector3.ZERO, light_dir, u if absf(light_dir.dot(u)) < 0.99 else side)
+	_apply_daylight(dl)
+
+const NIGHT_SUN := Color("8fa8ff") # luar
+const NIGHT_AMBIENT := Color("3b4a8a")
+const DUSK_TINT := Color("ff9a5c")
+var _sky_day := {}
+var _last_dl := -1.0
+
+## Luz, ambiente e céu conforme a luz do dia (1 = dia, 0 = noite). Laranja na transição.
+func _apply_daylight(dl: float) -> void:
+	if absf(dl - _last_dl) < 0.002 or _sky_day.is_empty():
+		return
+	_last_dl = dl
+	var dusk := 1.0 - absf(dl - 0.5) * 2.0 # 1 a meio da transição
+	var sun_col: Color = (_sky_day.sun as Color).lerp(NIGHT_SUN, 1.0 - dl).lerp(DUSK_TINT, dusk * 0.45)
+	sun.light_color = sun_col
+	sun.light_energy = lerpf(0.32, 1.15, dl)
+	_env.ambient_light_color = (_sky_day.ambient as Color).lerp(NIGHT_AMBIENT, 1.0 - dl)
+	_env.ambient_light_energy = lerpf(0.42, 0.5, dl)
+	_sky_mat.set_shader_parameter("brightness", lerpf(0.55, 1.0, dl) * _sky_bright)
+	_sky_mat.set_shader_parameter("star_brightness", lerpf(2.2, 1.3, dl))
 
 var _hud_layer: CanvasLayer
 var pause_menu: PauseMenu
@@ -804,6 +851,16 @@ func _build_ui() -> void:
 	minimap.offset_right = -20.0
 	minimap.offset_top = 76.0
 	minimap.offset_bottom = 76.0 + Minimap.SIZE
+	day_clock = DayClock.new()
+	day_clock.name = "DayClock"
+	day_clock.cycle = cycle
+	hud.add_child(day_clock)
+	day_clock.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	day_clock.offset_left = -Minimap.SIZE - 140.0
+	day_clock.offset_right = -20.0
+	day_clock.offset_top = 76.0 + Minimap.SIZE + 6.0
+	day_clock.offset_bottom = 76.0 + Minimap.SIZE + 40.0
+	day_clock.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	var pause_layer := CanvasLayer.new()
 	pause_layer.layer = 60
 	pause_layer.process_mode = Node.PROCESS_MODE_ALWAYS
@@ -871,7 +928,9 @@ func _register_debug() -> void:
 	DebugMenu.add_slider(self, "DBG_ROVER_SPRING", 2000.0, 9000.0, 100.0, rover.spring_k, func(v: float) -> void: rover.spring_k = v)
 	DebugMenu.add_button(self, "DBG_ADD_CREDITS", func() -> void: wallet.add(Wallet.CREDITS, 500), "DBG_TAB_GENERAL")
 	DebugMenu.default_tab = "DBG_TAB_WORLD"
-	DebugMenu.add_slider(self, "DBG_SKY_BRIGHT", 0.3, 2.0, 0.05, 1.0, func(v: float) -> void: _sky_mat.set_shader_parameter("brightness", v))
+	DebugMenu.add_slider(self, "DBG_SKY_BRIGHT", 0.3, 2.0, 0.05, 1.0, func(v: float) -> void:
+		_sky_bright = v
+		_last_dl = -1.0)
 	DebugMenu.add_slider(self, "DBG_SKY_NEBULA", 0.0, 1.0, 0.05, 0.55, func(v: float) -> void: _sky_mat.set_shader_parameter("nebula_strength", v))
 	# F2: relevo, ácido/lava, partículas.
 	DebugMenu.add_button(self, "DBG_GOTO_RELIEF", func() -> void:
@@ -919,4 +978,13 @@ func _register_debug() -> void:
 		if driving:
 			exit_rover()
 		_park_rover_near_player())
+	DebugMenu.default_tab = "DBG_TAB_NIGHT"
+	DebugMenu.add_label(self, func() -> String:
+		return "%s %d · %s" % [tr("CLOCK_NIGHT_SHORT") if cycle.is_night() else tr("CLOCK_DAY_SHORT"), cycle.day,
+			DayClock.clock(cycle.time_to_morning() if cycle.is_night() else cycle.time_to_night())])
+	DebugMenu.add_button(self, "DBG_TO_NIGHT", cycle.skip_to_night)
+	DebugMenu.add_button(self, "DBG_TO_MORNING", cycle.skip_to_morning)
+	DebugMenu.add_button(self, "DBG_TO_DUSK", func() -> void:
+		cycle.from_dict({"day": cycle.day, "time": DayCycle.DAY_LEN - DayCycle.WARN_BEFORE - 3.0}))
+	DebugMenu.add_slider(self, "DBG_TIME_SPEED", 1.0, 30.0, 1.0, 1.0, func(v: float) -> void: cycle.speed = v)
 	DebugMenu.default_tab = DebugMenu.GENERAL
