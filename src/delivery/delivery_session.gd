@@ -181,9 +181,12 @@ func tick(delta: float) -> void:
 			active.freshness = maxf(PERISH_MIN, 1.0 - (1.0 - PERISH_MIN) * active.elapsed / active.time_limit)
 
 ## Solavanco do rover (força como em Rover.bumped): estraga as encomendas frágeis.
+## Multiplicador da perda de valor em embates (melhoria de carga do rover).
+var cargo_factor := 1.0
+
 func bump_active(strength: float) -> void:
 	if carrying() and active.kind == "fragile":
-		active.value_factor = maxf(active.value_factor - strength * FRAGILE_LOSS_PER_BUMP, MIN_VALUE_FACTOR)
+		active.value_factor = maxf(active.value_factor - strength * FRAGILE_LOSS_PER_BUMP * cargo_factor, MIN_VALUE_FACTOR)
 
 func carrying() -> bool:
 	return active != null and active.state == DeliveryOrder.State.CARRYING
@@ -191,7 +194,7 @@ func carrying() -> bool:
 ## Um empurrão (criatura) estraga a encomenda que se leva: perde valor.
 func damage_active(loss := PUSH_VALUE_LOSS) -> void:
 	if carrying():
-		active.value_factor = maxf(active.value_factor - loss, MIN_VALUE_FACTOR)
+		active.value_factor = maxf(active.value_factor - loss * cargo_factor, MIN_VALUE_FACTOR)
 
 ## Uma criatura rouba a caixa que se leva.
 func steal() -> bool:

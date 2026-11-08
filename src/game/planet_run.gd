@@ -43,6 +43,7 @@ var bubbles: O2Bubbles
 var outpost: OutpostController
 var farm: FarmController
 var tutorial: Tutorial
+var upgrades := Upgrades.new()
 var _tut_walk := 0.0
 var _tut_last := Vector3.INF
 var _tut_jumped := false
@@ -111,6 +112,10 @@ func _ready() -> void:
 	vitals.fainted.connect(_on_player_fainted)
 	_update_vital_bars()
 	_setup_tutorial()
+	var upg_page := UpgradesPage.new()
+	upg_page.run = self
+	outpost.menu.add_page("TERMINAL_TAB_UPGRADES", upg_page)
+	upgrades.changed.connect(apply_upgrades)
 	var saved := SaveGame.read() if SaveGame.active else {}
 	if not saved.is_empty():
 		var pl: Dictionary = saved.get("planet", {})
@@ -219,6 +224,25 @@ func _track_tutorial() -> void:
 		if wallet.amount(k) > 0:
 			_tut_collected = true
 
+## Compra uma melhoria (linha do rover ou "slots"), aplica-a e guarda.
+func buy_upgrade(line: String) -> bool:
+	if not upgrades.buy(line, wallet):
+		return false
+	if line == "slots":
+		outpost.state.add_slots()
+		outpost.rebuild()
+	deliveries.hud.toast(tr("TOAST_UPGRADED") % tr("UPG_" + line.to_upper()))
+	autosave()
+	return true
+
+## Passa os efeitos das melhorias para o rover e para as entregas.
+func apply_upgrades() -> void:
+	rover.upgrade_speed = upgrades.speed_factor()
+	rover.damage_factor = upgrades.shield_factor()
+	rover.impact_bonus = upgrades.suspension_bonus()
+	if deliveries and deliveries.session:
+		deliveries.session.cargo_factor = upgrades.cargo_factor()
+
 ## Estado do jogo para o save. Cada sistema acrescenta a sua secção.
 func save_state() -> Dictionary:
 	return {
@@ -228,6 +252,7 @@ func save_state() -> Dictionary:
 		"outpost": outpost.state.to_dict(),
 		"farm": farm.farm.to_dict(),
 		"tutorial": tutorial.to_dict(),
+		"upgrades": upgrades.to_dict(),
 	}
 
 ## Repõe as secções de um save (o planeta já foi gerado com a seed guardada).
@@ -235,6 +260,8 @@ func apply_state(state: Dictionary) -> void:
 	wallet.from_dict(state.get("wallet", {}))
 	deliveries.session.from_dict(state.get("deliveries", {}))
 	deliveries._update_keycards()
+	if state.has("upgrades"):
+		upgrades.from_dict(state.upgrades) # antes do posto: os slots extra vêm daqui
 	if state.has("outpost"):
 		outpost.load_state(state.outpost)
 	if state.has("farm"):
@@ -256,6 +283,7 @@ func _notification(what: int) -> void:
 func new_game() -> void:
 	SaveGame.erase()
 	wallet.from_dict({})
+	upgrades.from_dict({})
 	tutorial.restart()
 	biome = "prado"
 	start(randi() % 100000)
@@ -292,6 +320,11 @@ func start(s: int) -> void:
 	_spawn_creatures()
 	if outpost:
 		outpost.start_planet()
+		# O posto recomeça em cada planeta, mas os slots extra são melhoria permanente.
+		for k in upgrades.level("slots"):
+			outpost.state.add_slots()
+		outpost.rebuild()
+	apply_upgrades()
 	if farm:
 		farm.start_planet()
 	deliveries.session.order_delivered.connect(func(_o: DeliveryOrder, _t: bool) -> void: autosave())

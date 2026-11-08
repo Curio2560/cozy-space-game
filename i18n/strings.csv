@@ -186,3 +186,15 @@ TIP_CROP_ORDER,Some orders carry a crop from your farm: you need one to accept t
 TIP_ACID,"Acid planet: the air uses O₂ on foot, faster near the rivers. Grab blue bubbles; the rover cabin protects you.","Planeta ácido: o ar gasta O₂ a pé, mais depressa junto aos rios. Apanha as bolhas azuis; a cabine do rover protege-te."
 TIP_LAVA,"Lava planet: the rover heats up with speed and near fissures. Stop in the shade to cool down.","Planeta de lava: o rover aquece com a velocidade e junto às fissuras. Para à sombra para arrefecer."
 TIP_POWER,Not enough energy: buildings work at 50%. Build a solar panel (+3).,Pouca energia: os edifícios trabalham a 50%. Constrói um painel solar (+3).
+TOAST_UPGRADED,Upgraded: %s,Melhorado: %s
+UPG_MAX,Max,Máximo
+UPG_SPEED,Rover speed,Velocidade do rover
+UPG_SPEED_INFO,+12% top speed per level,+12% de velocidade máxima por nível
+UPG_CARGO,Cargo,Carga
+UPG_CARGO_INFO,Crates lose 20% less value in bumps per level,As caixas perdem menos 20% de valor nos embates por nível
+UPG_SHIELD,Shield,Escudo
+UPG_SHIELD_INFO,Rover takes 20% less damage per level,O rover leva menos 20% de dano por nível
+UPG_SUSPENSION,Suspension,Suspensão
+UPG_SUSPENSION_INFO,Takes harder landings without damage,Aguenta aterragens mais fortes sem dano
+UPG_SLOTS,Outpost slots,Slots do posto
+UPG_SLOTS_INFO,+2 building slots,+2 slots de edifícios
