@@ -193,8 +193,11 @@ func _update_world(delta: float) -> void:
 	if target >= 0:
 		var up: Vector3 = run.planet.data.posts[target]
 		_beacon.global_transform = Transform3D(SphereMath.basis_from_up(run.planet.global_basis * up), post_position(target) + up * 15.0)
-	_crate.visible = o != null
-	if o == null:
+	# A pé, a caixa vai nas mãos do astronauta (o modelo dele mostra-a); no rover vai por cima.
+	var in_hands: bool = o != null and o.state == DeliveryOrder.State.CARRYING and not run.driving
+	run.player.carrying = in_hands
+	_crate.visible = o != null and not in_hands
+	if o == null or in_hands:
 		return
 	if o.state == DeliveryOrder.State.ACCEPTED:
 		var up: Vector3 = run.planet.data.posts[o.from_post]

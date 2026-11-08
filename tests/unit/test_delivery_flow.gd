@@ -41,3 +41,14 @@ func test_accept_pick_up_and_deliver_pays_credits() -> void:
 	assert_eq(o.state, DeliveryOrder.State.DELIVERED, "devia ter entregue ao chegar ao destino")
 	assert_gt(run.wallet.credits(), before)
 	assert_null(dc.session.active)
+
+func test_crate_is_carried_in_hands_on_foot() -> void:
+	var dc: DeliveryController = run.deliveries
+	var o: DeliveryOrder = dc.session.offers[0]
+	o.crop = ""
+	dc.accept(o)
+	dc.session.pick_up()
+	await wait_physics_frames(30)
+	assert_true(run.player.carrying, "a pé, a caixa vai nas mãos")
+	assert_true(run.player.hand_crate.visible)
+	assert_gt(run.player._arms.influence, 0.9, "braços à frente")

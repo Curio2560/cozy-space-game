@@ -31,6 +31,14 @@ var controllable := true
 var push := Vector3.ZERO
 
 var _anim: AnimationPlayer
+## A levar uma caixa nas mãos (a pé): braços à frente e a caixa ao peito.
+var carrying := false
+var _arms: CarryArms
+## Caixa nas mãos: nó filho do visual (segue para onde o astronauta está virado).
+var hand_crate: Node3D
+const HAND_CRATE_POS := Vector3(0.0, 0.86, 0.5)
+var _was_on_floor := true
+var _land_t := 0.0
 var _jump := JumpBuffer.new()
 var _anim_name := ""
 ## Desmaiado: sem input e sem trocar de animação (fica caído).
@@ -62,6 +70,21 @@ func _ready() -> void:
 		if _anim and _anim.has_animation(a):
 			_anim.get_animation(a).loop_mode = Animation.LOOP_LINEAR
 	_play("Idle")
+	var sks := model.find_children("*", "Skeleton3D", true, false)
+	if not sks.is_empty():
+		_arms = CarryArms.new()
+		_arms.name = "CarryArms"
+		_arms.influence = 0.0
+		sks[0].add_child(_arms)
+	hand_crate = Node3D.new()
+	hand_crate.name = "HandCrate"
+	hand_crate.position = HAND_CRATE_POS
+	hand_crate.visible = false
+	visual.add_child(hand_crate)
+	var crate: Node3D = (load("res://assets/kit/pickups/Pickup_Crate.gltf") as PackedScene).instantiate()
+	hand_crate.add_child(crate)
+	KitUtil.fit_height(crate, 0.5)
+	CelShading.apply(crate)
 
 func up() -> Vector3:
 	return (global_position - planet_center).normalized()
@@ -87,6 +110,7 @@ func _physics_process(delta: float) -> void:
 	_jump.update(controllable and Input.is_action_pressed("jump"), delta)
 	if is_on_floor() and _jump.consume():
 		vert = u * jump_velocity
+		_jumped = true
 	else:
 		vert -= u * gravity * delta
 	# O empurrão entra só no movimento deste passo (não fica guardado na velocidade, senão
@@ -103,6 +127,7 @@ func _physics_process(delta: float) -> void:
 	visual.rotation.y = atan2(local.x, local.z)
 	if not downed:
 		_update_anim(hor.length())
+	_update_body(delta)
 
 func add_push(v: Vector3) -> void:
 	push += v
@@ -144,18 +169,47 @@ func _align(u: Vector3, weight: float) -> void:
 		q = Quaternion.IDENTITY.slerp(q, weight)
 	global_basis = Basis(q * global_basis.get_rotation_quaternion()).orthonormalized()
 
+var _jumped := false
+
+## Salto: impulso ("Jump") ao sair do chão, pose no ar ("Jump_Idle"), aterragem ("Jump_Land")
+## curta. Andar/correr com a velocidade da animação a acompanhar a velocidade real.
 func _update_anim(speed: float) -> void:
-	if not is_on_floor():
-		_play("Jump_Idle" if _anim and _anim.has_animation("Jump_Idle") else "Jump")
+	var on_floor := is_on_floor()
+	if not on_floor:
+		if _jumped and _anim and _anim.has_animation("Jump"):
+			_jumped = false
+			_play("Jump", 0.05)
+		elif _anim_name != "Jump" or not _anim.is_playing():
+			_play("Jump_Idle" if _anim and _anim.has_animation("Jump_Idle") else "Jump")
+	elif not _was_on_floor:
+		_land_t = 0.22
+		_play("Jump_Land", 0.05)
+	elif _land_t > 0.0:
+		pass # deixa acabar a aterragem
 	elif speed > walk_speed * 0.55:
 		_play("Run")
+		_anim.speed_scale = clampf(speed / walk_speed, 0.7, 1.4)
 	elif speed > 0.4:
 		_play("Walk")
+		_anim.speed_scale = clampf(speed / (walk_speed * 0.45), 0.6, 1.3)
 	else:
 		_play("Idle")
+	if _anim and _anim_name not in ["Run", "Walk"]:
+		_anim.speed_scale = 1.0
+	_was_on_floor = on_floor
 
-func _play(a: String) -> void:
+## Braços a segurar a caixa (suave) e um pequeno amortecimento ao aterrar.
+func _update_body(delta: float) -> void:
+	_land_t = maxf(_land_t - delta, 0.0)
+	var hold := carrying and not downed
+	if _arms:
+		_arms.influence = move_toward(_arms.influence, 1.0 if hold else 0.0, delta * 6.0)
+	hand_crate.visible = hold and (_arms == null or _arms.influence > 0.6)
+	var squash := 1.0 - 0.12 * sin(clampf(_land_t / 0.22, 0.0, 1.0) * PI)
+	visual.scale = Vector3(2.0 - squash, squash, 2.0 - squash)
+
+func _play(a: String, blend := 0.15) -> void:
 	if _anim == null or a == _anim_name or not _anim.has_animation(a):
 		return
 	_anim_name = a
-	_anim.play(a, 0.15)
+	_anim.play(a, blend)
