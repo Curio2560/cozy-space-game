@@ -54,6 +54,7 @@ var _tut_collected := false
 var heat := RoverHeat.new()
 var cycle := DayCycle.new()
 var day_clock: DayClock
+var defense: DefenseController
 var ambient: AmbientParticles
 
 func _ready() -> void:
@@ -101,6 +102,10 @@ func _ready() -> void:
 	farm.name = "Farm"
 	add_child(farm)
 	farm.setup(self, _hud_layer)
+	defense = DefenseController.new()
+	defense.name = "Defense"
+	add_child(defense)
+	defense.setup(self, _hud_layer)
 	bars = StatusBars.new()
 	_hud_layer.add_child(bars)
 	bars.add_bar("rover", "BAR_ROVER", Color("ff9f5a"))
@@ -126,11 +131,15 @@ func _ready() -> void:
 	crew.leveled.connect(func(m: String, lv: int) -> void:
 		deliveries.hud.toast(tr("TOAST_CREW_LEVEL") % [tr("CREW_" + m.to_upper()), lv]))
 	cycle.dusk_warning.connect(func() -> void: deliveries.hud.toast(tr("TOAST_DUSK")))
-	cycle.night_started.connect(func(_d: int) -> void:
+	cycle.night_started.connect(func(d: int) -> void:
 		deliveries.hud.toast(tr("TOAST_NIGHT"))
+		defense.start_night(d)
+		_set_night_hostile(true)
 		autosave())
 	cycle.morning.connect(func(d: int) -> void:
 		deliveries.hud.toast(tr("TOAST_MORNING") % d)
+		defense.end_night()
+		_set_night_hostile(false)
 		autosave())
 	var saved := SaveGame.read() if SaveGame.active else {}
 	if not saved.is_empty():
@@ -190,6 +199,15 @@ func _ready() -> void:
 		rover.take_damage(999.0)
 	if "night" in args:
 		cycle.skip_to_night()
+	if "raid" in args: # noite com uma vaga a chegar à frente da câmara (capturas)
+		cycle.skip_to_night()
+		defense.waves.launch_next()
+		var pd := planet.to_local(player.global_position).normalized()
+		var f := planet.global_basis.inverse() * (-camera.global_basis.z)
+		f = (f - pd * f.dot(pd)).normalized()
+		for i in defense.raiders.size():
+			var side := pd.cross(f).normalized()
+			defense.raiders[i].teleport_to((pd + f * ((10.0 + i * 2.0) / planet.data.radius) + side * ((i - 1) * 2.5 / planet.data.radius)).normalized())
 	if "dusk" in args:
 		cycle.from_dict({"day": 1, "time": DayCycle.DAY_LEN - 10.0})
 	if "perf" in args:
@@ -303,6 +321,14 @@ func apply_state(state: Dictionary) -> void:
 		crew.from_dict(state.crew)
 	if state.has("cycle"):
 		cycle.from_dict(state.cycle)
+		if cycle.is_night():
+			defense.resume_night(cycle.day, cycle.time - DayCycle.DAY_LEN)
+			_set_night_hostile(true)
+
+## À noite as criaturas hostis do planeta atacam mesmo sem encomenda.
+func _set_night_hostile(on: bool) -> void:
+	for c in creatures:
+		c.night_hostile = on
 
 ## Guarda se o save estiver ativo (aberto pelo menu). Chamado ao entregar, construir e sair.
 func autosave() -> void:
@@ -321,6 +347,8 @@ func new_game() -> void:
 	upgrades.from_dict({})
 	crew.from_dict({})
 	cycle.from_dict({})
+	defense.end_night()
+	_set_night_hostile(false)
 	tutorial.restart()
 	biome = "prado"
 	start(randi() % 100000)
@@ -364,6 +392,10 @@ func start(s: int) -> void:
 	apply_upgrades()
 	if farm:
 		farm.start_planet()
+	if defense:
+		defense.end_night()
+		if cycle.is_night():
+			defense.start_night(cycle.day)
 	apply_crew()
 	deliveries.session.order_delivered.connect(func(_o: DeliveryOrder, on_time: bool) -> void:
 		crew.on_delivery(on_time)
@@ -401,6 +433,7 @@ func _spawn_creatures() -> void:
 		creatures.append(c)
 	for c in creatures:
 		c.flock = creatures
+		c.night_hostile = cycle.is_night()
 
 func _creature_target() -> Node3D:
 	return rover if driving else player
@@ -986,5 +1019,12 @@ func _register_debug() -> void:
 	DebugMenu.add_button(self, "DBG_TO_MORNING", cycle.skip_to_morning)
 	DebugMenu.add_button(self, "DBG_TO_DUSK", func() -> void:
 		cycle.from_dict({"day": cycle.day, "time": DayCycle.DAY_LEN - DayCycle.WARN_BEFORE - 3.0}))
+	DebugMenu.add_button(self, "DBG_WAVE_NOW", func() -> void:
+		if not defense.waves.active():
+			defense.start_night(cycle.day)
+		defense.waves.launch_next())
+	DebugMenu.add_button(self, "DBG_KILL_WAVE", func() -> void:
+		for c in defense.raiders.duplicate():
+			c.take_hit(9999.0))
 	DebugMenu.add_slider(self, "DBG_TIME_SPEED", 1.0, 30.0, 1.0, 1.0, func(v: float) -> void: cycle.speed = v)
 	DebugMenu.default_tab = DebugMenu.GENERAL

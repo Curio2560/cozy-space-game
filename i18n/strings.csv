@@ -223,3 +223,8 @@ CLOCK_NIGHT_SHORT,Night,Noite
 TOAST_DUSK,Night falls in 30 s — head back to the outpost!,Anoitece em 30 s — volta ao posto!
 TOAST_NIGHT,Night has fallen. Colonists pay +25%.,Anoiteceu. Os colonos pagam +25%.
 TOAST_MORNING,Good morning! Day %d,Bom dia! Dia %d
+DBG_WAVE_NOW,Send a wave now,Mandar uma vaga já
+DBG_KILL_WAVE,Kill night creatures,Matar as criaturas da noite
+TOAST_WAVE,Wave %d/%d: %d creatures!,Vaga %d/%d: %d criaturas!
+TOAST_WAVE_CLEARED,Wave %d cleared!,Vaga %d vencida!
+HUD_WAVE,Wave %d/%d · %d left,Vaga %d/%d · faltam %d
