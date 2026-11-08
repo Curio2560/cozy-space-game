@@ -10,9 +10,11 @@ var resources_label: Label
 ## Linha dos recursos (minério, cristal, colheitas, dados); vazia se não houver nenhum.
 func set_resources(w: Wallet) -> void:
 	var parts := []
-	for k in [Wallet.ORE, Wallet.CRYSTAL, Wallet.CROPS, Wallet.DATA]:
+	for k in [Wallet.ORE, Wallet.CRYSTAL, Wallet.DATA]:
 		if w.amount(k) > 0:
 			parts.append("%s %d" % [tr("RES_" + k.to_upper()), w.amount(k)])
+	if w.crops_total() > 0:
+		parts.append("%s %d" % [tr("RES_CROPS"), w.crops_total()])
 	resources_label.text = "  ·  ".join(parts)
 var order_label: Label
 var arrow: NavArrow

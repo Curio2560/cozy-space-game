@@ -339,7 +339,7 @@ static func _place_outpost_slots(d: PlanetData) -> void:
 	for ring_i in SLOT_RINGS_M.size():
 		var ring: float = SLOT_RINGS_M[ring_i]
 		for i in SLOT_CANDIDATES:
-			if ok.size() >= Outpost.MAX_SLOTS:
+			if ok.size() >= Outpost.MAX_SLOTS + Farm.PLOTS:
 				break
 			var a := TAU * (i + 0.5 * ring_i) / SLOT_CANDIDATES # o 2.º anel desfasado
 			var t := ref.rotated(c, a)
@@ -356,10 +356,12 @@ static func _place_outpost_slots(d: PlanetData) -> void:
 					break
 			if not blocked:
 				ok.append(p)
-	d.outpost_slots = ok
+	# Os primeiros para edifícios, os seguintes para os talhões da quinta.
+	d.outpost_slots = ok.slice(0, Outpost.MAX_SLOTS)
+	d.farm_plots = ok.slice(Outpost.MAX_SLOTS, Outpost.MAX_SLOTS + Farm.PLOTS)
 
 static func _near_slot(d: PlanetData, dir: Vector3, margin: float) -> bool:
-	for sl in d.outpost_slots:
+	for sl in d.outpost_slots + d.farm_plots:
 		if d.arc_m(dir, sl) < SLOT_RADIUS_M + margin:
 			return true
 	return false
@@ -369,6 +371,8 @@ static func structures(d: PlanetData) -> Array:
 	var out := []
 	for sl in d.outpost_slots:
 		out.append([sl, SLOT_RADIUS_M])
+	for fp in d.farm_plots:
+		out.append([fp, SLOT_RADIUS_M])
 	for p in d.posts:
 		out.append([p, STRUCT_RADIUS.post])
 	out.append([d.outpost_dir, STRUCT_RADIUS.outpost])
@@ -636,6 +640,8 @@ static func _place_turf(d: PlanetData, b: Dictionary, p_seed: int) -> void:
 		if near_road.has(d.road_cell_of(dir)) and d.road_clearance(dir) < 0.2:
 			continue
 		if d.in_relief(dir) and d.slope_deg(dir) > MAX_SLOPE_DEG:
+			continue
+		if _near_slot(d, dir, -0.6): # nada de relva em cima dos slots e talhões
 			continue
 		d.turf_dirs.append(dir)
 		d.turf_sizes.append(rng.randf_range(t.size[0], t.size[1]))

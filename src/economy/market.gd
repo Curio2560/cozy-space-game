@@ -3,7 +3,7 @@ extends RefCounted
 ## Venda de recursos no terminal do posto (regras puras). Minério, cristal e colheitas ficam
 ## no planeta: vendem-se antes de partir. Os dados de pesquisa não se vendem.
 
-const PRICES := {Wallet.ORE: 4, Wallet.CRYSTAL: 15, Wallet.CROPS: 10}
+const PRICES := {Wallet.ORE: 4, Wallet.CRYSTAL: 15, Wallet.CROP_FAST: 6, Wallet.CROP_MID: 12, Wallet.CROP_SLOW: 20}
 
 static func can_sell(kind: String) -> bool:
 	return PRICES.has(kind)

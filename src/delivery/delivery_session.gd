@@ -106,7 +106,18 @@ func make_order(from_post: int, to_post: int, kind := "normal") -> DeliveryOrder
 	var dist: float = distances[from_post][to_post]
 	o.base_pay = int(round((BASE_PAY + dist * PAY_PER_M) * float(rule.pay) * friendship_bonus(to_post)))
 	o.time_limit = (dist * TIME_PER_M + TIME_SLACK) * float(rule.time)
+	# Algumas perecíveis levam colheitas da quinta (pagam mais).
+	if kind == "perishable" and _rng.randf() < CROP_ORDER_CHANCE:
+		o.crop = Wallet.CROP_KINDS[_rng.randi() % Wallet.CROP_KINDS.size()]
+		o.base_pay = int(round(o.base_pay * CROP_ORDER_PAY))
 	return o
+
+const CROP_ORDER_CHANCE := 0.5
+const CROP_ORDER_PAY := 1.5
+
+## Pode aceitar já? (encomendas com colheita precisam de 1 na carteira)
+func can_accept(o: DeliveryOrder) -> bool:
+	return active == null and o in offers and (o.crop == "" or wallet.amount(o.crop) >= 1)
 
 func _random_pair() -> Array:
 	var n := distances.size()
@@ -146,7 +157,9 @@ func refill_offers() -> void:
 		offers.append(make_order(pr[0], pr[1], _common_kind()))
 
 func accept(o: DeliveryOrder) -> bool:
-	if active != null or o not in offers:
+	if not can_accept(o):
+		return false
+	if o.crop != "" and not wallet.spend({o.crop: 1}):
 		return false
 	offers.erase(o)
 	o.state = DeliveryOrder.State.ACCEPTED

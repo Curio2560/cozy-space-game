@@ -40,6 +40,7 @@ func test_longer_routes_pay_more_and_allow_more_time() -> void:
 func test_full_lifecycle_pays_wallet_and_raises_reputation() -> void:
 	var s := _session()
 	var o: DeliveryOrder = s.offers[0]
+	o.crop = "" # sem colheita (encomendas da quinta testam-se em test_farm)
 	assert_true(s.accept(o))
 	assert_eq(s.target_post(), o.from_post)
 	assert_eq(s.offers.size(), DeliverySession.OFFER_COUNT, "a oferta aceite é reposta")
@@ -55,6 +56,7 @@ func test_full_lifecycle_pays_wallet_and_raises_reputation() -> void:
 func test_late_delivery_pays_less_and_no_reputation() -> void:
 	var s := _session()
 	var o: DeliveryOrder = s.offers[0]
+	o.crop = "" # sem colheita (encomendas da quinta testam-se em test_farm)
 	s.accept(o)
 	s.pick_up()
 	s.tick(o.time_limit * 1.5)
@@ -66,6 +68,7 @@ func test_late_delivery_pays_less_and_no_reputation() -> void:
 func test_clock_only_runs_while_carrying() -> void:
 	var s := _session()
 	var o: DeliveryOrder = s.offers[0]
+	o.crop = "" # sem colheita (encomendas da quinta testam-se em test_farm)
 	s.accept(o)
 	s.tick(999.0)
 	s.pick_up()
@@ -92,6 +95,7 @@ func test_same_seed_same_offers() -> void:
 func test_fail_active_pays_nothing_and_frees_the_player() -> void:
 	var s := _session()
 	var o: DeliveryOrder = s.offers[0]
+	o.crop = "" # sem colheita (encomendas da quinta testam-se em test_farm)
 	s.accept(o)
 	s.pick_up()
 	watch_signals(s)
@@ -105,6 +109,7 @@ func test_fail_active_pays_nothing_and_frees_the_player() -> void:
 func test_pushes_lower_the_pay_but_not_below_floor() -> void:
 	var s := _session()
 	var o: DeliveryOrder = s.offers[0]
+	o.crop = "" # sem colheita (encomendas da quinta testam-se em test_farm)
 	s.accept(o)
 	s.pick_up()
 	var clean := DeliverySession.payment(o.base_pay, o.time_limit, 1.0)
@@ -119,6 +124,7 @@ func test_pushes_lower_the_pay_but_not_below_floor() -> void:
 func test_steal_drop_and_recover() -> void:
 	var s := _session()
 	var o: DeliveryOrder = s.offers[0]
+	o.crop = "" # sem colheita (encomendas da quinta testam-se em test_farm)
 	s.accept(o)
 	assert_false(s.steal(), "só se rouba o que se está a levar")
 	s.pick_up()

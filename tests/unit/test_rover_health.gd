@@ -34,6 +34,7 @@ func test_damage_to_zero_destroys_once() -> void:
 func test_explosion_fails_order_and_respawns_at_base() -> void:
 	var dc: DeliveryController = run.deliveries
 	var o: DeliveryOrder = dc.session.offers[0]
+	o.crop = "" # sem colheita (encomendas da quinta testam-se em test_farm)
 	dc.accept(o)
 	dc.session.pick_up()
 	run.enter_rover()

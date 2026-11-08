@@ -202,6 +202,8 @@ func close_menu() -> void:
 	menu_open = false
 	menu.visible = false
 	slot_menu.visible = false
+	if run.farm:
+		run.farm.menu.visible = false
 	run._update_touch_visibility()
 	if not run.driving:
 		run.player.controllable = true
@@ -213,7 +215,7 @@ func hint() -> String:
 		return tr("HINT_TERMINAL")
 	var i := nearest_slot()
 	if i < 0:
-		return ""
+		return run.farm.hint() if run.farm else ""
 	var s: Dictionary = state.slots[i]
 	if s.kind == "":
 		return tr("HINT_SLOT_BUILD")
@@ -228,6 +230,8 @@ func _physics_process(delta: float) -> void:
 	if _action.consume() and not menu_open and not run.deliveries.board_open:
 		if near_terminal():
 			open_menu()
+		elif run.farm and run.farm.act():
+			pass
 		else:
 			var i := nearest_slot()
 			if i >= 0:

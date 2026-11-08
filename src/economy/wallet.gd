@@ -7,9 +7,19 @@ signal changed
 const CREDITS := "credits"
 const ORE := "ore"
 const CRYSTAL := "crystal"
-const CROPS := "crops"
 const DATA := "data"
-const KINDS := [CREDITS, ORE, CRYSTAL, CROPS, DATA]
+## Colheitas, uma por cultura da quinta (valem diferente). No HUD aparecem somadas.
+const CROP_FAST := "crop_fast"
+const CROP_MID := "crop_mid"
+const CROP_SLOW := "crop_slow"
+const CROP_KINDS := [CROP_FAST, CROP_MID, CROP_SLOW]
+const KINDS := [CREDITS, ORE, CRYSTAL, DATA, CROP_FAST, CROP_MID, CROP_SLOW]
+
+func crops_total() -> int:
+	var n := 0
+	for k in CROP_KINDS:
+		n += amount(k)
+	return n
 
 var _amounts := {}
 

@@ -41,6 +41,7 @@ var dust: CPUParticles3D
 var deliveries: DeliveryController
 var bubbles: O2Bubbles
 var outpost: OutpostController
+var farm: FarmController
 var heat := RoverHeat.new()
 var ambient: AmbientParticles
 
@@ -85,6 +86,10 @@ func _ready() -> void:
 	outpost.name = "Outpost"
 	add_child(outpost)
 	outpost.setup(self, _hud_layer)
+	farm = FarmController.new()
+	farm.name = "Farm"
+	add_child(farm)
+	farm.setup(self, _hud_layer)
 	bars = StatusBars.new()
 	_hud_layer.add_child(bars)
 	bars.add_bar("rover", "BAR_ROVER", Color("ff9f5a"))
@@ -124,6 +129,7 @@ func _ready() -> void:
 		deliveries.open_board()
 	if "order" in args:
 		var o: DeliveryOrder = deliveries.session.offers[0]
+		o.crop = "" # sem colheita (encomendas da quinta testam-se em test_farm)
 		deliveries.accept(o)
 		deliveries.session.pick_up()
 		deliveries.session.tick(12.0)
@@ -168,6 +174,7 @@ func save_state() -> Dictionary:
 		"wallet": wallet.to_dict(),
 		"deliveries": deliveries.session.to_dict(),
 		"outpost": outpost.state.to_dict(),
+		"farm": farm.farm.to_dict(),
 	}
 
 ## Repõe as secções de um save (o planeta já foi gerado com a seed guardada).
@@ -177,6 +184,8 @@ func apply_state(state: Dictionary) -> void:
 	deliveries._update_keycards()
 	if state.has("outpost"):
 		outpost.load_state(state.outpost)
+	if state.has("farm"):
+		farm.load_state(state.farm)
 
 ## Guarda se o save estiver ativo (aberto pelo menu). Chamado ao entregar, construir e sair.
 func autosave() -> void:
@@ -227,6 +236,8 @@ func start(s: int) -> void:
 	_spawn_creatures()
 	if outpost:
 		outpost.start_planet()
+	if farm:
+		farm.start_planet()
 	deliveries.session.order_delivered.connect(func(_o: DeliveryOrder, _t: bool) -> void: autosave())
 	autosave()
 	if builder:

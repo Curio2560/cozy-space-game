@@ -49,6 +49,8 @@ func refresh() -> void:
 		var info := Label.new()
 		info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		info.text = "[%s]  %s → %s   ·   %d ¢   ·   %s" % [tr("KIND_" + o.kind.to_upper()), session.colonist_name(o.from_post), session.colonist_name(o.to_post), o.base_pay, DeliveryHud.format_time(o.time_limit)]
+		if o.crop != "":
+			info.text += "\n" + tr("BOARD_NEEDS_CROP") % [tr("RES_" + o.crop.to_upper()), session.wallet.amount(o.crop)]
 		info.add_theme_font_size_override("font_size", 26)
 		info.add_theme_color_override("font_color", KIND_COLORS.get(o.kind, CozyTheme.INK))
 		row.add_child(info)
@@ -56,7 +58,7 @@ func refresh() -> void:
 		b.text = "BOARD_ACCEPT"
 		b.custom_minimum_size = Vector2(170, 64)
 		b.add_theme_font_size_override("font_size", 24)
-		b.disabled = session.active != null
+		b.disabled = not session.can_accept(o)
 		b.pressed.connect(func() -> void: accepted.emit(o))
 		row.add_child(b)
 		_list.add_child(row)
