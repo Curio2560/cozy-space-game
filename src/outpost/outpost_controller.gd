@@ -127,7 +127,7 @@ func _update_labels() -> void:
 
 ## Slot aberto mais perto do jogador (a pé), ou -1.
 func nearest_slot() -> int:
-	if run.driving or run.planet.data == null:
+	if run.in_vehicle() or run.planet.data == null:
 		return -1
 	var best := -1
 	var best_d := SLOT_RADIUS
@@ -189,7 +189,7 @@ func terminal_position() -> Vector3:
 	return base.global_transform * TERMINAL_LOCAL
 
 func near_terminal() -> bool:
-	return not run.driving and run.player.global_position.distance_to(terminal_position()) < TERMINAL_RADIUS
+	return not run.in_vehicle() and run.player.global_position.distance_to(terminal_position()) < TERMINAL_RADIUS
 
 func open_menu() -> void:
 	menu_open = true
@@ -205,7 +205,7 @@ func close_menu() -> void:
 	if run.farm:
 		run.farm.menu.visible = false
 	run._update_touch_visibility()
-	if not run.driving:
+	if not run.in_vehicle():
 		run.player.controllable = true
 
 func hint() -> String:

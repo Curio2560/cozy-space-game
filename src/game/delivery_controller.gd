@@ -127,7 +127,7 @@ func outpost_position() -> Vector3:
 	return run.planet.to_global(d.surface_point(d.outpost_dir))
 
 func carrier() -> Node3D:
-	return run.rover if run.driving else run.player
+	return run.carrier_node()
 
 func near_board() -> bool:
 	return carrier().global_position.distance_to(outpost_position()) < BOARD_RADIUS
@@ -143,7 +143,7 @@ func close_board() -> void:
 	board_open = false
 	board.visible = false
 	run._update_touch_visibility()
-	if not run.driving:
+	if not run.in_vehicle():
 		run.player.controllable = true
 
 func accept(o: DeliveryOrder) -> bool:
@@ -194,7 +194,7 @@ func _update_world(delta: float) -> void:
 		var up: Vector3 = run.planet.data.posts[target]
 		_beacon.global_transform = Transform3D(SphereMath.basis_from_up(run.planet.global_basis * up), post_position(target) + up * 15.0)
 	# A pé, a caixa vai nas mãos do astronauta (o modelo dele mostra-a); no rover vai por cima.
-	var in_hands: bool = o != null and o.state == DeliveryOrder.State.CARRYING and not run.driving
+	var in_hands: bool = o != null and o.state == DeliveryOrder.State.CARRYING and not run.in_vehicle()
 	run.player.carrying = in_hands
 	_crate.visible = o != null and not in_hands
 	if o == null or in_hands:
@@ -212,7 +212,7 @@ func _update_world(delta: float) -> void:
 	else:
 		var c := carrier()
 		var up: Vector3 = (c.global_position - run.planet.global_position).normalized()
-		var lift := 2.2 if run.driving else 2.1
+		var lift := 3.8 if run.piloting else (2.2 if run.driving else 2.1)
 		_crate.global_transform = Transform3D(c.global_basis.orthonormalized(), c.global_position + up * lift)
 
 ## Posição global para onde o jogador tem de ir agora (entrega, caixa, ladrão), ou null.

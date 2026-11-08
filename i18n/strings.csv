@@ -228,3 +228,12 @@ DBG_KILL_WAVE,Kill night creatures,Matar as criaturas da noite
 TOAST_WAVE,Wave %d/%d: %d creatures!,Vaga %d/%d: %d criaturas!
 TOAST_WAVE_CLEARED,Wave %d cleared!,Vaga %d vencida!
 HUD_WAVE,Wave %d/%d · %d left,Vaga %d/%d · faltam %d
+BAR_MECH,Mech,Mech
+BAR_GUN_HEAT,Gun heat,Calor da arma
+BTN_FIRE,FIRE,DISPARAR
+HINT_ENTER_MECH,Tap Mech to board,Toca em Mech para entrar
+HINT_EXIT_MECH,FIRE to shoot · Mech to get out,DISPARAR para atirar · Mech para sair
+HINT_MECH_NIGHT_ONLY,The mech only wakes up at night,O mech só acorda à noite
+TOAST_MECH_BROKEN,The mech broke down! It will be repaired by morning.,O mech avariou! De manhã está reparado.
+TOAST_GUN_HOT,Gun overheated!,Arma sobreaquecida!
+BTN_MECH,Mech,Mech

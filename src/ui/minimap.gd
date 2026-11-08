@@ -96,7 +96,7 @@ func _draw() -> void:
 		_marker(TEX_POST, planet.to_global(d.surface_point(p)), 22.0, false, CozyTheme.INK)
 	_marker(TEX_LAIR, planet.to_global(d.surface_point(d.lair_dir)), 22.0, false, Color(1.0, 0.45, 0.45))
 	# Criaturas perto.
-	for cr in run.creatures:
+	for cr in run.all_creatures():
 		if not is_instance_valid(cr):
 			continue
 		if not near(cr.global_position):

@@ -118,7 +118,7 @@ func _target_for(c: Creature) -> Array:
 	if run.respawning:
 		who = null
 	var who_dir: Vector3 = run.planet.to_local(who.global_position).normalized() if who else Vector3.ZERO
-	var reach: float = ROVER_REACH if run.driving else PLAYER_REACH
+	var reach: float = ROVER_REACH if run.in_vehicle() else PLAYER_REACH
 	if who and d.arc_m(c.dir, who_dir) < PLAYER_AGGRO_M:
 		return [who.global_position, reach, "player"]
 	var best := -1

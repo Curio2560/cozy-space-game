@@ -107,7 +107,7 @@ func _refresh() -> void:
 				l.modulate = Color("ffc857")
 
 func nearest_plot() -> int:
-	if run.driving:
+	if run.in_vehicle():
 		return -1
 	var d: PlanetData = run.planet.data
 	var best := -1

@@ -13,6 +13,9 @@ const RESPAWN_DELAY := WRECK_TIME + FADE_TIME * 2.0 # tempo total até voltar a 
 const CAM_WRECK := {"distance": 15.0, "pitch": -0.42, "focus_height": 2.0, "auto_return_delay": 999.0}
 const CAM_FOOT := {"distance": 6.5, "pitch": -0.42, "focus_height": 1.2, "auto_return_delay": 1.6}
 const CAM_ROVER := {"distance": 9.5, "pitch": -0.36, "focus_height": 1.6, "auto_return_delay": 0.35}
+const CAM_MECH := {"distance": 11.5, "pitch": -0.4, "focus_height": 3.0, "auto_return_delay": 0.5}
+const MECH_ENTER_DISTANCE := 5.5
+const MECH_PARK_M := 12.0 # o mech estaciona a esta distância do centro da base (na estrada da praça)
 
 var seed_value := 1
 var biome := "prado"
@@ -55,6 +58,8 @@ var heat := RoverHeat.new()
 var cycle := DayCycle.new()
 var day_clock: DayClock
 var defense: DefenseController
+var mech: Mech
+var piloting := false
 var ambient: AmbientParticles
 
 func _ready() -> void:
@@ -84,6 +89,14 @@ func _ready() -> void:
 	rover.collision_mask = 1 | 2
 	add_child(rover)
 	rover.destroyed.connect(_on_rover_destroyed)
+	mech = Mech.new()
+	mech.name = "Mech"
+	mech.collision_layer = 4
+	mech.collision_mask = 1 | 2
+	mech.view = camera
+	add_child(mech)
+	mech.targets = all_creatures
+	mech.broken.connect(_on_mech_broken)
 	dust = _make_dust()
 	rover.add_child(dust)
 	_build_ui()
@@ -111,6 +124,10 @@ func _ready() -> void:
 	bars.add_bar("rover", "BAR_ROVER", Color("ff9f5a"))
 	rover.health_changed.connect(func(v: float, m: float) -> void: bars.set_value("rover", v, m))
 	bars.set_value("rover", rover.health, rover.max_health)
+	bars.add_bar("mech", "BAR_MECH", Color("9fd36b"))
+	mech.health_changed.connect(func(v: float, m: float) -> void: bars.set_value("mech", v, m))
+	bars.set_value("mech", mech.health, Mech.MAX_HEALTH)
+	bars.add_bar("gun", "BAR_GUN_HEAT", Color("ffcf4a"))
 	bars.add_bar("health", "BAR_HEALTH", Color("ff6b8a"))
 	bars.add_bar("o2", "BAR_O2", Color("6fd6ff"))
 	bars.add_bar("heat", "BAR_HEAT", Color("ff5a2a"))
@@ -138,6 +155,10 @@ func _ready() -> void:
 		autosave())
 	cycle.morning.connect(func(d: int) -> void:
 		deliveries.hud.toast(tr("TOAST_MORNING") % d)
+		if piloting:
+			exit_mech()
+		mech.repair_full()
+		_park_mech()
 		defense.end_night()
 		_set_night_hostile(false)
 		autosave())
@@ -199,10 +220,15 @@ func _ready() -> void:
 		rover.take_damage(999.0)
 	if "night" in args:
 		cycle.skip_to_night()
+	if "mech" in args: # noite, dentro do mech, a disparar (capturas)
+		cycle.skip_to_night()
+		player.place_at(mech.global_position + mech.facing * 3.0 + mech.up() * 0.5)
+		enter_mech()
+		Input.action_press("jump")
 	if "raid" in args: # noite com uma vaga a chegar à frente da câmara (capturas)
 		cycle.skip_to_night()
 		defense.waves.launch_next()
-		var pd := planet.to_local(player.global_position).normalized()
+		var pd := planet.to_local(carrier_node().global_position).normalized()
 		var f := planet.global_basis.inverse() * (-camera.global_basis.z)
 		f = (f - pd * f.dot(pd)).normalized()
 		for i in defense.raiders.size():
@@ -277,6 +303,7 @@ func buy_upgrade(line: String) -> bool:
 ## Vantagens do tripulante ativo: modelo do astronauta, salto/andar, rover, quinta.
 func apply_crew() -> void:
 	player.set_crew(crew.active)
+	mech.set_crew(crew.active)
 	player.walk_factor = crew.walk_factor()
 	player.jump_factor = crew.jump_factor()
 	rover.drive_factor = crew.drive_factor()
@@ -374,12 +401,17 @@ func start(s: int) -> void:
 	player.planet_center = planet.global_position
 	camera.planet_center = planet.global_position
 	rover.planet_center = planet.global_position
+	mech.planet_center = planet.global_position
 	rover.ground_radius = func(pos: Vector3) -> float:
 		return planet.data.surface_point(planet.to_local(pos)).length()
 	if driving:
 		exit_rover()
+	if piloting:
+		exit_mech()
 	spawn_near(planet.data.outpost_dir, planet.data.posts[0], 10.5)
 	_park_rover_near_player()
+	mech.repair_full()
+	_park_mech()
 	if deliveries:
 		deliveries.start_planet(planet.data)
 	_spawn_creatures()
@@ -436,7 +468,14 @@ func _spawn_creatures() -> void:
 		c.night_hostile = cycle.is_night()
 
 func _creature_target() -> Node3D:
-	return rover if driving else player
+	return carrier_node()
+
+## Criaturas do planeta e as da noite (mira do mech, minimapa).
+func all_creatures() -> Array:
+	var out: Array = creatures.duplicate()
+	if defense:
+		out.append_array(defense.raiders)
+	return out
 
 ## Uma criatura apanhou o jogador (ou o rover): empurra, tira vida e pode estragar ou roubar a encomenda.
 func _on_creature_attack(c: Creature) -> void:
@@ -446,6 +485,9 @@ func _on_creature_attack(c: Creature) -> void:
 	var away := (t.global_position - c.global_position)
 	var up := (t.global_position - planet.global_position).normalized()
 	away = (away - up * away.dot(up)).normalized()
+	if piloting:
+		mech.take_damage(ATTACK_DAMAGE)
+		return
 	if driving:
 		rover.take_damage(ATTACK_ROVER_DAMAGE)
 		rover.apply_central_impulse(away * 1.2 * rover.mass) # empurrão lateral, sem atirar ao ar
@@ -554,6 +596,65 @@ func exit_rover() -> void:
 	_apply_camera(CAM_FOOT)
 	camera.target_facing = func() -> Vector3: return player.facing
 
+## Em algum veículo (rover ou mech): sem interações a pé.
+func in_vehicle() -> bool:
+	return driving or piloting
+
+## Estaciona o mech na praça da base, no corredor da estrada para o 2.º posto (lá não há slots
+## nem o rover), virado para fora.
+func _park_mech() -> void:
+	var d := planet.data
+	var toward: Vector3 = d.post_doors[1 % d.post_doors.size()]
+	var spot := d.toward_point(d.outpost_dir, toward, minf(d.plaza_radius_m, MECH_PARK_M))
+	var away := toward - spot * toward.dot(spot)
+	var p := planet.to_global(d.surface_point(spot) + spot * 0.3)
+	mech.place_at(p, planet.global_basis * away.normalized())
+
+func can_enter_mech() -> bool:
+	return not in_vehicle() and cycle.is_night() and mech.alive() \
+		and player.global_position.distance_to(mech.global_position) < MECH_ENTER_DISTANCE
+
+func near_mech_by_day() -> bool:
+	return not in_vehicle() and not cycle.is_night() and player.global_position.distance_to(mech.global_position) < MECH_ENTER_DISTANCE
+
+func enter_mech() -> void:
+	piloting = true
+	mech.piloted = true
+	mech.collision_layer = 2
+	mech.collision_mask = 1 | 4
+	player.controllable = false
+	player.visible = false
+	player.process_mode = Node.PROCESS_MODE_DISABLED
+	player.collision_layer = 0
+	camera.set_target(mech, mech.facing)
+	camera.add_exclude(player.get_rid())
+	_apply_camera(CAM_MECH)
+	camera.target_facing = func() -> Vector3: return mech.facing
+
+func exit_mech() -> void:
+	piloting = false
+	mech.piloted = false
+	mech.collision_layer = 4
+	mech.collision_mask = 1 | 2
+	var u := mech.up()
+	var side := mech.facing.cross(u).normalized()
+	player.process_mode = Node.PROCESS_MODE_INHERIT
+	player.visible = true
+	player.controllable = true
+	player.collision_layer = 2
+	player.place_at(mech.global_position + side * 2.6 + u * 0.8)
+	player.facing = mech.facing
+	camera.set_target(player, player.facing)
+	camera.add_exclude(mech.get_rid())
+	_apply_camera(CAM_FOOT)
+	camera.target_facing = func() -> Vector3: return player.facing
+
+## O mech ficou sem vida: o jogador sai (amanhã está reparado).
+func _on_mech_broken() -> void:
+	deliveries.hud.toast(tr("TOAST_MECH_BROKEN"))
+	if piloting:
+		exit_mech()
+
 func _apply_camera(profile: Dictionary) -> void:
 	for k: String in profile:
 		camera.set(k, profile[k])
@@ -586,6 +687,8 @@ func _on_rover_destroyed() -> void:
 ## e clareia. Usado depois da explosão do rover e do desmaio.
 func _respawn_at_base() -> void:
 	await _fade(1.0)
+	if piloting:
+		exit_mech()
 	if driving:
 		driving = false
 		rover.driven = false
@@ -657,7 +760,7 @@ func _apply_hazards(delta: float) -> void:
 		var rr := _rover_liquid_rate(d)
 		if rr > 0.0:
 			rover.take_damage(rr * delta)
-	if driving:
+	if in_vehicle():
 		return
 	var here := planet.to_local(player.global_position)
 	vitals.damage(AcidHazard.foot_damage_rate(d, here) * crew.acid_factor() * delta)
@@ -740,7 +843,7 @@ func _physics_process(delta: float) -> void:
 	_update_tracks()
 	if not respawning:
 		# A cabine do rover protege: lá dentro o O₂ não se gasta.
-		vitals.o2_drain = 0.0 if driving else o2_drain_here()
+		vitals.o2_drain = 0.0 if in_vehicle() else o2_drain_here()
 		vitals.tick(delta)
 		_apply_hazards(delta)
 	if respawning:
@@ -750,6 +853,10 @@ func _physics_process(delta: float) -> void:
 	if _vehicle_btn.consume() and not deliveries.board_open and not outpost.menu_open:
 		if driving:
 			exit_rover()
+		elif piloting:
+			exit_mech()
+		elif can_enter_mech():
+			enter_mech()
 		elif can_enter_rover():
 			enter_rover()
 	if driving:
@@ -757,11 +864,29 @@ func _physics_process(delta: float) -> void:
 		rover.throttle = m.y
 		rover.steer = m.x
 	var h := tr("HINT_EXIT_ROVER") if driving else (tr("HINT_ENTER_ROVER") if can_enter_rover() else "")
+	if piloting:
+		h = tr("HINT_EXIT_MECH")
+	elif can_enter_mech():
+		h = tr("HINT_ENTER_MECH")
+	elif near_mech_by_day() and h == "":
+		h = tr("HINT_MECH_NIGHT_ONLY")
+	bars.show_bar("mech", piloting or (mech.health < Mech.MAX_HEALTH and cycle.is_night()))
+	bars.show_bar("gun", piloting)
+	var ov := {}
+	if piloting:
+		ov["jump"] = "BTN_FIRE"
+	if piloting or can_enter_mech():
+		ov["vehicle"] = "BTN_MECH"
+	if ov != touch.label_override:
+		touch.label_override = ov
+		touch.queue_redraw()
+	if piloting:
+		bars.set_value("gun", mech.gun.heat, MechGun.MAX_HEAT)
 	var dh := deliveries.hint()
 	var oh := outpost.hint()
 	if oh != "":
 		dh = oh # o terminal está mesmo ao lado: tem prioridade sobre o quadro
-	_hint.text = "" if deliveries.board_open or outpost.menu_open else (dh if dh != "" and not driving else (h if h != "" else dh))
+	_hint.text = "" if deliveries.board_open or outpost.menu_open else (dh if dh != "" and not in_vehicle() else (h if h != "" else dh))
 
 var _env: Environment
 var sky_planets: SkyPlanets
@@ -815,11 +940,11 @@ func _process(delta: float) -> void:
 	if deliveries and deliveries.session:
 		deliveries.session.pay_factor = cycle.pay_factor()
 	# Árvores entre a câmara e quem se segue (a pé ou no rover) ficam pontilhadas.
-	var who: Node3D = rover if driving else player
+	var who: Node3D = carrier_node()
 	CelShading.set_occlusion(camera.global_position, who.global_position + (who.global_position - planet.global_position).normalized() * 0.8)
 	if ambient:
 		ambient.target = who
-	var u := rover.planet_up() if driving else player.up()
+	var u := rover.planet_up() if driving else (mech.up() if piloting else player.up())
 	var side := SphereMath.basis_from_up(u).x
 	var dl := cycle.daylight()
 	var elev := lerpf(0.35, 0.75, dl) # ao anoitecer o sol desce (sombras compridas)
@@ -854,7 +979,7 @@ var minimap: Minimap
 
 ## Nó que o jogador está a controlar (rover ou astronauta).
 func carrier_node() -> Node3D:
-	return rover if driving else player
+	return rover if driving else (mech if piloting else player)
 
 func _build_ui() -> void:
 	var hud := CanvasLayer.new()
