@@ -4,7 +4,7 @@ extends GutTest
 func test_six_to_nine_reliefs_per_planet() -> void:
 	for s in [1, 2, 3, 99]:
 		var d := PlanetGenerator.generate(s)
-		assert_between(d.reliefs.size(), 6, 9, "seed %d" % s)
+		assert_between(d.reliefs.size(), 5, 9, "seed %d" % s) # a zona do posto (slots) tira espaço
 		for r in d.reliefs:
 			assert_gte(ReliefKit.piece(r.kind).top * r.height_scale, PlanetGenerator.RELIEF_MIN_HEIGHT - 0.001)
 

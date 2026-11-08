@@ -23,6 +23,12 @@ const MODEL_WHEELS := {
 @export var max_speed := 15.0
 ## Multiplicador da velocidade máxima (o sobreaquecimento na lava abranda o rover).
 var speed_factor := 1.0
+## Melhorias (Upgrades): multiplicadores da velocidade e do dano, folga do impacto.
+var upgrade_speed := 1.0
+## Vantagem da Rae (Crew): velocidade e direção.
+var drive_factor := 1.0
+var damage_factor := 1.0
+var impact_bonus := 0.0
 @export var reverse_factor := 0.5
 @export var turn_rate := 2.2 # rad/s em velocidade
 @export var spring_k := 4200.0
@@ -162,13 +168,13 @@ func _physics_process(delta: float) -> void:
 	var on_ground := grounded_wheels >= 2
 	if on_ground and driven:
 		var spd := speed()
-		var top := max_speed * speed_factor
+		var top := max_speed * speed_factor * upgrade_speed * drive_factor
 		var limit := top if throttle >= 0.0 else top * reverse_factor
 		var room := clampf(1.0 - absf(spd) / limit, 0.0, 1.0) if signf(spd) == signf(throttle) else 1.0
 		apply_central_force(fwd * throttle * engine_force * room)
 		# Direção arcade: velocidade angular à volta do "cima" do rover.
 		var speed_k := clampf(spd / 4.0, -1.0, 1.0)
-		var target_w := -steer * turn_rate * speed_k
+		var target_w := -steer * turn_rate * drive_factor * speed_k
 		var w_up := angular_velocity.dot(r_up)
 		angular_velocity += r_up * (target_w - w_up) * clampf(10.0 * delta, 0.0, 1.0)
 	if not on_ground:
@@ -225,13 +231,13 @@ func _check_bump(delta: float, u: Vector3) -> void:
 
 ## Vida perdida num impacto a `speed` m/s (0 abaixo de safe_impact).
 func impact_to_damage(speed: float) -> float:
-	return clampf((speed - safe_impact) * impact_damage, 0.0, max_impact_damage)
+	return clampf((speed - safe_impact - impact_bonus) * impact_damage, 0.0, max_impact_damage)
 
 ## Tira vida ao rover (embates, ácido, criaturas). A 0 emite `destroyed` (uma vez).
 func take_damage(amount: float) -> void:
 	if not alive or amount <= 0.0:
 		return
-	health = maxf(health - amount, 0.0)
+	health = maxf(health - amount * damage_factor, 0.0)
 	health_changed.emit(health, max_health)
 	if health <= 0.0:
 		alive = false

@@ -9,6 +9,8 @@ var id: int
 var kind := "normal"
 ## Frescura (encomendas perecíveis): desce com o tempo e multiplica o pagamento.
 var freshness := 1.0
+## Colheita da quinta que a encomenda leva (tipo na carteira; "" = nenhuma). Gasta ao aceitar.
+var crop := ""
 var from_post: int
 var to_post: int
 var base_pay: int

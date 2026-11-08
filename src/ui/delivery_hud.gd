@@ -5,6 +5,17 @@ extends Control
 
 var credits_label: Label
 var keycards_label: Label
+var resources_label: Label
+
+## Linha dos recursos (minério, cristal, colheitas, dados); vazia se não houver nenhum.
+func set_resources(w: Wallet) -> void:
+	var parts := []
+	for k in [Wallet.ORE, Wallet.CRYSTAL, Wallet.DATA]:
+		if w.amount(k) > 0:
+			parts.append("%s %d" % [tr("RES_" + k.to_upper()), w.amount(k)])
+	if w.crops_total() > 0:
+		parts.append("%s %d" % [tr("RES_CROPS"), w.crops_total()])
+	resources_label.text = "  ·  ".join(parts)
 var order_label: Label
 var arrow: NavArrow
 var _toast: Label
@@ -17,12 +28,20 @@ static func format_time(seconds: float) -> String:
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# Créditos e KeyCards lado a lado (os créditos podem crescer sem tapar os KeyCards).
+	var top := HBoxContainer.new()
+	top.position = Vector2(104, 26)
+	top.add_theme_constant_override("separation", 28)
+	top.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(top)
 	credits_label = _label(30, Color("ffc857"))
-	credits_label.position = Vector2(104, 26)
-	add_child(credits_label)
+	top.add_child(credits_label)
+	resources_label = _label(20, Color("fff6ea"))
+	resources_label.position = Vector2(104, 66)
+	add_child(resources_label)
 	keycards_label = _label(22, Color("b79cff"))
-	keycards_label.position = Vector2(200, 30)
-	add_child(keycards_label)
+	keycards_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	top.add_child(keycards_label)
 	var box := VBoxContainer.new()
 	box.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
 	box.grow_horizontal = Control.GROW_DIRECTION_BOTH

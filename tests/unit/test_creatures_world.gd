@@ -11,8 +11,25 @@ func before_each() -> void:
 
 ## Põe o jogador a meio de uma estrada principal (campo aberto, longe dos edifícios).
 func _open_ground() -> void:
-	var pts: PackedVector3Array = run.planet.data.roads[0].points
-	run.teleport(pts[pts.size() / 2])
+	# Ponto de estrada principal mais longe de qualquer estrutura (casas, base, slots, quinta).
+	var d: PlanetData = run.planet.data
+	var structs := PlanetGenerator.structures(d)
+	var best := Vector3.ZERO
+	var best_m := -1.0
+	for r in d.roads:
+		if not r.main:
+			continue
+		for p: Vector3 in r.points:
+			var m := INF
+			for st in structs:
+				m = minf(m, d.arc_m(p, st[0]) - float(st[1]))
+			for o in d.placements:
+				if o.collider > 0.0:
+					m = minf(m, d.arc_m(p, o.dir))
+			if m > best_m:
+				best_m = m
+				best = p
+	run.teleport(best)
 	await wait_physics_frames(20)
 
 func _bring(c: Creature, metres: float) -> void:
@@ -38,6 +55,7 @@ func test_creatures_stay_on_the_surface_while_moving() -> void:
 func _carry_order() -> DeliveryOrder:
 	var dc: DeliveryController = run.deliveries
 	var o: DeliveryOrder = dc.session.offers[0]
+	o.crop = "" # sem colheita (encomendas da quinta testam-se em test_farm)
 	dc.accept(o)
 	dc.session.pick_up()
 	return o
@@ -56,6 +74,7 @@ func test_aggressive_chases_and_attacks_player_with_a_package() -> void:
 func test_steal_touch_drop_and_recover() -> void:
 	var dc: DeliveryController = run.deliveries
 	var o: DeliveryOrder = dc.session.offers[0]
+	o.crop = "" # sem colheita (encomendas da quinta testam-se em test_farm)
 	dc.accept(o)
 	dc.session.pick_up()
 	await _open_ground()
@@ -69,7 +88,8 @@ func test_steal_touch_drop_and_recover() -> void:
 			break
 	assert_eq(o.state, DeliveryOrder.State.STOLEN, "a criatura devia ter roubado a caixa")
 	assert_true(c.carrying)
-	# Tocar no ladrão: larga a caixa.
+	# Tocar no ladrão (passado o instante em que foge): larga a caixa.
+	await wait_seconds(Creature.STEAL_GRACE + 0.1)
 	run.player.place_at(c.global_position + (c.global_position - run.planet.global_position).normalized() * 0.5)
 	await wait_physics_frames(5)
 	assert_false(c.carrying, "ao tocar devia largar a caixa")
@@ -83,6 +103,7 @@ func test_steal_touch_drop_and_recover() -> void:
 func test_thief_drops_crate_by_itself_after_a_while() -> void:
 	var dc: DeliveryController = run.deliveries
 	var o: DeliveryOrder = dc.session.offers[0]
+	o.crop = "" # sem colheita (encomendas da quinta testam-se em test_farm)
 	dc.accept(o)
 	dc.session.pick_up()
 	var c: Creature = run.creatures[0]

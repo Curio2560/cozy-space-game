@@ -167,7 +167,7 @@ func _physics_process(delta: float) -> void:
 	if session == null:
 		return
 	_action.update(Input.is_action_pressed("action"), delta)
-	if _action.consume() and not board_open and near_board():
+	if _action.consume() and not board_open and near_board() and not (run.outpost and (run.outpost.near_terminal() or run.outpost.menu_open)):
 		open_board()
 	session.tick(delta)
 	_bump_hint_cd = maxf(_bump_hint_cd - delta, 0.0)
@@ -193,8 +193,11 @@ func _update_world(delta: float) -> void:
 	if target >= 0:
 		var up: Vector3 = run.planet.data.posts[target]
 		_beacon.global_transform = Transform3D(SphereMath.basis_from_up(run.planet.global_basis * up), post_position(target) + up * 15.0)
-	_crate.visible = o != null
-	if o == null:
+	# A pé, a caixa vai nas mãos do astronauta (o modelo dele mostra-a); no rover vai por cima.
+	var in_hands: bool = o != null and o.state == DeliveryOrder.State.CARRYING and not run.driving
+	run.player.carrying = in_hands
+	_crate.visible = o != null and not in_hands
+	if o == null or in_hands:
 		return
 	if o.state == DeliveryOrder.State.ACCEPTED:
 		var up: Vector3 = run.planet.data.posts[o.from_post]
@@ -259,3 +262,4 @@ func _update_hud() -> void:
 func _update_credits() -> void:
 	if hud and hud.credits_label:
 		hud.credits_label.text = "%d ¢" % wallet.credits()
+		hud.set_resources(wallet)

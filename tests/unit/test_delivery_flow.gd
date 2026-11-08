@@ -12,7 +12,8 @@ func after_each() -> void:
 	Input.action_release("action")
 
 func test_colonist_names_float_over_houses() -> void:
-	var labels := run.find_children("*", "Label3D", true, false)
+	# Letreiros com os nomes dos colonos (os dos slots do posto ficam de fora).
+	var labels := run.find_children("*", "Label3D", true, false).filter(func(l: Node) -> bool: return not (l.get_parent().name.begins_with("Slot") or l.get_parent().name.begins_with("Plot")))
 	assert_eq(labels.size(), 3)
 
 func test_board_opens_near_outpost_with_action() -> void:
@@ -29,6 +30,7 @@ func test_board_opens_near_outpost_with_action() -> void:
 func test_accept_pick_up_and_deliver_pays_credits() -> void:
 	var dc: DeliveryController = run.deliveries
 	var o: DeliveryOrder = dc.session.offers[0]
+	o.crop = "" # sem colheita (encomendas da quinta testam-se em test_farm)
 	assert_true(dc.accept(o))
 	run.spawn_near(run.planet.data.posts[o.from_post], run.planet.data.outpost_dir, 3.5)
 	await wait_physics_frames(20)
@@ -39,3 +41,14 @@ func test_accept_pick_up_and_deliver_pays_credits() -> void:
 	assert_eq(o.state, DeliveryOrder.State.DELIVERED, "devia ter entregue ao chegar ao destino")
 	assert_gt(run.wallet.credits(), before)
 	assert_null(dc.session.active)
+
+func test_crate_is_carried_in_hands_on_foot() -> void:
+	var dc: DeliveryController = run.deliveries
+	var o: DeliveryOrder = dc.session.offers[0]
+	o.crop = ""
+	dc.accept(o)
+	dc.session.pick_up()
+	await wait_physics_frames(30)
+	assert_true(run.player.carrying, "a pé, a caixa vai nas mãos")
+	assert_true(run.player.hand_crate.visible)
+	assert_gt(run.player._arms.influence, 0.9, "braços à frente")

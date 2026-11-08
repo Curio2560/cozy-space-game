@@ -22,6 +22,7 @@ const ATTACK_RANGE := 1.8
 const HIT_RANGE := 2.4 # no fim da preparação, o golpe acerta se o alvo ainda estiver aqui
 const WINDUP_TIME := 0.6
 const TOUCH_RANGE := 2.0
+const STEAL_GRACE := 1.0 # s depois de roubar em que tocar ainda não a faz largar (tem de fugir)
 const COOLDOWN := 2.6
 const CARRY_TIME := 20.0
 const ACTIVE_RANGE := 75.0
@@ -131,7 +132,10 @@ func knock(from: Vector3) -> void:
 func take_crate() -> void:
 	carrying = true
 	_timer = CARRY_TIME
+	_grace = STEAL_GRACE
 	mode = Mode.CARRY
+
+var _grace := 0.0
 
 func drop() -> void:
 	if not carrying:
@@ -205,7 +209,8 @@ func _physics_process(delta: float) -> void:
 		Mode.CARRY:
 			_steer_towards(-to_t, delta, 4.0)
 			_timer -= delta
-			if dist < TOUCH_RANGE or _timer <= 0.0:
+			_grace -= delta
+			if (dist < TOUCH_RANGE and _grace <= 0.0) or _timer <= 0.0:
 				_play("hit", true)
 				drop()
 		Mode.KNOCKED, Mode.DODGE:

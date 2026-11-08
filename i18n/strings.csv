@@ -108,3 +108,106 @@ DBG_GOTO_RELIEF,Go to a mountain,Ir a uma montanha
 DBG_GOTO_RIVER,Go to a river / fissure,Ir a um rio / fissura
 DBG_PARTICLES,Ambient particles,Partículas ambiente
 DBG_HEAT,Rover heat +50,Calor do rover +50
+PAUSE_NEW_GAME,New game,Novo jogo
+NEW_GAME_CONFIRM,Start a new game? Your saved progress will be deleted.,Começar um jogo novo? O progresso guardado é apagado.
+NEW_GAME_YES,New game,Novo jogo
+NEW_GAME_NO,Cancel,Cancelar
+BOOT_CONTINUE,Continue,Continuar
+TERMINAL_TITLE,Outpost terminal,Terminal do posto
+TERMINAL_TAB_SELL,Sell,Vender
+TERMINAL_TAB_BUILD,Build,Construir
+TERMINAL_TAB_UPGRADES,Upgrades,Melhorias
+TERMINAL_TAB_CREW,Crew,Tripulação
+HINT_TERMINAL,Action: terminal,Ação: terminal
+SELL_ONE,Sell 1,Vender 1
+SELL_ALL,Sell all,Vender tudo
+UNIT,unit,unid.
+TOAST_SOLD,+%d ¢ (%s),+%d ¢ (%s)
+RES_CREDITS,Credits,Créditos
+RES_ORE,Ore,Minério
+RES_CRYSTAL,Crystal,Cristal
+RES_CROPS,Crops,Colheitas
+RES_DATA,Data,Dados
+SLOT_EMPTY,Empty slot,Slot vazio
+SLOT_MENU_TITLE,Build here,Construir aqui
+SLOT_BUILD,Build,Construir
+HINT_SLOT_BUILD,Action: build,Ação: construir
+HINT_SLOT_COLLECT,Action: collect %d %s,Ação: recolher %d %s
+TOAST_BUILT,Built: %s,Construído: %s
+TOAST_COLLECTED,+%d %s,+%d %s
+TOAST_COLLECTED_ALL,Collected %d,Recolhido: %d
+OUTPOST_ENERGY,Energy %d / %d,Energia %d / %d
+OUTPOST_LOW_POWER,low power: 50%,pouca energia: 50%
+OUTPOST_TIP,To build go to an empty slot and press Action.,Para construir vai a um slot vazio e carrega em Ação.
+OUTPOST_COLLECT_ALL,Collect all,Recolher tudo
+BUILDING_MINER,Miner,Mineiro
+BUILDING_MINER_INFO,1 ore every 20 s,1 minério a cada 20 s
+BUILDING_LAB,Laboratory,Laboratório
+BUILDING_LAB_INFO,"1 crystal every 40 s, uses 2 ore","1 cristal a cada 40 s, gasta 2 minério"
+BUILDING_RESEARCH,Research centre,Centro de pesquisa
+BUILDING_RESEARCH_INFO,1 data every 60 s,1 dado a cada 60 s
+BUILDING_SOLAR,Solar panel,Painel solar
+BUILDING_SOLAR_INFO,+3 energy (each building uses 1),+3 de energia (cada edifício gasta 1)
+BUILDING_STORAGE,Warehouse,Armazém
+BUILDING_STORAGE_INFO,+20 storage in every building,+20 de capacidade em cada edifício
+PLOT_EMPTY,Empty plot,Talhão vazio
+PLOT_READY,Ready!,Pronto!
+HINT_PLANT,Action: plant,Ação: plantar
+HINT_HARVEST,Action: harvest,Ação: colher
+HINT_GROWING,Growing: %s,A crescer: %s
+TOAST_HARVEST,+%d %s,+%d %s
+CROP_MENU_TITLE,Plant,Plantar
+CROP_PLANT,Plant,Plantar
+CROP_INFO,"%s · %s · seed %d ¢ · gives %d × %d ¢","%s · %s · semente %d ¢ · dá %d × %d ¢"
+CROP_FAST,Radish,Rabanete
+CROP_MID,Space carrot,Cenoura espacial
+CROP_SLOW,Star pumpkin,Abóbora estelar
+RES_CROP_FAST,Radish,Rabanete
+RES_CROP_MID,Space carrot,Cenoura espacial
+RES_CROP_SLOW,Star pumpkin,Abóbora estelar
+BOARD_NEEDS_CROP,Needs 1 %s (you have %d),Leva 1 %s (tens %d)
+TUT_SKIP,Skip,Passar
+TUT_STEP,Tutorial %d/%d,Tutorial %d/%d
+TUT_TIP,Tip,Dica
+PAUSE_TUTORIAL,Replay tutorial,Repetir tutorial
+TUT_MOVE,Use the joystick on the left to walk around the planet.,Usa o joystick à esquerda para andar à volta do planeta.
+TUT_JUMP,Press JUMP to jump. You can reach places the rover can't.,Carrega em SALTAR para saltar. Chegas a sítios onde o rover não chega.
+TUT_BOARD,Go to the base and press ACTION to see the delivery board.,Vai à base e carrega em AÇÃO para ver o quadro de encomendas.
+TUT_ACCEPT,Pick an order and press Accept.,Escolhe uma encomenda e carrega em Aceitar.
+TUT_PICKUP,Follow the arrow to the colonist's house and pick up the crate.,Segue a seta até à casa do colono e apanha a caixa.
+TUT_ROVER,Get in the rover (ROVER button) — it's faster. Bumps damage fragile crates!,Entra no rover (botão ROVER) — é mais rápido. Os embates estragam caixas frágeis!
+TUT_DELIVER,Follow the arrow and deliver the crate. On time pays a bonus.,Segue a seta e entrega a caixa. A tempo paga um bónus.
+TUT_TERMINAL,"Back at the base, open the terminal next to the door (ACTION). That's where you build, sell and upgrade.","De volta à base, abre o terminal ao lado da porta (AÇÃO). É lá que constróis, vendes e melhoras."
+TIP_BUILD,You can build! Go to an empty slot around the base and press ACTION. Start with a miner.,Já podes construir! Vai a um slot vazio à volta da base e carrega em AÇÃO. Começa por um mineiro.
+TIP_COLLECT,"Buildings produce over time. Press ACTION next to one to collect, or Collect all in the terminal.","Os edifícios produzem com o tempo. Carrega em AÇÃO ao pé de um para recolher, ou em Recolher tudo no terminal."
+TIP_SELL,Sell ore and crystal in the terminal (Sell tab). Research data stays with you.,Vende minério e cristal no terminal (separador Vender). Os dados de pesquisa ficam contigo.
+TIP_FARM,This is a farm plot: press ACTION to plant. Slow crops are worth more.,Isto é um talhão da quinta: carrega em AÇÃO para plantar. As culturas lentas valem mais.
+TIP_CROP_ORDER,Some orders carry a crop from your farm: you need one to accept them.,Algumas encomendas levam uma colheita da tua quinta: precisas de uma para as aceitar.
+TIP_ACID,"Acid planet: the air uses O₂ on foot, faster near the rivers. Grab blue bubbles; the rover cabin protects you.","Planeta ácido: o ar gasta O₂ a pé, mais depressa junto aos rios. Apanha as bolhas azuis; a cabine do rover protege-te."
+TIP_LAVA,"Lava planet: the rover heats up with speed and near fissures. Stop in the shade to cool down.","Planeta de lava: o rover aquece com a velocidade e junto às fissuras. Para à sombra para arrefecer."
+TIP_POWER,Not enough energy: buildings work at 50%. Build a solar panel (+3).,Pouca energia: os edifícios trabalham a 50%. Constrói um painel solar (+3).
+TOAST_UPGRADED,Upgraded: %s,Melhorado: %s
+UPG_MAX,Max,Máximo
+UPG_SPEED,Rover speed,Velocidade do rover
+UPG_SPEED_INFO,+12% top speed per level,+12% de velocidade máxima por nível
+UPG_CARGO,Cargo,Carga
+UPG_CARGO_INFO,Crates lose 20% less value in bumps per level,As caixas perdem menos 20% de valor nos embates por nível
+UPG_SHIELD,Shield,Escudo
+UPG_SHIELD_INFO,Rover takes 20% less damage per level,O rover leva menos 20% de dano por nível
+UPG_SUSPENSION,Suspension,Suspensão
+UPG_SUSPENSION_INFO,Takes harder landings without damage,Aguenta aterragens mais fortes sem dano
+UPG_SLOTS,Outpost slots,Slots do posto
+UPG_SLOTS_INFO,+2 building slots,+2 slots de edifícios
+CREW_LEVEL,Level,Nível
+CREW_NEXT,%d XP to next,faltam %d XP
+CREW_ACTIVE,Active,Ativo
+CREW_SELECT,Choose,Escolher
+TOAST_CREW_LEVEL,%s reached level %d!,%s chegou ao nível %d!
+CREW_FINNTHEFROG,Finn (frog),Finn (sapo)
+CREW_FINNTHEFROG_PERK,Resists acid: less acid damage and O₂ use,Resiste ao ácido: menos dano do ácido e menos gasto de O₂
+CREW_BARBARATHEBEE,Barbara (bee),Barbara (abelha)
+CREW_BARBARATHEBEE_PERK,Green thumb: crops grow faster,Mão verde: as culturas crescem mais depressa
+CREW_FERNANDOTHEFLAMINGO,Fernando (flamingo),Fernando (flamingo)
+CREW_FERNANDOTHEFLAMINGO_PERK,Agile: jumps higher and walks faster,Ágil: salta mais alto e anda mais depressa
+CREW_RAETHEREDPANDA,Rae (red panda),Rae (panda-vermelho)
+CREW_RAETHEREDPANDA_PERK,Driver: faster rover with better steering,Condutora: rover mais rápido e com melhor direção

@@ -61,6 +61,19 @@ func _init(p_wallet: Wallet, post_distances: Array, p_seed: int) -> void:
 	refill_offers()
 
 ## Pagamento de `order` se for entregue com `elapsed` segundos. Nunca 0.
+## Estado para o save: amizade de cada colono e KeyCards.
+func to_dict() -> Dictionary:
+	return {"reputation": colonists.map(func(c: Dictionary) -> int: return int(c.reputation)),
+		"keycards": keycards, "important_given": important_given, "since_important": since_important}
+
+func from_dict(d: Dictionary) -> void:
+	var rep: Array = d.get("reputation", [])
+	for i in mini(rep.size(), colonists.size()):
+		colonists[i].reputation = int(rep[i])
+	keycards = int(d.get("keycards", 0))
+	important_given = int(d.get("important_given", 0))
+	since_important = int(d.get("since_important", 0))
+
 static func payment(base_pay: int, time_limit: float, elapsed: float) -> int:
 	if elapsed <= time_limit:
 		var spare := clampf(1.0 - elapsed / time_limit, 0.0, 1.0)
@@ -93,7 +106,18 @@ func make_order(from_post: int, to_post: int, kind := "normal") -> DeliveryOrder
 	var dist: float = distances[from_post][to_post]
 	o.base_pay = int(round((BASE_PAY + dist * PAY_PER_M) * float(rule.pay) * friendship_bonus(to_post)))
 	o.time_limit = (dist * TIME_PER_M + TIME_SLACK) * float(rule.time)
+	# Algumas perecíveis levam colheitas da quinta (pagam mais).
+	if kind == "perishable" and _rng.randf() < CROP_ORDER_CHANCE:
+		o.crop = Wallet.CROP_KINDS[_rng.randi() % Wallet.CROP_KINDS.size()]
+		o.base_pay = int(round(o.base_pay * CROP_ORDER_PAY))
 	return o
+
+const CROP_ORDER_CHANCE := 0.5
+const CROP_ORDER_PAY := 1.5
+
+## Pode aceitar já? (encomendas com colheita precisam de 1 na carteira)
+func can_accept(o: DeliveryOrder) -> bool:
+	return active == null and o in offers and (o.crop == "" or wallet.amount(o.crop) >= 1)
 
 func _random_pair() -> Array:
 	var n := distances.size()
@@ -133,7 +157,9 @@ func refill_offers() -> void:
 		offers.append(make_order(pr[0], pr[1], _common_kind()))
 
 func accept(o: DeliveryOrder) -> bool:
-	if active != null or o not in offers:
+	if not can_accept(o):
+		return false
+	if o.crop != "" and not wallet.spend({o.crop: 1}):
 		return false
 	offers.erase(o)
 	o.state = DeliveryOrder.State.ACCEPTED
@@ -155,9 +181,12 @@ func tick(delta: float) -> void:
 			active.freshness = maxf(PERISH_MIN, 1.0 - (1.0 - PERISH_MIN) * active.elapsed / active.time_limit)
 
 ## Solavanco do rover (força como em Rover.bumped): estraga as encomendas frágeis.
+## Multiplicador da perda de valor em embates (melhoria de carga do rover).
+var cargo_factor := 1.0
+
 func bump_active(strength: float) -> void:
 	if carrying() and active.kind == "fragile":
-		active.value_factor = maxf(active.value_factor - strength * FRAGILE_LOSS_PER_BUMP, MIN_VALUE_FACTOR)
+		active.value_factor = maxf(active.value_factor - strength * FRAGILE_LOSS_PER_BUMP * cargo_factor, MIN_VALUE_FACTOR)
 
 func carrying() -> bool:
 	return active != null and active.state == DeliveryOrder.State.CARRYING
@@ -165,7 +194,7 @@ func carrying() -> bool:
 ## Um empurrão (criatura) estraga a encomenda que se leva: perde valor.
 func damage_active(loss := PUSH_VALUE_LOSS) -> void:
 	if carrying():
-		active.value_factor = maxf(active.value_factor - loss, MIN_VALUE_FACTOR)
+		active.value_factor = maxf(active.value_factor - loss * cargo_factor, MIN_VALUE_FACTOR)
 
 ## Uma criatura rouba a caixa que se leva.
 func steal() -> bool:

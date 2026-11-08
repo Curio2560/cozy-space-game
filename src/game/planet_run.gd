@@ -40,6 +40,17 @@ var explosion: RoverExplosion
 var dust: CPUParticles3D
 var deliveries: DeliveryController
 var bubbles: O2Bubbles
+var outpost: OutpostController
+var farm: FarmController
+var tutorial: Tutorial
+var upgrades := Upgrades.new()
+var crew := Crew.new()
+var _tut_walk := 0.0
+var _tut_last := Vector3.INF
+var _tut_jumped := false
+var _tut_terminal := false
+var _tut_built := false
+var _tut_collected := false
 var heat := RoverHeat.new()
 var ambient: AmbientParticles
 
@@ -80,6 +91,14 @@ func _ready() -> void:
 	deliveries.name = "Deliveries"
 	add_child(deliveries)
 	deliveries.setup(self, wallet, _hud_layer)
+	outpost = OutpostController.new()
+	outpost.name = "Outpost"
+	add_child(outpost)
+	outpost.setup(self, _hud_layer)
+	farm = FarmController.new()
+	farm.name = "Farm"
+	add_child(farm)
+	farm.setup(self, _hud_layer)
 	bars = StatusBars.new()
 	_hud_layer.add_child(bars)
 	bars.add_bar("rover", "BAR_ROVER", Color("ff9f5a"))
@@ -93,7 +112,25 @@ func _ready() -> void:
 	vitals.changed.connect(_update_vital_bars)
 	vitals.fainted.connect(_on_player_fainted)
 	_update_vital_bars()
+	_setup_tutorial()
+	var upg_page := UpgradesPage.new()
+	upg_page.run = self
+	outpost.menu.add_page("TERMINAL_TAB_UPGRADES", upg_page)
+	upgrades.changed.connect(apply_upgrades)
+	var crew_page := CrewPage.new()
+	crew_page.run = self
+	outpost.menu.add_page("TERMINAL_TAB_CREW", crew_page)
+	crew.changed.connect(apply_crew)
+	crew.leveled.connect(func(m: String, lv: int) -> void:
+		deliveries.hud.toast(tr("TOAST_CREW_LEVEL") % [tr("CREW_" + m.to_upper()), lv]))
+	var saved := SaveGame.read() if SaveGame.active else {}
+	if not saved.is_empty():
+		var pl: Dictionary = saved.get("planet", {})
+		seed_value = int(pl.get("seed", seed_value))
+		biome = str(pl.get("biome", biome))
 	start(seed_value)
+	if not saved.is_empty():
+		apply_state(saved)
 	_register_debug()
 	builder.setup(self)
 	var args := OS.get_cmdline_user_args() # argumentos só para capturas de ecrã no PC
@@ -112,6 +149,7 @@ func _ready() -> void:
 		deliveries.open_board()
 	if "order" in args:
 		var o: DeliveryOrder = deliveries.session.offers[0]
+		o.crop = "" # sem colheita (encomendas da quinta testam-se em test_farm)
 		deliveries.accept(o)
 		deliveries.session.pick_up()
 		deliveries.session.tick(12.0)
@@ -149,6 +187,127 @@ func _ready() -> void:
 		Input.action_press("move_forward", 1.0)
 		Input.action_press("move_right", 0.25)
 
+## Tutorial inicial e dicas de desbloqueio (ver Tutorial).
+func _setup_tutorial() -> void:
+	tutorial = Tutorial.new()
+	tutorial.name = "Tutorial"
+	tutorial.steps = [
+		["TUT_MOVE", func() -> bool: return _tut_walk > 6.0],
+		["TUT_JUMP", func() -> bool: return _tut_jumped],
+		["TUT_BOARD", func() -> bool: return deliveries.board_open or deliveries.session.active != null],
+		["TUT_ACCEPT", func() -> bool: return deliveries.session.active != null],
+		["TUT_PICKUP", func() -> bool: return deliveries.session.carrying() or deliveries.session.active == null],
+		["TUT_ROVER", func() -> bool: return driving or deliveries.session.active == null],
+		["TUT_DELIVER", func() -> bool: return deliveries.session.active == null],
+		["TUT_TERMINAL", func() -> bool: return _tut_terminal],
+	]
+	tutorial.tips = [
+		["TIP_BUILD", func() -> bool: return wallet.credits() >= 120 and outpost.state.count("miner") == 0],
+		["TIP_COLLECT", func() -> bool: return _tut_built],
+		["TIP_SELL", func() -> bool: return _tut_collected],
+		["TIP_FARM", func() -> bool: return farm.nearest_plot() >= 0],
+		["TIP_CROP_ORDER", func() -> bool: return deliveries.board_open and deliveries.session.offers.any(func(o: DeliveryOrder) -> bool: return o.crop != "")],
+		["TIP_ACID", func() -> bool: return biome == "acido"],
+		["TIP_LAVA", func() -> bool: return biome == "lava"],
+		["TIP_POWER", func() -> bool: return outpost.state.power_factor() < 1.0],
+	]
+	_hud_layer.add_child(tutorial)
+	tutorial.changed.connect(autosave)
+	outpost.state.changed.connect(func() -> void: _tut_built = _tut_built or outpost.state.energy_demand() > 0)
+
+## Medições para os passos do tutorial (andar, saltar, abrir o terminal, recolher).
+func _track_tutorial() -> void:
+	if tutorial == null or not tutorial.in_intro() and tutorial.seen.size() >= tutorial.tips.size():
+		return
+	var p := player.global_position
+	if _tut_last != Vector3.INF and not driving:
+		_tut_walk += minf(p.distance_to(_tut_last), 1.0)
+	_tut_last = p
+	if not driving and not player.is_on_floor() and Input.is_action_pressed("jump"):
+		_tut_jumped = true
+	if outpost.menu_open and outpost.menu.visible:
+		_tut_terminal = true
+	for k in [Wallet.ORE, Wallet.CRYSTAL, Wallet.DATA]:
+		if wallet.amount(k) > 0:
+			_tut_collected = true
+
+## Compra uma melhoria (linha do rover ou "slots"), aplica-a e guarda.
+func buy_upgrade(line: String) -> bool:
+	if not upgrades.buy(line, wallet):
+		return false
+	if line == "slots":
+		outpost.state.add_slots()
+		outpost.rebuild()
+	deliveries.hud.toast(tr("TOAST_UPGRADED") % tr("UPG_" + line.to_upper()))
+	autosave()
+	return true
+
+## Passa os efeitos das melhorias para o rover e para as entregas.
+## Vantagens do tripulante ativo: modelo do astronauta, salto/andar, rover, quinta.
+func apply_crew() -> void:
+	player.set_crew(crew.active)
+	player.walk_factor = crew.walk_factor()
+	player.jump_factor = crew.jump_factor()
+	rover.drive_factor = crew.drive_factor()
+	if farm:
+		farm.farm.growth_speed = crew.farm_speed()
+
+func apply_upgrades() -> void:
+	rover.upgrade_speed = upgrades.speed_factor()
+	rover.damage_factor = upgrades.shield_factor()
+	rover.impact_bonus = upgrades.suspension_bonus()
+	if deliveries and deliveries.session:
+		deliveries.session.cargo_factor = upgrades.cargo_factor()
+
+## Estado do jogo para o save. Cada sistema acrescenta a sua secção.
+func save_state() -> Dictionary:
+	return {
+		"planet": {"seed": seed_value, "biome": biome},
+		"wallet": wallet.to_dict(),
+		"deliveries": deliveries.session.to_dict(),
+		"outpost": outpost.state.to_dict(),
+		"farm": farm.farm.to_dict(),
+		"tutorial": tutorial.to_dict(),
+		"upgrades": upgrades.to_dict(),
+		"crew": crew.to_dict(),
+	}
+
+## Repõe as secções de um save (o planeta já foi gerado com a seed guardada).
+func apply_state(state: Dictionary) -> void:
+	wallet.from_dict(state.get("wallet", {}))
+	deliveries.session.from_dict(state.get("deliveries", {}))
+	deliveries._update_keycards()
+	if state.has("upgrades"):
+		upgrades.from_dict(state.upgrades) # antes do posto: os slots extra vêm daqui
+	if state.has("outpost"):
+		outpost.load_state(state.outpost)
+	if state.has("farm"):
+		farm.load_state(state.farm)
+	if state.has("tutorial"):
+		tutorial.from_dict(state.tutorial)
+	if state.has("crew"):
+		crew.from_dict(state.crew)
+
+## Guarda se o save estiver ativo (aberto pelo menu). Chamado ao entregar, construir e sair.
+func autosave() -> void:
+	if SaveGame.active:
+		SaveGame.write(save_state())
+
+func _notification(what: int) -> void:
+	if what in [NOTIFICATION_APPLICATION_FOCUS_OUT, NOTIFICATION_APPLICATION_PAUSED, NOTIFICATION_WM_CLOSE_REQUEST]:
+		if is_node_ready() and deliveries and deliveries.session:
+			autosave()
+
+## Começa um jogo novo: apaga o save, zera a carteira e gera um planeta novo (prado).
+func new_game() -> void:
+	SaveGame.erase()
+	wallet.from_dict({})
+	upgrades.from_dict({})
+	crew.from_dict({})
+	tutorial.restart()
+	biome = "prado"
+	start(randi() % 100000)
+
 ## Gera o planeta `s` e põe o jogador junto ao posto avançado.
 func start(s: int) -> void:
 	seed_value = s
@@ -179,6 +338,20 @@ func start(s: int) -> void:
 	if deliveries:
 		deliveries.start_planet(planet.data)
 	_spawn_creatures()
+	if outpost:
+		outpost.start_planet()
+		# O posto recomeça em cada planeta, mas os slots extra são melhoria permanente.
+		for k in upgrades.level("slots"):
+			outpost.state.add_slots()
+		outpost.rebuild()
+	apply_upgrades()
+	if farm:
+		farm.start_planet()
+	apply_crew()
+	deliveries.session.order_delivered.connect(func(_o: DeliveryOrder, on_time: bool) -> void:
+		crew.on_delivery(on_time)
+		autosave())
+	autosave()
 	if builder:
 		builder.clear()
 
@@ -398,7 +571,7 @@ func o2_drain_here() -> float:
 	var bd: Dictionary = PlanetGenerator.BIOMES[biome]
 	var base := float(bd.get("o2_drain", 0.0))
 	var near_k := float(bd.get("rivers", {}).get("o2_near", 1.0))
-	return AcidHazard.o2_drain(planet.data, planet.to_local(player.global_position), base, near_k) + extra_o2_drain
+	return AcidHazard.o2_drain(planet.data, planet.to_local(player.global_position), base, near_k) * crew.o2_factor() + extra_o2_drain
 
 ## Calor do rover nos biomas com "rover_heat" (lava): aquece a andar e junto às fissuras,
 ## arrefece parado e à sombra; sobreaquecido fica lento.
@@ -437,7 +610,7 @@ func _apply_hazards(delta: float) -> void:
 	if driving:
 		return
 	var here := planet.to_local(player.global_position)
-	vitals.damage(AcidHazard.foot_damage_rate(d, here) * delta)
+	vitals.damage(AcidHazard.foot_damage_rate(d, here) * crew.acid_factor() * delta)
 	if bubbles:
 		var got := bubbles.collect(here)
 		if got > 0.0:
@@ -524,7 +697,7 @@ func _physics_process(delta: float) -> void:
 		_hint.text = ""
 		return
 	_vehicle_btn.update(Input.is_action_pressed("vehicle"), delta)
-	if _vehicle_btn.consume() and not deliveries.board_open:
+	if _vehicle_btn.consume() and not deliveries.board_open and not outpost.menu_open:
 		if driving:
 			exit_rover()
 		elif can_enter_rover():
@@ -535,7 +708,10 @@ func _physics_process(delta: float) -> void:
 		rover.steer = m.x
 	var h := tr("HINT_EXIT_ROVER") if driving else (tr("HINT_ENTER_ROVER") if can_enter_rover() else "")
 	var dh := deliveries.hint()
-	_hint.text = "" if deliveries.board_open else (dh if dh != "" and not driving else (h if h != "" else dh))
+	var oh := outpost.hint()
+	if oh != "":
+		dh = oh # o terminal está mesmo ao lado: tem prioridade sobre o quadro
+	_hint.text = "" if deliveries.board_open or outpost.menu_open else (dh if dh != "" and not driving else (h if h != "" else dh))
 
 var _env: Environment
 var sky_planets: SkyPlanets
@@ -580,6 +756,7 @@ func _build_world() -> void:
 
 ## Até existir o ciclo dia/noite (F4) o sol acompanha o jogador: é sempre de dia onde ele está.
 func _process(_delta: float) -> void:
+	_track_tutorial()
 	# Árvores entre a câmara e quem se segue (a pé ou no rover) ficam pontilhadas.
 	var who: Node3D = rover if driving else player
 	CelShading.set_occlusion(camera.global_position, who.global_position + (who.global_position - planet.global_position).normalized() * 0.8)
@@ -634,6 +811,12 @@ func _build_ui() -> void:
 	pause_menu = PauseMenu.new()
 	pause_layer.add_child(pause_menu)
 	pause_menu.new_planet.connect(func() -> void: start(randi() % 100000))
+	pause_menu.new_game.connect(new_game)
+	pause_menu.tutorial_again.connect(func() -> void:
+		tutorial.restart()
+		_tut_walk = 0.0
+		_tut_jumped = false
+		_tut_terminal = false)
 	pause_menu.quit_to_menu.connect(func() -> void: get_tree().change_scene_to_file("res://scenes/ui/boot.tscn"))
 	var fade_layer := CanvasLayer.new()
 	fade_layer.layer = 50

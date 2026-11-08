@@ -25,6 +25,7 @@ func test_rover_cabin_protects_o2() -> void:
 func test_faint_fails_order_and_wakes_at_base() -> void:
 	var dc: DeliveryController = run.deliveries
 	var o: DeliveryOrder = dc.session.offers[0]
+	o.crop = "" # sem colheita (encomendas da quinta testam-se em test_farm)
 	dc.accept(o)
 	dc.session.pick_up()
 	run.teleport(run.planet.data.lair_dir)

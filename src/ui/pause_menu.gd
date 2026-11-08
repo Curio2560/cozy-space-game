@@ -38,10 +38,32 @@ func _ready() -> void:
 	_item(col, "PAUSE_NEW_PLANET", func() -> void:
 		close()
 		new_planet.emit())
+	_item(col, "PAUSE_TUTORIAL", func() -> void:
+		close()
+		tutorial_again.emit())
+	_item(col, "PAUSE_NEW_GAME", func() -> void: _confirm_new_game())
 	_item(col, "PAUSE_LANGUAGE", func() -> void: Settings.cycle_locale())
 	_item(col, "PAUSE_EXIT", func() -> void:
 		close()
 		quit_to_menu.emit())
+
+signal new_game
+signal tutorial_again
+
+func _confirm_new_game() -> void:
+	var dlg := ConfirmationDialog.new()
+	dlg.dialog_text = tr("NEW_GAME_CONFIRM")
+	dlg.ok_button_text = tr("NEW_GAME_YES")
+	dlg.cancel_button_text = tr("NEW_GAME_NO")
+	dlg.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(dlg)
+	dlg.confirmed.connect(func() -> void:
+		close()
+		new_game.emit())
+	dlg.visibility_changed.connect(func() -> void:
+		if not dlg.visible:
+			dlg.queue_free())
+	dlg.popup_centered()
 
 func _item(col: VBoxContainer, key: String, action: Callable) -> Button:
 	var b := Button.new()
