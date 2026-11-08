@@ -128,3 +128,25 @@ RES_ORE,Ore,Minério
 RES_CRYSTAL,Crystal,Cristal
 RES_CROPS,Crops,Colheitas
 RES_DATA,Data,Dados
+SLOT_EMPTY,Empty slot,Slot vazio
+SLOT_MENU_TITLE,Build here,Construir aqui
+SLOT_BUILD,Build,Construir
+HINT_SLOT_BUILD,Action: build,Ação: construir
+HINT_SLOT_COLLECT,Action: collect %d %s,Ação: recolher %d %s
+TOAST_BUILT,Built: %s,Construído: %s
+TOAST_COLLECTED,+%d %s,+%d %s
+TOAST_COLLECTED_ALL,Collected %d,Recolhido: %d
+OUTPOST_ENERGY,Energy %d / %d,Energia %d / %d
+OUTPOST_LOW_POWER,low power: 50%,pouca energia: 50%
+OUTPOST_TIP,To build go to an empty slot and press Action.,Para construir vai a um slot vazio e carrega em Ação.
+OUTPOST_COLLECT_ALL,Collect all,Recolher tudo
+BUILDING_MINER,Miner,Mineiro
+BUILDING_MINER_INFO,1 ore every 20 s,1 minério a cada 20 s
+BUILDING_LAB,Laboratory,Laboratório
+BUILDING_LAB_INFO,"1 crystal every 40 s, uses 2 ore","1 cristal a cada 40 s, gasta 2 minério"
+BUILDING_RESEARCH,Research centre,Centro de pesquisa
+BUILDING_RESEARCH_INFO,1 data every 60 s,1 dado a cada 60 s
+BUILDING_SOLAR,Solar panel,Painel solar
+BUILDING_SOLAR_INFO,+3 energy (each building uses 1),+3 de energia (cada edifício gasta 1)
+BUILDING_STORAGE,Warehouse,Armazém
+BUILDING_STORAGE_INFO,+20 storage in every building,+20 de capacidade em cada edifício

@@ -167,6 +167,7 @@ func save_state() -> Dictionary:
 		"planet": {"seed": seed_value, "biome": biome},
 		"wallet": wallet.to_dict(),
 		"deliveries": deliveries.session.to_dict(),
+		"outpost": outpost.state.to_dict(),
 	}
 
 ## Repõe as secções de um save (o planeta já foi gerado com a seed guardada).
@@ -174,6 +175,8 @@ func apply_state(state: Dictionary) -> void:
 	wallet.from_dict(state.get("wallet", {}))
 	deliveries.session.from_dict(state.get("deliveries", {}))
 	deliveries._update_keycards()
+	if state.has("outpost"):
+		outpost.load_state(state.outpost)
 
 ## Guarda se o save estiver ativo (aberto pelo menu). Chamado ao entregar, construir e sair.
 func autosave() -> void:
@@ -222,6 +225,8 @@ func start(s: int) -> void:
 	if deliveries:
 		deliveries.start_planet(planet.data)
 	_spawn_creatures()
+	if outpost:
+		outpost.start_planet()
 	deliveries.session.order_delivered.connect(func(_o: DeliveryOrder, _t: bool) -> void: autosave())
 	autosave()
 	if builder:

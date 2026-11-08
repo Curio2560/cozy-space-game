@@ -88,3 +88,44 @@ func test_save_round_trip() -> void:
 	assert_eq(o2.slot_count, 8)
 	assert_eq(o2.slots[0].kind, "miner")
 	assert_eq(o2.slots[0].stored, o.slots[0].stored)
+
+func _run() -> Node3D:
+	var run: Node3D = (load("res://scenes/game/planet_run.tscn") as PackedScene).instantiate()
+	add_child_autofree(run)
+	return run
+
+func test_slots_are_drawn_and_buildable_in_game() -> void:
+	var run := _run()
+	await wait_physics_frames(10)
+	var op: OutpostController = run.outpost
+	assert_eq(op.slot_total(), Outpost.START_SLOTS)
+	assert_not_null(run.planet.get_node_or_null("Slot0"), "plataforma do slot 0")
+	run.wallet.add(Wallet.CREDITS, 1000)
+	assert_true(op.build(0, "miner"))
+	assert_not_null(run.planet.get_node_or_null("Slot0/B0"), "edifício desenhado")
+	# Ir ao slot: dica de recolher depois de produzir.
+	var d: PlanetData = run.planet.data
+	run.teleport(d.toward_point(d.outpost_slots[0], d.outpost_dir, 2.0))
+	await wait_physics_frames(10)
+	assert_eq(op.nearest_slot(), 0)
+	op.state.tick(45.0, run.wallet) # sem painel solar: a 50%
+	assert_string_contains(op.hint(), "1")
+	assert_eq(op.collect(0), 1)
+	assert_eq(run.wallet.amount(Wallet.ORE), 1)
+
+func test_outpost_is_saved() -> void:
+	SaveGame.path = "user://test_outpost_save.json"
+	SaveGame.active = true
+	var run := _run()
+	await wait_physics_frames(10)
+	run.wallet.add(Wallet.CREDITS, 1000)
+	run.outpost.build(2, "solar")
+	run.queue_free()
+	await wait_physics_frames(2)
+	var again := _run()
+	await wait_physics_frames(10)
+	assert_eq(again.outpost.state.slots[2].kind, "solar")
+	assert_not_null(again.planet.get_node_or_null("Slot2/B2"))
+	SaveGame.erase()
+	SaveGame.active = false
+	SaveGame.path = SaveGame.DEFAULT_PATH

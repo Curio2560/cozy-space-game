@@ -12,7 +12,8 @@ func after_each() -> void:
 	Input.action_release("action")
 
 func test_colonist_names_float_over_houses() -> void:
-	var labels := run.find_children("*", "Label3D", true, false)
+	# Letreiros com os nomes dos colonos (os dos slots do posto ficam de fora).
+	var labels := run.find_children("*", "Label3D", true, false).filter(func(l: Node) -> bool: return not l.get_parent().name.begins_with("Slot"))
 	assert_eq(labels.size(), 3)
 
 func test_board_opens_near_outpost_with_action() -> void:
