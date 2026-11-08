@@ -20,8 +20,11 @@ var run: Node3D
 var waves := NightWaves.new()
 var raiders: Array[Creature] = []
 var label: Label
-## Diz se o edifício do slot `i` ainda pode ser atacado (o #41 desliga os destruídos).
-var building_alive: Callable = func(_i: int) -> bool: return true
+## Diz se o edifício do slot `i` ainda pode ser atacado ou disparar (desligados não).
+var building_alive: Callable = func(i: int) -> bool: return run.outpost.state.is_working(i)
+## Contas da noite (#42): dano aos edifícios e quantos ficaram desligados.
+var night_damage := 0.0
+var night_broken := 0
 var _rng := RandomNumberGenerator.new()
 var beams: Beams
 var _turret_cd := {}
@@ -58,6 +61,8 @@ func setup(p_run: Node3D, hud_layer: CanvasLayer) -> void:
 
 func start_night(n: int) -> void:
 	clear()
+	night_damage = 0.0
+	night_broken = 0
 	waves.start_night(n)
 
 ## Retoma uma noite a meio (save carregado de noite): salta as vagas cujo tempo já passou.
@@ -186,6 +191,9 @@ func _on_raid_hit(c: Creature, key: Variant) -> void:
 	if key is String and key == "player":
 		run._on_creature_attack(c)
 	elif key is int:
+		night_damage += BUILDING_DAMAGE
+		if run.outpost.damage_building(key, BUILDING_DAMAGE):
+			night_broken += 1
 		building_hit.emit(key, BUILDING_DAMAGE)
 
 func _on_died(c: Creature) -> void:

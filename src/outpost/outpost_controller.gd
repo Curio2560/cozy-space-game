@@ -13,6 +13,7 @@ var menu_open := false
 var _action := JumpBuffer.new()
 var state := Outpost.new()
 var slot_menu: SlotMenu
+var bars: BuildingBars
 var build_page: OutpostPage
 const SLOT_RADIUS := 3.6
 ## Visual de cada edifício: modelo do kit (altura em m) ou montagem do pack sci-fi.
@@ -50,6 +51,9 @@ func setup(p_run: Node3D, hud_layer: CanvasLayer) -> void:
 	slot_menu.visible = false
 	hud_layer.add_child(slot_menu)
 	slot_menu.closed.connect(close_menu)
+	bars = BuildingBars.new()
+	bars.controller = self
+	hud_layer.add_child(bars)
 
 ## Planeta novo: posto vazio (o posto recomeça em cada planeta) e slots desenhados.
 func start_planet() -> void:
@@ -137,8 +141,10 @@ func _update_labels() -> void:
 				line += " · " + tr("TURRET_LEVEL") % state.level(i)
 			if b.produces != "":
 				line += "\n%s %d/%d" % [tr("RES_" + str(b.produces).to_upper()), s.stored, state.capacity()]
+			if state.is_broken(i):
+				line += "\n" + tr("BUILDING_OFF")
 			l.text = line
-			l.modulate = Color("ffc857") if int(s.stored) >= state.capacity() else Color.WHITE
+			l.modulate = Color("ff6b6b") if state.is_broken(i) else (Color("ffc857") if int(s.stored) >= state.capacity() else Color.WHITE)
 
 ## Slot aberto mais perto do jogador (a pé), ou -1.
 func nearest_slot() -> int:
@@ -154,6 +160,31 @@ func nearest_slot() -> int:
 			best_d = dist
 			best = i
 	return best
+
+## Dano de uma criatura ao edifício do slot `i`. Devolve true se o desligou.
+func damage_building(i: int, amount: float) -> bool:
+	if not state.damage(i, amount):
+		return false
+	run.deliveries.hud.toast(tr("TOAST_BUILDING_BROKEN") % tr("BUILDING_" + str(state.slots[i].kind).to_upper()))
+	_update_labels()
+	return true
+
+## Repara o slot `i` com o minério que houver.
+func repair(i: int) -> int:
+	var ore := state.repair(i, run.wallet)
+	if ore > 0:
+		run.deliveries.hud.toast(tr("TOAST_REPAIRED") % ore)
+		_update_labels()
+		run.autosave()
+	return ore
+
+func repair_all() -> int:
+	var ore := state.repair_all(run.wallet)
+	if ore > 0:
+		run.deliveries.hud.toast(tr("TOAST_REPAIRED") % ore)
+		_update_labels()
+		run.autosave()
+	return ore
 
 ## Melhora a torre do slot `i` (paga, redesenha, guarda).
 func upgrade(i: int) -> bool:
@@ -243,6 +274,9 @@ func hint() -> String:
 	var s: Dictionary = state.slots[i]
 	if s.kind == "":
 		return tr("HINT_SLOT_BUILD")
+	if state.is_damaged(i):
+		var need := state.repair_cost(i)
+		return tr("HINT_REPAIR") % need if run.wallet.amount(Wallet.ORE) > 0 else tr("HINT_REPAIR_NO_ORE") % need
 	if s.kind == "turret":
 		return tr("HINT_TURRET") % state.level(i)
 	if int(s.stored) > 0:
@@ -261,7 +295,9 @@ func _physics_process(delta: float) -> void:
 		else:
 			var i := nearest_slot()
 			if i >= 0:
-				if state.is_empty(i) or state.slots[i].kind == "turret":
+				if state.is_damaged(i) and run.wallet.amount(Wallet.ORE) > 0:
+					repair(i)
+				elif state.is_empty(i) or state.slots[i].kind == "turret":
 					open_slot_menu(i)
 				else:
 					collect(i)

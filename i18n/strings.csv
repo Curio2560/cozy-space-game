@@ -246,3 +246,10 @@ TURRET_UPGRADE,Upgrade,Melhorar
 TURRET_MAX,Max level,Nível máximo
 HINT_TURRET,Action: laser turret (level %d),Ação: torre laser (nível %d)
 TOAST_TURRET_UP,Turret upgraded to level %d!,Torre melhorada para o nível %d!
+BUILDING_OFF,OFF — needs repair,DESLIGADO — precisa de reparação
+BUILDING_HP,%d%% health,%d%% de vida
+HINT_REPAIR,Action: repair (%d ore),Ação: reparar (%d minério)
+HINT_REPAIR_NO_ORE,Needs %d ore to repair,Precisa de %d minério para reparar
+TOAST_BUILDING_BROKEN,%s is off! Repair it with ore.,%s desligou-se! Repara com minério.
+TOAST_REPAIRED,Repaired (−%d ore),Reparado (−%d minério)
+OUTPOST_REPAIR_ALL,Repair all (%d ore),Reparar tudo (%d minério)

@@ -235,6 +235,8 @@ func _ready() -> void:
 			var c0: Creature = defense.raiders[i]
 			c0.teleport_to(d0.toward_point(side, s0, -2.5 * i))
 			c0.raid_target = func() -> Array: return []
+	if "damaged" in args: # edifício do slot 0 danificado (capturas da barra de vida)
+		outpost.state.damage(0, 70.0)
 	if "mech" in args: # noite, dentro do mech, a disparar (capturas)
 		cycle.skip_to_night()
 		player.place_at(mech.global_position + mech.facing * 3.0 + mech.up() * 0.5)
