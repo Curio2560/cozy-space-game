@@ -42,6 +42,13 @@ var deliveries: DeliveryController
 var bubbles: O2Bubbles
 var outpost: OutpostController
 var farm: FarmController
+var tutorial: Tutorial
+var _tut_walk := 0.0
+var _tut_last := Vector3.INF
+var _tut_jumped := false
+var _tut_terminal := false
+var _tut_built := false
+var _tut_collected := false
 var heat := RoverHeat.new()
 var ambient: AmbientParticles
 
@@ -103,6 +110,7 @@ func _ready() -> void:
 	vitals.changed.connect(_update_vital_bars)
 	vitals.fainted.connect(_on_player_fainted)
 	_update_vital_bars()
+	_setup_tutorial()
 	var saved := SaveGame.read() if SaveGame.active else {}
 	if not saved.is_empty():
 		var pl: Dictionary = saved.get("planet", {})
@@ -167,6 +175,50 @@ func _ready() -> void:
 		Input.action_press("move_forward", 1.0)
 		Input.action_press("move_right", 0.25)
 
+## Tutorial inicial e dicas de desbloqueio (ver Tutorial).
+func _setup_tutorial() -> void:
+	tutorial = Tutorial.new()
+	tutorial.name = "Tutorial"
+	tutorial.steps = [
+		["TUT_MOVE", func() -> bool: return _tut_walk > 6.0],
+		["TUT_JUMP", func() -> bool: return _tut_jumped],
+		["TUT_BOARD", func() -> bool: return deliveries.board_open or deliveries.session.active != null],
+		["TUT_ACCEPT", func() -> bool: return deliveries.session.active != null],
+		["TUT_PICKUP", func() -> bool: return deliveries.session.carrying() or deliveries.session.active == null],
+		["TUT_ROVER", func() -> bool: return driving or deliveries.session.active == null],
+		["TUT_DELIVER", func() -> bool: return deliveries.session.active == null],
+		["TUT_TERMINAL", func() -> bool: return _tut_terminal],
+	]
+	tutorial.tips = [
+		["TIP_BUILD", func() -> bool: return wallet.credits() >= 120 and outpost.state.count("miner") == 0],
+		["TIP_COLLECT", func() -> bool: return _tut_built],
+		["TIP_SELL", func() -> bool: return _tut_collected],
+		["TIP_FARM", func() -> bool: return farm.nearest_plot() >= 0],
+		["TIP_CROP_ORDER", func() -> bool: return deliveries.board_open and deliveries.session.offers.any(func(o: DeliveryOrder) -> bool: return o.crop != "")],
+		["TIP_ACID", func() -> bool: return biome == "acido"],
+		["TIP_LAVA", func() -> bool: return biome == "lava"],
+		["TIP_POWER", func() -> bool: return outpost.state.power_factor() < 1.0],
+	]
+	_hud_layer.add_child(tutorial)
+	tutorial.changed.connect(autosave)
+	outpost.state.changed.connect(func() -> void: _tut_built = _tut_built or outpost.state.energy_demand() > 0)
+
+## Medições para os passos do tutorial (andar, saltar, abrir o terminal, recolher).
+func _track_tutorial() -> void:
+	if tutorial == null or not tutorial.in_intro() and tutorial.seen.size() >= tutorial.tips.size():
+		return
+	var p := player.global_position
+	if _tut_last != Vector3.INF and not driving:
+		_tut_walk += minf(p.distance_to(_tut_last), 1.0)
+	_tut_last = p
+	if not driving and not player.is_on_floor() and Input.is_action_pressed("jump"):
+		_tut_jumped = true
+	if outpost.menu_open and outpost.menu.visible:
+		_tut_terminal = true
+	for k in [Wallet.ORE, Wallet.CRYSTAL, Wallet.DATA]:
+		if wallet.amount(k) > 0:
+			_tut_collected = true
+
 ## Estado do jogo para o save. Cada sistema acrescenta a sua secção.
 func save_state() -> Dictionary:
 	return {
@@ -175,6 +227,7 @@ func save_state() -> Dictionary:
 		"deliveries": deliveries.session.to_dict(),
 		"outpost": outpost.state.to_dict(),
 		"farm": farm.farm.to_dict(),
+		"tutorial": tutorial.to_dict(),
 	}
 
 ## Repõe as secções de um save (o planeta já foi gerado com a seed guardada).
@@ -186,6 +239,8 @@ func apply_state(state: Dictionary) -> void:
 		outpost.load_state(state.outpost)
 	if state.has("farm"):
 		farm.load_state(state.farm)
+	if state.has("tutorial"):
+		tutorial.from_dict(state.tutorial)
 
 ## Guarda se o save estiver ativo (aberto pelo menu). Chamado ao entregar, construir e sair.
 func autosave() -> void:
@@ -201,6 +256,7 @@ func _notification(what: int) -> void:
 func new_game() -> void:
 	SaveGame.erase()
 	wallet.from_dict({})
+	tutorial.restart()
 	biome = "prado"
 	start(randi() % 100000)
 
@@ -644,6 +700,7 @@ func _build_world() -> void:
 
 ## Até existir o ciclo dia/noite (F4) o sol acompanha o jogador: é sempre de dia onde ele está.
 func _process(_delta: float) -> void:
+	_track_tutorial()
 	# Árvores entre a câmara e quem se segue (a pé ou no rover) ficam pontilhadas.
 	var who: Node3D = rover if driving else player
 	CelShading.set_occlusion(camera.global_position, who.global_position + (who.global_position - planet.global_position).normalized() * 0.8)
@@ -699,6 +756,11 @@ func _build_ui() -> void:
 	pause_layer.add_child(pause_menu)
 	pause_menu.new_planet.connect(func() -> void: start(randi() % 100000))
 	pause_menu.new_game.connect(new_game)
+	pause_menu.tutorial_again.connect(func() -> void:
+		tutorial.restart()
+		_tut_walk = 0.0
+		_tut_jumped = false
+		_tut_terminal = false)
 	pause_menu.quit_to_menu.connect(func() -> void: get_tree().change_scene_to_file("res://scenes/ui/boot.tscn"))
 	var fade_layer := CanvasLayer.new()
 	fade_layer.layer = 50

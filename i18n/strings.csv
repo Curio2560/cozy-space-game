@@ -166,3 +166,23 @@ RES_CROP_FAST,Radish,Rabanete
 RES_CROP_MID,Space carrot,Cenoura espacial
 RES_CROP_SLOW,Star pumpkin,Abóbora estelar
 BOARD_NEEDS_CROP,Needs 1 %s (you have %d),Leva 1 %s (tens %d)
+TUT_SKIP,Skip,Passar
+TUT_STEP,Tutorial %d/%d,Tutorial %d/%d
+TUT_TIP,Tip,Dica
+PAUSE_TUTORIAL,Replay tutorial,Repetir tutorial
+TUT_MOVE,Use the joystick on the left to walk around the planet.,Usa o joystick à esquerda para andar à volta do planeta.
+TUT_JUMP,Press JUMP to jump. You can reach places the rover can't.,Carrega em SALTAR para saltar. Chegas a sítios onde o rover não chega.
+TUT_BOARD,Go to the base and press ACTION to see the delivery board.,Vai à base e carrega em AÇÃO para ver o quadro de encomendas.
+TUT_ACCEPT,Pick an order and press Accept.,Escolhe uma encomenda e carrega em Aceitar.
+TUT_PICKUP,Follow the arrow to the colonist's house and pick up the crate.,Segue a seta até à casa do colono e apanha a caixa.
+TUT_ROVER,Get in the rover (ROVER button) — it's faster. Bumps damage fragile crates!,Entra no rover (botão ROVER) — é mais rápido. Os embates estragam caixas frágeis!
+TUT_DELIVER,Follow the arrow and deliver the crate. On time pays a bonus.,Segue a seta e entrega a caixa. A tempo paga um bónus.
+TUT_TERMINAL,"Back at the base, open the terminal next to the door (ACTION). That's where you build, sell and upgrade.","De volta à base, abre o terminal ao lado da porta (AÇÃO). É lá que constróis, vendes e melhoras."
+TIP_BUILD,You can build! Go to an empty slot around the base and press ACTION. Start with a miner.,Já podes construir! Vai a um slot vazio à volta da base e carrega em AÇÃO. Começa por um mineiro.
+TIP_COLLECT,"Buildings produce over time. Press ACTION next to one to collect, or Collect all in the terminal.","Os edifícios produzem com o tempo. Carrega em AÇÃO ao pé de um para recolher, ou em Recolher tudo no terminal."
+TIP_SELL,Sell ore and crystal in the terminal (Sell tab). Research data stays with you.,Vende minério e cristal no terminal (separador Vender). Os dados de pesquisa ficam contigo.
+TIP_FARM,This is a farm plot: press ACTION to plant. Slow crops are worth more.,Isto é um talhão da quinta: carrega em AÇÃO para plantar. As culturas lentas valem mais.
+TIP_CROP_ORDER,Some orders carry a crop from your farm: you need one to accept them.,Algumas encomendas levam uma colheita da tua quinta: precisas de uma para as aceitar.
+TIP_ACID,"Acid planet: the air uses O₂ on foot, faster near the rivers. Grab blue bubbles; the rover cabin protects you.","Planeta ácido: o ar gasta O₂ a pé, mais depressa junto aos rios. Apanha as bolhas azuis; a cabine do rover protege-te."
+TIP_LAVA,"Lava planet: the rover heats up with speed and near fissures. Stop in the shade to cool down.","Planeta de lava: o rover aquece com a velocidade e junto às fissuras. Para à sombra para arrefecer."
+TIP_POWER,Not enough energy: buildings work at 50%. Build a solar panel (+3).,Pouca energia: os edifícios trabalham a 50%. Constrói um painel solar (+3).

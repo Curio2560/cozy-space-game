@@ -38,6 +38,9 @@ func _ready() -> void:
 	_item(col, "PAUSE_NEW_PLANET", func() -> void:
 		close()
 		new_planet.emit())
+	_item(col, "PAUSE_TUTORIAL", func() -> void:
+		close()
+		tutorial_again.emit())
 	_item(col, "PAUSE_NEW_GAME", func() -> void: _confirm_new_game())
 	_item(col, "PAUSE_LANGUAGE", func() -> void: Settings.cycle_locale())
 	_item(col, "PAUSE_EXIT", func() -> void:
@@ -45,6 +48,7 @@ func _ready() -> void:
 		quit_to_menu.emit())
 
 signal new_game
+signal tutorial_again
 
 func _confirm_new_game() -> void:
 	var dlg := ConfirmationDialog.new()
