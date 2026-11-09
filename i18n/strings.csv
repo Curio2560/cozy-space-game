@@ -317,3 +317,4 @@ RES_LINE_BUILDING_HP_INFO,+30% building health per level,+30% de vida dos edifí
 TOAST_RESEARCHED,Research done: %s,Pesquisa feita: %s
 PAUSE_VOL_MUSIC,Music %d%%,Música %d%%
 PAUSE_VOL_SFX,Sounds %d%%,Sons %d%%
+DBG_NEXT_PLANET,Jump to the next planet,Saltar para o planeta seguinte

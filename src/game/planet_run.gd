@@ -1361,6 +1361,8 @@ func _register_debug() -> void:
 	DebugMenu.add_button(self, "DBG_GALAXY_MAP", func() -> void:
 		boss_fight.beaten = true
 		travel())
+	DebugMenu.add_button(self, "DBG_NEXT_PLANET", func() -> void:
+		arrive(galaxy.next_options()[0]))
 	DebugMenu.add_button(self, "DBG_BOSS_LOW", func() -> void:
 		if is_instance_valid(boss_fight.boss):
 			boss_fight.boss.take_hit(boss_fight.boss.health - 40.0))
