@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="pt-PT"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Correio Cósmico · Grill · Ronda 7</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Nunito:wght@400;600;700&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Tema cozy space (o mesmo da página da visão). Uma coluna de fichas; barra fixa com "Copiar respostas". */
+:root{--sky:#231a38;--panel:#fff6ea;--panel2:#ffe9d2;--ink:#2a2140;--soft:#6d5f86;--peach:#ff9f7a;--mint:#6fd6b4;--sun:#ffc857;--line:#e8d6c0;
+ --display:"Fredoka",system-ui,sans-serif;--body:"Nunito",system-ui,sans-serif;--mono:"JetBrains Mono",ui-monospace,monospace}
+*{box-sizing:border-box}
+body{margin:0;background:var(--sky);color:var(--panel);font-family:var(--body);font-size:15.5px;line-height:1.5;
+ background-image:radial-gradient(circle at 85% 0%,rgba(255,159,122,.25),transparent 40%);
+ padding:28px max(16px,env(safe-area-inset-right)) 130px max(16px,env(safe-area-inset-left))}
+main{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+h1{font-family:var(--display);font-weight:600;color:var(--sun);font-size:clamp(24px,5vw,34px);margin:0}
+.tag{font-family:var(--mono);font-size:12px;color:var(--mint);letter-spacing:.08em;text-transform:uppercase}
+header p{color:#e9def8;margin:6px 0 0;max-width:64ch}
+form{display:flex;flex-direction:column;gap:18px}
+fieldset{background:var(--panel);color:var(--ink);border:0;border-radius:16px;padding:16px 16px 14px;margin:0;display:flex;flex-direction:column;gap:10px;min-width:0;box-shadow:0 5px 0 rgba(0,0,0,.18)}
+legend{display:contents}
+.qh{display:flex;gap:10px;align-items:baseline}
+.qn{font-family:var(--display);color:var(--peach);font-size:18px;flex:none}
+.qt{font-family:var(--display);font-weight:600;font-size:17px}
+.ctx{margin:0;color:var(--soft);font-size:14.5px}
+.opts{display:flex;flex-direction:column;gap:7px}
+.opt{display:flex;gap:10px;align-items:flex-start;padding:9px 11px;border:2px solid var(--line);border-radius:11px;background:#fff;cursor:pointer}
+.opt:has(input:checked){border-color:var(--peach);background:#fff1ea}
+.opt input{accent-color:#e5734a;margin-top:4px;flex:none;width:18px;height:18px}
+.opt b{font-weight:700}
+.opt small{display:block;color:var(--soft);font-size:13.5px}
+.rec{font-family:var(--mono);font-size:10.5px;background:var(--mint);color:#123b2e;padding:1px 7px;border-radius:99px;margin-left:6px;white-space:nowrap}
+textarea{width:100%;min-height:46px;resize:vertical;border:2px solid var(--line);border-radius:11px;padding:8px 10px;font:inherit;font-size:14.5px;color:var(--ink);background:var(--panel2)}
+textarea:focus,.opt:focus-within,button:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
+.bar{position:fixed;left:0;right:0;bottom:0;background:rgba(35,26,56,.96);border-top:2px solid #4a3b72;
+ padding:12px max(16px,env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
+.bar .in{max-width:760px;margin:0 auto;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+button{font-family:var(--display);font-weight:600;font-size:16px;background:var(--peach);color:var(--ink);border:0;border-radius:12px;padding:11px 18px;cursor:pointer}
+#status{font-family:var(--mono);font-size:12px;color:var(--sun)}
+#out{display:none;width:100%;min-height:140px;font-family:var(--mono);font-size:12px}
+</style></head><body><main>
+<header>
+ <div class="tag">Grill · Ronda 7 · 09 nov 2026</div>
+ <h1>Correio Cósmico: ronda 7 (F5 — boss e galáxia)</h1>
+ <p>A F4 está fechada (v0.4.0). Estas 17 decisões preparam a F5: o covil, a luta com o boss, a partida na nave, o mapa da galáxia e a pesquisa na nave-mãe. Já estava decidido: o covil abre com os 3 KeyCards; a luta é no mech, numa arena perto do covil; a nave é uma transição animada, sem pilotagem; entre planetas passam créditos, dados, tripulação e melhorias. A recomendada já vem marcada; os números são de partida e afinam-se no DBG. No fim, toca em <b>Copiar respostas</b> e cola no chat.</p>
+</header>
+<form id="f">
+<fieldset data-q="Q1 Ordem dos sistemas na F5">
+  <legend><div class="qh"><span class="qn">Q1</span><span class="qt">Ordem dos sistemas na F5</span></div></legend>
+  <p class="ctx">Cada passo fica jogável antes do seguinte.</p>
+  <div class="opts"><label class="opt"><input type="radio" name="q1" value="Covil e arena → boss → vitória e partida na nave → mapa da galáxia → planeta seguinte → pesquisa na nave-mãe" checked><span><b>Covil e arena → boss → vitória e partida na nave → mapa da galáxia → planeta seguinte → pesquisa na nave-mãe</b><span class=rec>recomendado</span></span></label><label class="opt"><input type="radio" name="q1" value="Mapa da galáxia e planeta seguinte primeiro, boss no fim — Dá para ver os 3 biomas em sequência mais cedo."><span><b>Mapa da galáxia e planeta seguinte primeiro, boss no fim</b><small>Dá para ver os 3 biomas em sequência mais cedo.</small></span></label></div>
+  <textarea name="q1x" placeholder="Resposta aberta (opcional): completa ou substitui a escolha"></textarea>
+</fieldset>
+<fieldset data-q="Q2 Como se entra na luta">
+  <legend><div class="qh"><span class="qn">Q2</span><span class="qt">Como se entra na luta</span></div></legend>
+  <p class="ctx">O covil é a rocha grande que já está no mapa.</p>
+  <div class="opts"><label class="opt"><input type="radio" name="q2" value="Com os 3 KeyCards, Ação na porta do covil → aviso → o boss sai para a arena ao lado; entras no mech que aparece lá — Não é preciso trazer o mech da base." checked><span><b>Com os 3 KeyCards, Ação na porta do covil → aviso → o boss sai para a arena ao lado; entras no mech que aparece lá</b><span class=rec>recomendado</span><small>Não é preciso trazer o mech da base.</small></span></label><label class="opt"><input type="radio" name="q2" value="Tens de ir no teu mech da base até ao covil — Mais lento, mas o mech só existe num sítio."><span><b>Tens de ir no teu mech da base até ao covil</b><small>Mais lento, mas o mech só existe num sítio.</small></span></label><label class="opt"><input type="radio" name="q2" value="A luta é um ecrã à parte (carregar uma arena) — Mais simples de afinar, mas sai do planeta."><span><b>A luta é um ecrã à parte (carregar uma arena)</b><small>Mais simples de afinar, mas sai do planeta.</small></span></label></div>
+  <textarea name="q2x" placeholder="Resposta aberta (opcional): completa ou substitui a escolha"></textarea>
+</fieldset>
+<fieldset data-q="Q3 Quando se pode lutar com o boss">
+  <legend><div class="qh"><span class="qn">Q3</span><span class="qt">Quando se pode lutar com o boss</span></div></legend>
+  
+  <div class="opts"><label class="opt"><input type="radio" name="q3" value="A qualquer hora; durante a luta o relógio pára (não há vagas ao mesmo tempo)" checked><span><b>A qualquer hora; durante a luta o relógio pára (não há vagas ao mesmo tempo)</b><span class=rec>recomendado</span></span></label><label class="opt"><input type="radio" name="q3" value="Só à noite (em vez das vagas)"><span><b>Só à noite (em vez das vagas)</b></span></label><label class="opt"><input type="radio" name="q3" value="Só de dia"><span><b>Só de dia</b></span></label></div>
+  <textarea name="q3x" placeholder="Resposta aberta (opcional): completa ou substitui a escolha"></textarea>
+</fieldset>
+<fieldset data-q="Q4 Modelo do boss">
+  <legend><div class="qh"><span class="qn">Q4</span><span class="qt">Modelo do boss</span></div></legend>
+  <p class="ctx">Os monstros grandes do teu pack têm animações de ataque, dano e morte.</p>
+  <div class="opts"><label class="opt"><input type="radio" name="q4" value="Um monstro grande do pack em ponto grande (×3) e cor própria, diferente em cada bioma — Ex.: Rei Cogumelo no prado, Demónio Azul no ácido, Demónio na lava." checked><span><b>Um monstro grande do pack em ponto grande (×3) e cor própria, diferente em cada bioma</b><span class=rec>recomendado</span><small>Ex.: Rei Cogumelo no prado, Demónio Azul no ácido, Demónio na lava.</small></span></label><label class="opt"><input type="radio" name="q4" value="O inimigo grande do kit (Enemy_Large) para todos"><span><b>O inimigo grande do kit (Enemy_Large) para todos</b></span></label><label class="opt"><input type="radio" name="q4" value="Esperar por um pack de bosses (provisório até lá)"><span><b>Esperar por um pack de bosses (provisório até lá)</b></span></label></div>
+  <textarea name="q4x" placeholder="Resposta aberta (opcional): completa ou substitui a escolha"></textarea>
+</fieldset>
+<fieldset data-q="Q5 Fases do boss">
+  <legend><div class="qh"><span class="qn">Q5</span><span class="qt">Fases do boss</span></div></legend>
+  
+  <div class="opts"><label class="opt"><input type="radio" name="q5" value="3 fases pela vida: golpes simples → chama criaturas → mais rápido e ataque em área" checked><span><b>3 fases pela vida: golpes simples → chama criaturas → mais rápido e ataque em área</b><span class=rec>recomendado</span></span></label><label class="opt"><input type="radio" name="q5" value="2 fases: normal → zangado (mais rápido)"><span><b>2 fases: normal → zangado (mais rápido)</b></span></label><label class="opt"><input type="radio" name="q5" value="1 fase só, com mais vida"><span><b>1 fase só, com mais vida</b></span></label></div>
+  <textarea name="q5x" placeholder="Resposta aberta (opcional): completa ou substitui a escolha"></textarea>
+</fieldset>
+<fieldset data-q="Q6 Ataques do boss">
+  <legend><div class="qh"><span class="qn">Q6</span><span class="qt">Ataques do boss</span></div></legend>
+  <p class="ctx">No telemóvel tem de dar para fugir sem complicar os controlos.</p>
+  <div class="opts"><label class="opt"><input type="radio" name="q6" value="Avisados: um círculo vermelho no chão antes de cada golpe; sai de lá com o joystick" checked><span><b>Avisados: um círculo vermelho no chão antes de cada golpe; sai de lá com o joystick</b><span class=rec>recomendado</span></span></label><label class="opt"><input type="radio" name="q6" value="Projéteis lentos que se desviam a andar"><span><b>Projéteis lentos que se desviam a andar</b></span></label><label class="opt"><input type="radio" name="q6" value="Os dois"><span><b>Os dois</b></span></label></div>
+  <textarea name="q6x" placeholder="Resposta aberta (opcional): completa ou substitui a escolha"></textarea>
+</fieldset>
+<fieldset data-q="Q7 Perder a luta">
+  <legend><div class="qh"><span class="qn">Q7</span><span class="qt">Perder a luta</span></div></legend>
+  
+  <div class="opts"><label class="opt"><input type="radio" name="q7" value="O mech avaria e acordas no posto; os KeyCards ficam; tentas outra vez quando quiseres (o boss recupera a vida)" checked><span><b>O mech avaria e acordas no posto; os KeyCards ficam; tentas outra vez quando quiseres (o boss recupera a vida)</b><span class=rec>recomendado</span></span></label><label class="opt"><input type="radio" name="q7" value="Igual, mas só podes tentar outra vez no dia seguinte"><span><b>Igual, mas só podes tentar outra vez no dia seguinte</b></span></label><label class="opt"><input type="radio" name="q7" value="Perdes um KeyCard"><span><b>Perdes um KeyCard</b></span></label></div>
+  <textarea name="q7x" placeholder="Resposta aberta (opcional): completa ou substitui a escolha"></textarea>
+</fieldset>
+<fieldset data-q="Q8 Recompensa do boss">
+  <legend><div class="qh"><span class="qn">Q8</span><span class="qt">Recompensa do boss</span></div></legend>
+  
+  <div class="opts"><label class="opt"><input type="radio" name="q8" value="Muitos créditos + dados de pesquisa + núcleo do planeta (abre a partida na nave)" checked><span><b>Muitos créditos + dados de pesquisa + núcleo do planeta (abre a partida na nave)</b><span class=rec>recomendado</span></span></label><label class="opt"><input type="radio" name="q8" value="Créditos e dados; a nave já pode partir antes do boss — O boss passa a ser opcional."><span><b>Créditos e dados; a nave já pode partir antes do boss</b><small>O boss passa a ser opcional.</small></span></label></div>
+  <textarea name="q8x" placeholder="Resposta aberta (opcional): completa ou substitui a escolha"></textarea>
+</fieldset>
+<fieldset data-q="Q9 Partida">
+  <legend><div class="qh"><span class="qn">Q9</span><span class="qt">Partida</span></div></legend>
+  <p class="ctx">Minério, cristal e colheitas ficam no planeta (ronda 2).</p>
+  <div class="opts"><label class="opt"><input type="radio" name="q9" value="Depois do boss, a nave aparece na base; partes quando quiseres, com aviso para vender antes" checked><span><b>Depois do boss, a nave aparece na base; partes quando quiseres, com aviso para vender antes</b><span class=rec>recomendado</span></span></label><label class="opt"><input type="radio" name="q9" value="Partida automática logo a seguir ao boss"><span><b>Partida automática logo a seguir ao boss</b></span></label></div>
+  <textarea name="q9x" placeholder="Resposta aberta (opcional): completa ou substitui a escolha"></textarea>
+</fieldset>
+<fieldset data-q="Q10 Mapa da galáxia">
+  <legend><div class="qh"><span class="qn">Q10</span><span class="qt">Mapa da galáxia</span></div></legend>
+  
+  <div class="opts"><label class="opt"><input type="radio" name="q10" value="Um caminho de planetas: Prado → Ácido → Lava fixos; depois disso escolhes entre 2 planetas aleatórios" checked><span><b>Um caminho de planetas: Prado → Ácido → Lava fixos; depois disso escolhes entre 2 planetas aleatórios</b><span class=rec>recomendado</span></span></label><label class="opt"><input type="radio" name="q10" value="Sempre 2–3 planetas à escolha, desde o início"><span><b>Sempre 2–3 planetas à escolha, desde o início</b></span></label><label class="opt"><input type="radio" name="q10" value="Só em linha, sem escolha"><span><b>Só em linha, sem escolha</b></span></label></div>
+  <textarea name="q10x" placeholder="Resposta aberta (opcional): completa ou substitui a escolha"></textarea>
+</fieldset>
+<fieldset data-q="Q11 Transição da nave">
+  <legend><div class="qh"><span class="qn">Q11</span><span class="qt">Transição da nave</span></div></legend>
+  <p class="ctx">Usa a nave do kit do tripulante ativo.</p>
+  <div class="opts"><label class="opt"><input type="radio" name="q11" value="Descolar → mapa da galáxia com a nave a viajar → aterrar; ~8 s, com botão Saltar" checked><span><b>Descolar → mapa da galáxia com a nave a viajar → aterrar; ~8 s, com botão Saltar</b><span class=rec>recomendado</span></span></label><label class="opt"><input type="radio" name="q11" value="Só um ecrã de carregamento com o mapa"><span><b>Só um ecrã de carregamento com o mapa</b></span></label></div>
+  <textarea name="q11x" placeholder="Resposta aberta (opcional): completa ou substitui a escolha"></textarea>
+</fieldset>
+<fieldset data-q="Q12 Onde se gastam os dados de pesquisa">
+  <legend><div class="qh"><span class="qn">Q12</span><span class="qt">Onde se gastam os dados de pesquisa</span></div></legend>
+  
+  <div class="opts"><label class="opt"><input type="radio" name="q12" value="Separador Pesquisa no terminal (a nave-mãe fala por rádio); compras que ficam de planeta para planeta" checked><span><b>Separador Pesquisa no terminal (a nave-mãe fala por rádio); compras que ficam de planeta para planeta</b><span class=rec>recomendado</span></span></label><label class="opt"><input type="radio" name="q12" value="Num ecrã da nave-mãe, só no mapa da galáxia, entre planetas"><span><b>Num ecrã da nave-mãe, só no mapa da galáxia, entre planetas</b></span></label></div>
+  <textarea name="q12x" placeholder="Resposta aberta (opcional): completa ou substitui a escolha"></textarea>
+</fieldset>
+<fieldset data-q="Q13 Pesquisas na F5">
+  <legend><div class="qh"><span class="qn">Q13</span><span class="qt">Pesquisas na F5</span></div></legend>
+  <p class="ctx">Escolhe as que queres já. Os mechs ajudantes (ronda 2) podem ficar para a F6.</p>
+  <div class="opts"><label class="opt"><input type="checkbox" name="q13" value="Mech: mais dano e mais vida" checked><span><b>Mech: mais dano e mais vida</b><span class=rec>recomendado</span></span></label><label class="opt"><input type="checkbox" name="q13" value="Torres: nível 4" checked><span><b>Torres: nível 4</b><span class=rec>recomendado</span></span></label><label class="opt"><input type="checkbox" name="q13" value="Posto: edifícios com mais vida" checked><span><b>Posto: edifícios com mais vida</b><span class=rec>recomendado</span></span></label><label class="opt"><input type="checkbox" name="q13" value="Rover: oxigénio de reserva na cabine (sair sem perder O₂ logo)"><span><b>Rover: oxigénio de reserva na cabine (sair sem perder O₂ logo)</b></span></label><label class="opt"><input type="checkbox" name="q13" value="Mechs ajudantes (regam e colhem de dia, defendem à noite)"><span><b>Mechs ajudantes (regam e colhem de dia, defendem à noite)</b></span></label></div>
+  <textarea name="q13x" placeholder="Resposta aberta (opcional): completa ou substitui a escolha"></textarea>
+</fieldset>
+<fieldset data-q="Q14 Dificuldade de planeta para planeta">
+  <legend><div class="qh"><span class="qn">Q14</span><span class="qt">Dificuldade de planeta para planeta</span></div></legend>
+  
+  <div class="opts"><label class="opt"><input type="radio" name="q14" value="Cada planeta novo começa como se fosse +2 noites mais forte; o boss também cresce" checked><span><b>Cada planeta novo começa como se fosse +2 noites mais forte; o boss também cresce</b><span class=rec>recomendado</span></span></label><label class="opt"><input type="radio" name="q14" value="Igual em todos os planetas (só o bioma muda)"><span><b>Igual em todos os planetas (só o bioma muda)</b></span></label><label class="opt"><input type="radio" name="q14" value="Muito mais difícil: +5 noites por planeta"><span><b>Muito mais difícil: +5 noites por planeta</b></span></label></div>
+  <textarea name="q14x" placeholder="Resposta aberta (opcional): completa ou substitui a escolha"></textarea>
+</fieldset>
+<fieldset data-q="Q15 Voltar a planetas anteriores">
+  <legend><div class="qh"><span class="qn">Q15</span><span class="qt">Voltar a planetas anteriores</span></div></legend>
+  
+  <div class="opts"><label class="opt"><input type="radio" name="q15" value="Não: só para a frente (o save guarda o planeta atual e o progresso da galáxia)" checked><span><b>Não: só para a frente (o save guarda o planeta atual e o progresso da galáxia)</b><span class=rec>recomendado</span></span></label><label class="opt"><input type="radio" name="q15" value="Sim, os planetas vencidos ficam no mapa para visitar"><span><b>Sim, os planetas vencidos ficam no mapa para visitar</b></span></label></div>
+  <textarea name="q15x" placeholder="Resposta aberta (opcional): completa ou substitui a escolha"></textarea>
+</fieldset>
+<fieldset data-q="Q16 Som e música">
+  <legend><div class="qh"><span class="qn">Q16</span><span class="qt">Som e música</span></div></legend>
+  <p class="ctx">Na ronda 2 ficou placeholder até ao fim da F4.</p>
+  <div class="opts"><label class="opt"><input type="radio" name="q16" value="Pôr já sons CC0 (tiros, golpes, boss, nave) e uma música calma de dia + outra de noite" checked><span><b>Pôr já sons CC0 (tiros, golpes, boss, nave) e uma música calma de dia + outra de noite</b><span class=rec>recomendado</span></span></label><label class="opt"><input type="radio" name="q16" value="Continuar sem som até à F6"><span><b>Continuar sem som até à F6</b></span></label><label class="opt"><input type="radio" name="q16" value="Tens música/sons teus (escreve abaixo)"><span><b>Tens música/sons teus (escreve abaixo)</b></span></label></div>
+  <textarea name="q16x" placeholder="Resposta aberta (opcional): completa ou substitui a escolha"></textarea>
+</fieldset>
+<fieldset data-q="Q17 DBG para testar">
+  <legend><div class="qh"><span class="qn">Q17</span><span class="qt">DBG para testar</span></div></legend>
+  
+  <div class="opts"><label class="opt"><input type="radio" name="q17" value="Ir ao covil, dar 3 KeyCards, boss com pouca vida, vencer o boss, abrir o mapa da galáxia, saltar para o planeta seguinte" checked><span><b>Ir ao covil, dar 3 KeyCards, boss com pouca vida, vencer o boss, abrir o mapa da galáxia, saltar para o planeta seguinte</b><span class=rec>recomendado</span></span></label></div>
+  <textarea name="q17x" placeholder="Resposta aberta (opcional): completa ou substitui a escolha"></textarea>
+</fieldset>
+</form>
+<textarea id="out" readonly aria-label="Respostas para copiar"></textarea>
+</main>
+<div class="bar"><div class="in"><button type="button" id="copy">Copiar respostas</button><span id="status" role="status"></span></div></div>
+<script>
+function build(){
+  const lines=["Grill Correio Cósmico, ronda 7:"];
+  document.querySelectorAll("fieldset").forEach((fs,i)=>{
+    const n=i+1, title=fs.dataset.q;
+    const picked=[...fs.querySelectorAll("input:checked")].map(x=>x.value);
+    const free=fs.querySelector("textarea").value.trim();
+    const recs=[...fs.querySelectorAll("input")].filter(x=>x.defaultChecked).map(x=>x.value);
+    const same=picked.length===recs.length&&picked.every((v,k)=>v===recs[k]);
+    let s=title+": "+(picked.length?picked.join(" + "):"(nada escolhido)");
+    if(same&&picked.length) s+=" [recomendado]";
+    if(free) s+=" | Nota: "+free;
+    lines.push(s);
+  });
+  return lines.join("\n");
+}
+document.getElementById("copy").addEventListener("click",async()=>{
+  const t=build(), st=document.getElementById("status"), out=document.getElementById("out");
+  try{await navigator.clipboard.writeText(t);st.textContent="Copiado ✔ cola no chat";out.style.display="none";}
+  catch(e){out.value=t;out.style.display="block";out.focus();out.select();st.textContent="Não deu para copiar automaticamente: seleciona o texto abaixo e copia";}
+});
+</script>
+</body></html>
