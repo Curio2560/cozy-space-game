@@ -272,3 +272,49 @@ TIP_NIGHT,"Night is coming: creatures will attack the outpost. Head back to the 
 TIP_MECH,"Night: board the mech on the plaza (Mech button). FIRE aims by itself; don't overheat the gun.","Noite: entra no mech na praça (botão Mech). DISPARAR aponta sozinho; não deixes a arma sobreaquecer."
 TIP_TURRET,"Build a laser turret in an empty slot: it shoots night creatures by itself.","Constrói uma torre laser num slot vazio: dispara sozinha nas criaturas da noite."
 TIP_REPAIR,"A building is damaged: stand next to it and press Action to repair it with ore.","Há um edifício danificado: vai lá e carrega em Ação para o reparar com minério."
+DBG_TAB_BOSS,Boss,Boss
+DBG_GOTO_LAIR,Go to the lair,Ir ao covil
+DBG_KEYCARDS,Give 3 KeyCards,Dar 3 KeyCards
+DBG_BOSS_START,Start boss fight,Começar a luta com o boss
+DBG_BOSS_LOW,Boss almost dead,Boss quase morto
+DBG_BOSS_WIN,Defeat the boss,Vencer o boss
+HINT_BOSS_START,Action: challenge the boss!,Ação: desafiar o boss!
+HINT_LAIR_LOCKED,The lair is locked (KeyCards %d/%d),O covil está fechado (KeyCards %d/%d)
+TOAST_BOSS_AWAKE,The boss is awake!,O boss acordou!
+BOSS_NAME,Boss · phase %d/3,Boss · fase %d/3
+TOAST_BOSS_PHASE_2,The boss calls for help!,O boss chama ajuda!
+TOAST_BOSS_PHASE_3,The boss is furious! Watch out for the big ring.,O boss está furioso! Cuidado com o anel grande.
+TOAST_BOSS_LOST,The mech broke down. The KeyCards stay: try again!,O mech avariou. Os KeyCards ficam: tenta outra vez!
+TOAST_BOSS_WON,You defeated the boss!,Venceste o boss!
+TOAST_BOSS_REWARD,+%d ¢ +%d data · planet core! The ship is waiting at the base.,+%d ¢ +%d dados · núcleo do planeta! A nave espera na base.
+HINT_SHIP,Action: board the ship,Ação: entrar na nave
+DEPART_TITLE,Leave this planet?,Partir deste planeta?
+DEPART_LEFT,"These stay behind: %s (worth %d ¢). Credits, data, crew and upgrades come with you.","Ficam no planeta: %s (valem %d ¢). Créditos, dados, tripulação e melhorias vão contigo."
+DEPART_NOTHING,"Nothing stays behind. Credits, data, crew and upgrades come with you.","Não fica nada para trás. Créditos, dados, tripulação e melhorias vão contigo."
+DEPART_SELL,Sell everything (+%d ¢) and leave,Vender tudo (+%d ¢) e partir
+DEPART_GO,Leave without selling,Partir sem vender
+DEPART_STAY,Stay,Ficar
+DBG_GALAXY_MAP,Leave for the next planet,Partir para o planeta seguinte
+GALAXY_SKIP,Skip,Saltar
+GALAXY_TAKEOFF,Taking off…,A descolar…
+GALAXY_TRAVEL,On the way to: %s,A caminho de: %s
+GALAXY_CHOOSE,Choose the next planet,Escolhe o planeta seguinte
+GALAXY_LANDING,Landing…,A aterrar…
+TOAST_ARRIVED,Welcome to the %s planet! (planet %d),Bem-vindo ao planeta %s! (planeta %d)
+BIOME_PRADO,Meadow,Prado
+BIOME_ACIDO,Acid,Ácido
+BIOME_LAVA,Lava,Lava
+TERMINAL_TAB_RESEARCH,Research,Pesquisa
+RESEARCH_HEAD,"Mothership on the radio: research stays with you from planet to planet. You have %d data.","Nave-mãe por rádio: a pesquisa fica contigo de planeta para planeta. Tens %d dados."
+RES_LINE_MECH_DAMAGE,Mech cannons,Canhões do mech
+RES_LINE_MECH_DAMAGE_INFO,+20% damage per level,+20% de dano por nível
+RES_LINE_MECH_ARMOR,Mech armour,Blindagem do mech
+RES_LINE_MECH_ARMOR_INFO,+25% health per level,+25% de vida por nível
+RES_LINE_TURRET_4,Turret level 4,Torre nível 4
+RES_LINE_TURRET_4_INFO,Laser turrets can be upgraded to level 4,As torres laser podem subir ao nível 4
+RES_LINE_BUILDING_HP,Reinforced buildings,Edifícios reforçados
+RES_LINE_BUILDING_HP_INFO,+30% building health per level,+30% de vida dos edifícios por nível
+TOAST_RESEARCHED,Research done: %s,Pesquisa feita: %s
+PAUSE_VOL_MUSIC,Music %d%%,Música %d%%
+PAUSE_VOL_SFX,Sounds %d%%,Sons %d%%
+DBG_NEXT_PLANET,Jump to the next planet,Saltar para o planeta seguinte

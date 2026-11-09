@@ -98,3 +98,27 @@ Sem contorno nas pilhas de pedras pequenas, nas plantas pequenas do prado e nos 
 ácido (seed 7, a pé): prado 201 → 194 dc, 440k → 426k tri; ácido 254 → 235 dc, 497k → 475k tri;
 lava sem mudança à vista do posto. Ganho pequeno (3–5%): o grosso dos triângulos é a relva
 densa, que fica (o utilizador pediu mais relva).
+
+## F5 — fecho (09 nov 2026, v0.5.0)
+
+### Luta com o boss (no PC; só contam draw calls e triângulos), seed 7, 1280×720
+
+| Bioma | Draw calls | Triângulos |
+|---|---|---|
+| Prado | 362 | 717k |
+| Ácido | 348 | 637k |
+| Lava | 354 | 536k |
+
+O boss em si custa pouco (~12k tri). O custo é a vista: a arena fica no ponto mais longe do
+posto, rodeada de floresta, e a câmara do boss vê quase meio planeta (raio 60 m). Baixar o
+`far` da câmara não ajuda até cortar os planetas do céu (só a 70 m: 289 dc · 568k).
+
+**Risco:** no telemóvel (45–52 fps com 485–600k) a luta deve ficar abaixo de 45 fps. Se for
+assim: passo 3 do plano (menos densidade ou distância de desenho das árvores e plantas por
+região) e passo 4 (LODs das árvores grandes), começando pela floresta à volta do covil.
+
+### O que a F5 acrescentou
+
+- Boss: um modelo com esqueleto ×3 + um disco de aviso; invocações (3 criaturas) na fase 2+.
+- Mapa da galáxia: desenho 2D por cima (o mundo 3D continua por baixo, escurecido).
+- Som: WAV mono 22 kHz (~5 MB no total), 10 leitores de efeitos + 2 de música.

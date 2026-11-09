@@ -32,6 +32,7 @@ const TURRET_LEVELS := [
 	{"damage": 5.0, "interval": 0.5, "range": 20.0},
 	{"damage": 8.0, "interval": 0.4, "range": 24.0},
 	{"damage": 12.0, "interval": 0.3, "range": 28.0},
+	{"damage": 16.0, "interval": 0.25, "range": 32.0}, # nível 4: pesquisa
 ]
 ## Vida dos edifícios (#41): a 0 ficam desligados (não produzem, nem dão nem gastam energia,
 ## as torres não disparam) até serem reparados com minério.
@@ -43,6 +44,7 @@ const REPAIR_ORE_PER_HP := 0.1 # 10 de minério para reparar 100 de vida
 const TURRET_UPGRADE := [
 	{Wallet.CREDITS: 300, Wallet.ORE: 10},
 	{Wallet.CREDITS: 600, Wallet.CRYSTAL: 5},
+	{Wallet.CREDITS: 1200, Wallet.CRYSTAL: 10},
 ]
 
 var slot_count := START_SLOTS
@@ -92,7 +94,7 @@ func build(i: int, kind: String, wallet: Wallet) -> bool:
 		return false
 	if not wallet.spend(BUILDINGS[kind].cost):
 		return false
-	slots[i] = {"kind": kind, "stored": 0, "progress": 0.0, "level": 1, "hp": max_hp_of(kind)}
+	slots[i] = {"kind": kind, "stored": 0, "progress": 0.0, "level": 1, "hp": max_hp_of(kind) * hp_factor}
 	changed.emit()
 	return true
 
@@ -100,7 +102,22 @@ static func max_hp_of(kind: String) -> float:
 	return TURRET_HP if kind == "turret" else MAX_HP
 
 func max_hp(i: int) -> float:
-	return max_hp_of(slots[i].kind)
+	return max_hp_of(slots[i].kind) * hp_factor
+
+## Pesquisa (#51): multiplicador da vida dos edifícios e nível máximo das torres.
+var hp_factor := 1.0
+var max_turret_level := 3
+
+## Muda o multiplicador da vida mantendo a fração de vida de cada edifício.
+func set_hp_factor(f: float) -> void:
+	if is_equal_approx(f, hp_factor):
+		return
+	var k := f / hp_factor
+	hp_factor = f
+	for s in slots:
+		if s.kind != "":
+			s.hp = float(s.get("hp", 0.0)) * k
+	changed.emit()
 
 func hp(i: int) -> float:
 	return float(slots[i].get("hp", max_hp(i)))
@@ -168,7 +185,7 @@ func level(i: int) -> int:
 
 ## Custo da próxima melhoria do slot `i` ({} se não der: não é torre ou já está no máximo).
 func upgrade_cost(i: int) -> Dictionary:
-	if i < 0 or i >= slot_count or slots[i].kind != "turret" or level(i) >= TURRET_LEVELS.size():
+	if i < 0 or i >= slot_count or slots[i].kind != "turret" or level(i) >= mini(max_turret_level, TURRET_LEVELS.size()):
 		return {}
 	return TURRET_UPGRADE[level(i) - 1]
 
@@ -254,7 +271,7 @@ func from_dict(d: Dictionary) -> void:
 		if i < arr.size() and arr[i] is Dictionary and (arr[i].get("kind", "") == "" or BUILDINGS.has(arr[i].kind)):
 			slots[i] = {"kind": str(arr[i].get("kind", "")), "stored": int(arr[i].get("stored", 0)), "progress": float(arr[i].get("progress", 0.0)),
 				"level": clampi(int(arr[i].get("level", 1)), 1, TURRET_LEVELS.size())}
-			var mh := max_hp_of(slots[i].kind)
+			var mh := max_hp_of(slots[i].kind) * hp_factor
 			slots[i].hp = clampf(float(arr[i].get("hp", mh)), 0.0, mh)
 		else:
 			slots[i] = _empty_slot()

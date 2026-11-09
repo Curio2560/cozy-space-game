@@ -14,6 +14,7 @@ const CAM_WRECK := {"distance": 15.0, "pitch": -0.42, "focus_height": 2.0, "auto
 const CAM_FOOT := {"distance": 6.5, "pitch": -0.42, "focus_height": 1.2, "auto_return_delay": 1.6}
 const CAM_ROVER := {"distance": 9.5, "pitch": -0.36, "focus_height": 1.6, "auto_return_delay": 0.35}
 const CAM_MECH := {"distance": 11.5, "pitch": -0.4, "focus_height": 3.0, "auto_return_delay": 0.5}
+const CAM_BOSS := {"distance": 12.5, "pitch": -0.55, "focus_height": 3.0, "auto_return_delay": 0.5}
 const MECH_ENTER_DISTANCE := 5.5
 const MECH_PARK_M := 12.0 # o mech estaciona a esta distância do centro da base (na estrada da praça)
 
@@ -48,6 +49,7 @@ var farm: FarmController
 var tutorial: Tutorial
 var upgrades := Upgrades.new()
 var crew := Crew.new()
+var research := Research.new()
 var _tut_walk := 0.0
 var _tut_last := Vector3.INF
 var _tut_jumped := false
@@ -60,6 +62,13 @@ var day_clock: DayClock
 var defense: DefenseController
 var mech: Mech
 var morning_screen: MorningScreen
+var boss_fight: BossFight
+## Índice do planeta na galáxia (0 = o primeiro); faz crescer o boss e as noites.
+var planet_index := 0
+var dock: ShipDock
+var galaxy := Galaxy.new()
+var galaxy_map: GalaxyMap
+var traveling := false
 var morning_open := false
 var piloting := false
 var ambient: AmbientParticles
@@ -121,6 +130,23 @@ func _ready() -> void:
 	defense.name = "Defense"
 	add_child(defense)
 	defense.setup(self, _hud_layer)
+	boss_fight = BossFight.new()
+	boss_fight.name = "BossFight"
+	add_child(boss_fight)
+	boss_fight.setup(self, _hud_layer)
+	boss_fight.won.connect(_on_boss_won)
+	dock = ShipDock.new()
+	dock.name = "ShipDock"
+	add_child(dock)
+	dock.setup(self, _hud_layer)
+	dock.depart.connect(travel)
+	var map_layer := CanvasLayer.new()
+	map_layer.layer = 55
+	add_child(map_layer)
+	galaxy_map = GalaxyMap.new()
+	galaxy_map.name = "GalaxyMap"
+	map_layer.add_child(galaxy_map)
+	galaxy_map.finished.connect(arrive)
 	bars = StatusBars.new()
 	_hud_layer.add_child(bars)
 	bars.add_bar("rover", "BAR_ROVER", Color("ff9f5a"))
@@ -128,7 +154,7 @@ func _ready() -> void:
 	bars.set_value("rover", rover.health, rover.max_health)
 	bars.add_bar("mech", "BAR_MECH", Color("9fd36b"))
 	mech.health_changed.connect(func(v: float, m: float) -> void: bars.set_value("mech", v, m))
-	bars.set_value("mech", mech.health, Mech.MAX_HEALTH)
+	bars.set_value("mech", mech.health, mech.max_health)
 	bars.add_bar("gun", "BAR_GUN_HEAT", Color("ffcf4a"))
 	bars.add_bar("health", "BAR_HEALTH", Color("ff6b8a"))
 	bars.add_bar("o2", "BAR_O2", Color("6fd6ff"))
@@ -147,16 +173,24 @@ func _ready() -> void:
 	crew_page.run = self
 	outpost.menu.add_page("TERMINAL_TAB_CREW", crew_page)
 	crew.changed.connect(apply_crew)
+	var res_page := ResearchPage.new()
+	res_page.run = self
+	outpost.menu.add_page("TERMINAL_TAB_RESEARCH", res_page)
+	research.changed.connect(apply_research)
 	crew.leveled.connect(func(m: String, lv: int) -> void:
 		deliveries.hud.toast(tr("TOAST_CREW_LEVEL") % [tr("CREW_" + m.to_upper()), lv]))
-	cycle.dusk_warning.connect(func() -> void: deliveries.hud.toast(tr("TOAST_DUSK")))
+	cycle.dusk_warning.connect(func() -> void:
+		deliveries.hud.toast(tr("TOAST_DUSK"))
+		Sound.play("warn"))
 	cycle.night_started.connect(func(d: int) -> void:
 		deliveries.hud.toast(tr("TOAST_NIGHT"))
+		Sound.music("night")
 		defense.start_night(d)
 		_set_night_hostile(true)
 		autosave())
 	cycle.morning.connect(func(d: int) -> void:
 		deliveries.hud.toast(tr("TOAST_MORNING") % d)
+		Sound.music("day")
 		if piloting:
 			exit_mech()
 		mech.repair_full()
@@ -170,10 +204,12 @@ func _ready() -> void:
 	if not saved.is_empty():
 		var pl: Dictionary = saved.get("planet", {})
 		seed_value = int(pl.get("seed", seed_value))
+		planet_index = int(pl.get("index", 0))
 		biome = str(pl.get("biome", biome))
 	start(seed_value)
 	if not saved.is_empty():
 		apply_state(saved)
+	Sound.music("night" if cycle.is_night() else "day")
 	_register_debug()
 	builder.setup(self)
 	var args := OS.get_cmdline_user_args() # argumentos só para capturas de ecrã no PC
@@ -241,6 +277,23 @@ func _ready() -> void:
 			c0.raid_target = func() -> Array: return []
 	if "damaged" in args: # edifício do slot 0 danificado (capturas da barra de vida)
 		outpost.state.damage(0, 70.0)
+	if "galaxy" in args or "galaxy2" in args: # mapa da galáxia (capturas)
+		galaxy.index = 2 if "galaxy2" in args else 0
+		galaxy_map.begin(galaxy, "lava" if "galaxy2" in args else biome)
+		galaxy_map.t = 3.5
+		galaxy_map.set_process("galaxy2" in args)
+	if "ship" in args: # boss vencido, nave na base (capturas)
+		boss_fight.beaten = true
+		dock.refresh()
+		var sp := dock.ship_position()
+		var u0 := (sp - planet.global_position).normalized()
+		player.place_at(sp + dock.ship.global_basis.z * 12.0 + u0 * 1.0)
+		player.facing = (sp - player.global_position - u0 * (sp - player.global_position).dot(u0)).normalized()
+		camera.set_target(player, player.facing)
+	if "boss" in args: # luta com o boss a decorrer (capturas)
+		await get_tree().create_timer(0.3).timeout
+		await boss_fight.start()
+		Input.action_press("jump")
 	if "mech" in args: # noite, dentro do mech, a disparar (capturas)
 		cycle.skip_to_night()
 		player.place_at(mech.global_position + mech.facing * 3.0 + mech.up() * 0.5)
@@ -331,11 +384,31 @@ func buy_upgrade(line: String) -> bool:
 func apply_crew() -> void:
 	player.set_crew(crew.active)
 	mech.set_crew(crew.active)
+	if dock:
+		dock.refresh()
 	player.walk_factor = crew.walk_factor()
 	player.jump_factor = crew.jump_factor()
 	rover.drive_factor = crew.drive_factor()
 	if farm:
 		farm.farm.growth_speed = crew.farm_speed()
+
+## Efeitos da pesquisa (ficam de planeta para planeta): mech, torres, vida dos edifícios.
+func apply_research() -> void:
+	var full := mech.health >= mech.max_health
+	mech.max_health = Mech.MAX_HEALTH * research.mech_health_factor()
+	if full:
+		mech.health = mech.max_health
+	mech.damage_factor = research.mech_damage_factor()
+	if outpost:
+		outpost.state.max_turret_level = research.max_turret_level()
+		outpost.state.set_hp_factor(research.building_hp_factor())
+
+func buy_research(line: String) -> bool:
+	if not research.buy(line, wallet):
+		return false
+	deliveries.hud.toast(tr("TOAST_RESEARCHED") % tr("RES_LINE_" + line.to_upper()))
+	autosave()
+	return true
 
 func apply_upgrades() -> void:
 	rover.upgrade_speed = upgrades.speed_factor()
@@ -347,7 +420,8 @@ func apply_upgrades() -> void:
 ## Estado do jogo para o save. Cada sistema acrescenta a sua secção.
 func save_state() -> Dictionary:
 	return {
-		"planet": {"seed": seed_value, "biome": biome},
+		"planet": {"seed": seed_value, "biome": biome, "index": planet_index},
+		"boss": {"beaten": boss_fight.beaten},
 		"wallet": wallet.to_dict(),
 		"deliveries": deliveries.session.to_dict(),
 		"outpost": outpost.state.to_dict(),
@@ -355,7 +429,9 @@ func save_state() -> Dictionary:
 		"tutorial": tutorial.to_dict(),
 		"upgrades": upgrades.to_dict(),
 		"crew": crew.to_dict(),
+		"research": research.to_dict(),
 		"cycle": cycle.to_dict(),
+		"galaxy": galaxy.to_dict(),
 	}
 
 ## Repõe as secções de um save (o planeta já foi gerado com a seed guardada).
@@ -363,6 +439,8 @@ func apply_state(state: Dictionary) -> void:
 	wallet.from_dict(state.get("wallet", {}))
 	deliveries.session.from_dict(state.get("deliveries", {}))
 	deliveries._update_keycards()
+	if state.has("research"):
+		research.from_dict(state.research) # antes do posto: a vida guardada já tem o multiplicador
 	if state.has("upgrades"):
 		upgrades.from_dict(state.upgrades) # antes do posto: os slots extra vêm daqui
 	if state.has("outpost"):
@@ -373,11 +451,52 @@ func apply_state(state: Dictionary) -> void:
 		tutorial.from_dict(state.tutorial)
 	if state.has("crew"):
 		crew.from_dict(state.crew)
+	galaxy.from_dict(state.get("galaxy", {"index": planet_index}))
+	planet_index = galaxy.index
+	boss_fight.beaten = bool(state.get("boss", {}).get("beaten", false))
+	dock.refresh()
 	if state.has("cycle"):
 		cycle.from_dict(state.cycle)
 		if cycle.is_night():
 			defense.resume_night(cycle.day, cycle.time - DayCycle.DAY_LEN)
 			_set_night_hostile(true)
+
+## Partir na nave: escurece e mostra a viagem no mapa da galáxia.
+func travel() -> void:
+	if traveling:
+		return
+	traveling = true
+	autosave()
+	Sound.play("ship")
+	await _fade(1.0)
+	galaxy_map.begin(galaxy, biome)
+
+## Chegada ao planeta escolhido: minério, cristal e colheitas ficaram para trás; créditos,
+## dados, tripulação e melhorias vêm. Posto novo, dia 1.
+func arrive(option: Dictionary) -> void:
+	galaxy.advance(option)
+	planet_index = galaxy.index
+	biome = str(option.biome)
+	for k in DepartDialog.LEFT_BEHIND:
+		var n := wallet.amount(k)
+		if n > 0:
+			wallet.spend({k: n})
+	cycle.from_dict({})
+	cycle.paused = false
+	start(int(option.seed))
+	deliveries.hud.toast(tr("TOAST_ARRIVED") % [tr("BIOME_" + biome.to_upper()), planet_index + 1])
+	traveling = false
+	autosave()
+	await _fade(0.0)
+
+## Boss vencido: recompensa, núcleo do planeta (abre a partida) e a nave aparece na base.
+func _on_boss_won() -> void:
+	var r := BossRules.reward(planet_index)
+	for k in r:
+		wallet.add(k, int(r[k]))
+	deliveries.hud.toast(tr("TOAST_BOSS_REWARD") % [r[Wallet.CREDITS], r[Wallet.DATA]])
+	dock.refresh()
+	autosave()
 
 ## Ecrã da manhã: pára o relógio e o jogador até "Começar o dia".
 func open_morning(rep: Dictionary) -> void:
@@ -419,12 +538,15 @@ func new_game() -> void:
 	wallet.from_dict({})
 	upgrades.from_dict({})
 	crew.from_dict({})
+	research.from_dict({})
 	cycle.from_dict({})
+	galaxy.from_dict({"seed": randi() % 100000, "index": 0})
+	planet_index = 0
 	defense.end_night()
 	_set_night_hostile(false)
 	tutorial.restart()
 	biome = "prado"
-	start(randi() % 100000)
+	start(int(galaxy.first().seed))
 
 ## Gera o planeta `s` e põe o jogador junto ao posto avançado.
 func start(s: int) -> void:
@@ -468,14 +590,20 @@ func start(s: int) -> void:
 			outpost.state.add_slots()
 		outpost.rebuild()
 	apply_upgrades()
+	apply_research()
 	if farm:
 		farm.start_planet()
+	if boss_fight:
+		boss_fight.reset()
+	if dock:
+		dock.refresh()
 	if defense:
 		defense.end_night()
 		if cycle.is_night():
 			defense.start_night(cycle.day)
 	apply_crew()
 	deliveries.session.order_delivered.connect(func(_o: DeliveryOrder, on_time: bool) -> void:
+		Sound.play("coin")
 		crew.on_delivery(on_time)
 		autosave())
 	autosave()
@@ -521,6 +649,8 @@ func all_creatures() -> Array:
 	var out: Array = creatures.duplicate()
 	if defense:
 		out.append_array(defense.raiders)
+	if boss_fight:
+		out.append_array(boss_fight.fighters())
 	return out
 
 ## Uma criatura apanhou o jogador (ou o rover): empurra, tira vida e pode estragar ou roubar a encomenda.
@@ -697,6 +827,9 @@ func exit_mech() -> void:
 
 ## O mech ficou sem vida: o jogador sai (amanhã está reparado).
 func _on_mech_broken() -> void:
+	if boss_fight.in_fight():
+		boss_fight.on_mech_broken()
+		return
 	deliveries.hud.toast(tr("TOAST_MECH_BROKEN"))
 	if piloting:
 		exit_mech()
@@ -712,6 +845,7 @@ func _on_rover_destroyed() -> void:
 	respawning = true
 	explosion = RoverExplosion.new()
 	add_child(explosion)
+	Sound.play("boom")
 	explosion.start(rover.global_position, rover.planet_up(), planet.global_position, rover)
 	rover.wreck()
 	if driving:
@@ -896,7 +1030,7 @@ func _physics_process(delta: float) -> void:
 		_hint.text = ""
 		return
 	_vehicle_btn.update(Input.is_action_pressed("vehicle"), delta)
-	if _vehicle_btn.consume() and not deliveries.board_open and not outpost.menu_open and not morning_open:
+	if _vehicle_btn.consume() and not deliveries.board_open and not outpost.menu_open and not morning_open and not boss_fight.in_fight() and not dock.dialog_open:
 		if driving:
 			exit_rover()
 		elif piloting:
@@ -910,18 +1044,24 @@ func _physics_process(delta: float) -> void:
 		rover.throttle = m.y
 		rover.steer = m.x
 	var h := tr("HINT_EXIT_ROVER") if driving else (tr("HINT_ENTER_ROVER") if can_enter_rover() else "")
-	if piloting:
+	if boss_fight.in_fight():
+		h = ""
+	elif boss_fight.hint() != "":
+		h = boss_fight.hint()
+	elif dock.hint() != "":
+		h = dock.hint()
+	elif piloting:
 		h = tr("HINT_EXIT_MECH")
 	elif can_enter_mech():
 		h = tr("HINT_ENTER_MECH")
 	elif near_mech_by_day() and h == "":
 		h = tr("HINT_MECH_NIGHT_ONLY")
-	bars.show_bar("mech", piloting or (mech.health < Mech.MAX_HEALTH and cycle.is_night()))
+	bars.show_bar("mech", piloting or (mech.health < mech.max_health and cycle.is_night()))
 	bars.show_bar("gun", piloting)
 	var ov := {}
 	if piloting:
 		ov["jump"] = "BTN_FIRE"
-	if piloting or can_enter_mech():
+	if (piloting or can_enter_mech()) and not boss_fight.in_fight():
 		ov["vehicle"] = "BTN_MECH"
 	if ov != touch.label_override:
 		touch.label_override = ov
@@ -932,7 +1072,7 @@ func _physics_process(delta: float) -> void:
 	var oh := outpost.hint()
 	if oh != "":
 		dh = oh # o terminal está mesmo ao lado: tem prioridade sobre o quadro
-	_hint.text = "" if deliveries.board_open or outpost.menu_open or morning_open else (dh if dh != "" and not in_vehicle() else (h if h != "" else dh))
+	_hint.text = "" if deliveries.board_open or outpost.menu_open or morning_open or dock.dialog_open else (dh if dh != "" and not in_vehicle() else (h if h != "" else dh))
 
 var _env: Environment
 var sky_planets: SkyPlanets
@@ -1210,4 +1350,23 @@ func _register_debug() -> void:
 		rover.invincible = on
 		mech.invincible = on)
 	DebugMenu.add_slider(self, "DBG_TIME_SPEED", 1.0, 30.0, 1.0, 1.0, func(v: float) -> void: cycle.speed = v)
+	DebugMenu.default_tab = "DBG_TAB_BOSS"
+	DebugMenu.add_button(self, "DBG_GOTO_LAIR", func() -> void:
+		var d := planet.data
+		teleport(d.toward_point(d.lair_door, d.lair_dir, -2.0)))
+	DebugMenu.add_button(self, "DBG_KEYCARDS", func() -> void:
+		deliveries.session.keycards = DeliverySession.KEYCARDS_PER_PLANET
+		deliveries._update_keycards())
+	DebugMenu.add_button(self, "DBG_BOSS_START", boss_fight.start)
+	DebugMenu.add_button(self, "DBG_GALAXY_MAP", func() -> void:
+		boss_fight.beaten = true
+		travel())
+	DebugMenu.add_button(self, "DBG_NEXT_PLANET", func() -> void:
+		arrive(galaxy.next_options()[0]))
+	DebugMenu.add_button(self, "DBG_BOSS_LOW", func() -> void:
+		if is_instance_valid(boss_fight.boss):
+			boss_fight.boss.take_hit(boss_fight.boss.health - 40.0))
+	DebugMenu.add_button(self, "DBG_BOSS_WIN", func() -> void:
+		if is_instance_valid(boss_fight.boss):
+			boss_fight.boss.take_hit(1e9))
 	DebugMenu.default_tab = DebugMenu.GENERAL

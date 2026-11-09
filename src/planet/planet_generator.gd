@@ -7,6 +7,9 @@ const POST_COUNT := 3
 const POST_CLEAR_M := 10.0 # raio aplanado e sem decoração à volta de cada posto
 const OUTPOST_CLEAR_M := 27.0 # base + praça + anel de slots do posto (#32)
 const LAIR_CLEAR_M := 10.0
+## Arena do boss (#46): clareira plana ao lado do covil, do lado oposto ao posto avançado.
+const ARENA_OFFSET_M := 18.0
+const ARENA_CLEAR_M := 15.0
 const MAX_SLOPE_DEG := 28.0
 
 ## Biomas: lista de tipos de decoração (repetir um tipo em `kinds` aumenta o seu peso).
@@ -662,6 +665,9 @@ static func _place_spots(d: PlanetData, rng: RandomNumberGenerator, spin: Basis)
 		d.flat_spots.append({"dir": p, "angle": POST_CLEAR_M / d.radius, "h": d.height_at(p)})
 	d.flat_spots.append({"dir": d.outpost_dir, "angle": OUTPOST_CLEAR_M / d.radius, "h": d.height_at(d.outpost_dir)})
 	d.flat_spots.append({"dir": d.lair_dir, "angle": LAIR_CLEAR_M / d.radius, "h": d.height_at(d.lair_dir)})
+	d.arena_dir = d.toward_point(d.lair_dir, d.outpost_dir, -ARENA_OFFSET_M)
+	d.arena_radius_m = ARENA_CLEAR_M - 2.0
+	d.flat_spots.append({"dir": d.arena_dir, "angle": ARENA_CLEAR_M / d.radius, "h": d.height_at(d.lair_dir)})
 
 ## Dentro (ou a tocar) uma zona aplanada (postos, posto avançado, covil)?
 static func _in_spot(d: PlanetData, dir: Vector3, clear: float) -> bool:

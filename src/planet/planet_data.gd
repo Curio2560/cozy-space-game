@@ -149,6 +149,9 @@ var outpost_slots: Array[Vector3] = []
 ## Talhões da quinta (direções), no mesmo anel que os slots.
 var farm_plots: Array[Vector3] = []
 var lair_dir: Vector3
+## Arena do boss: centro e raio útil (m).
+var arena_dir: Vector3
+var arena_radius_m := 13.0
 ## Zonas aplanadas: [{dir, angle (rad), h}] — postos, posto avançado e covil.
 var flat_spots: Array[Dictionary] = []
 

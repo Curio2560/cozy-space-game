@@ -100,3 +100,25 @@
 12. Ecrã da manhã: resumo da noite (vagas, danos, créditos) + escolher tripulante + 3 encomendas do dia + plantar.
 13. Cada vaga vencida dá créditos e dados de pesquisa; noite perfeita (sem danos) dá bónus.
 14. DBG: saltar para a noite / manhã, acelerar o tempo, mandar uma vaga já, invencível.
+
+## Ronda 7 — F5: boss e galáxia (09 nov 2026) — PROVISÓRIAS
+O utilizador pôs o grill em espera e pediu para continuar: seguem-se as recomendadas; o que
+mudar quando responder ao grill corrige-se depois.
+
+1. Ordem: covil e arena → boss → vitória e partida → mapa da galáxia → planeta seguinte → pesquisa.
+2. Com os 3 KeyCards, Ação na porta do covil → aviso → o boss sai para a arena ao lado; entra-se num mech que aparece lá.
+3. Luta a qualquer hora; o relógio pára durante a luta (sem vagas ao mesmo tempo).
+4. Boss: monstro grande do pack ×3, cor própria, diferente em cada bioma.
+5. 3 fases pela vida: golpes simples → chama criaturas → mais rápido e ataque em área.
+6. Ataques avisados com um círculo vermelho no chão; foge-se com o joystick.
+7. Perder: o mech avaria e acorda-se no posto; os KeyCards ficam; tenta-se outra vez quando se quiser (o boss recupera).
+8. Recompensa: muitos créditos + dados + núcleo do planeta (abre a partida).
+9. Depois do boss a nave aparece na base; parte-se quando se quiser, com aviso para vender antes.
+10. Galáxia: Prado → Ácido → Lava fixos; depois escolhe-se entre 2 planetas aleatórios.
+11. Transição: descolar → mapa com a nave a viajar → aterrar; ~8 s, com Saltar.
+12. Pesquisa: separador no terminal; compras permanentes.
+13. Pesquisas da F5: mech (dano e vida), torres nível 4, edifícios com mais vida.
+14. Cada planeta novo começa +2 noites mais forte; o boss também cresce.
+15. Só para a frente (save guarda o planeta atual e o progresso da galáxia).
+16. Sons CC0 (tiros, golpes, boss, nave) + música calma de dia e outra de noite.
+17. DBG: ir ao covil, dar 3 KeyCards, boss com pouca vida, vencer o boss, abrir o mapa, saltar de planeta.

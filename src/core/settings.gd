@@ -33,5 +33,21 @@ func set_locale(loc: String, save := true) -> void:
 		_cfg.save(PATH)
 	locale_changed.emit(loc)
 
+## Volume (0..1) de "music" ou "sfx".
+func get_volume(kind: String) -> float:
+	return clampf(float(_cfg.get_value("audio", kind, 0.8)), 0.0, 1.0)
+
+func set_volume(kind: String, v: float) -> void:
+	_cfg.set_value("audio", kind, clampf(v, 0.0, 1.0))
+	_cfg.save(PATH)
+
+## Próximo passo do volume (0 → 25 → 50 → 75 → 100 → 0 %), para um botão no menu.
+func cycle_volume(kind: String) -> float:
+	var v := get_volume(kind) + 0.25
+	if v > 1.01:
+		v = 0.0
+	set_volume(kind, v)
+	return v
+
 func cycle_locale() -> void:
 	set_locale(LOCALES[(LOCALES.find(locale()) + 1) % LOCALES.size()])

@@ -36,6 +36,7 @@ func setup(p_run: Node3D, hud_layer: CanvasLayer) -> void:
 	_rng.randomize()
 	waves.spawn.connect(_spawn_wave)
 	waves.wave_started.connect(func(w: int, n: int) -> void:
+		Sound.play("wave")
 		run.deliveries.hud.toast(tr("TOAST_WAVE") % [w, NightWaves.WAVES, n]))
 	waves.wave_cleared.connect(_on_wave_cleared)
 	beams = Beams.new()
@@ -65,7 +66,8 @@ func start_night(n: int) -> void:
 	night_damage = 0.0
 	night_broken = 0
 	night_gain = {}
-	waves.start_night(n)
+	# Cada planeta conta como mais noites (dificuldade da galáxia).
+	waves.start_night(n + (run.galaxy.night_offset() if run.galaxy else 0))
 
 ## Retoma uma noite a meio (save carregado de noite): salta as vagas cujo tempo já passou.
 func resume_night(n: int, night_clock: float) -> void:
@@ -93,7 +95,17 @@ func clear() -> void:
 			tw.tween_callback(c.queue_free)
 	raiders.clear()
 
+## Durante a luta com o boss: sem vagas (as criaturas da noite vão-se embora).
+var suspended := false
+
+func suspend(on: bool) -> void:
+	suspended = on
+	if on:
+		clear()
+
 func _physics_process(delta: float) -> void:
+	if suspended:
+		return
 	waves.tick(delta)
 	_tick_turrets(delta)
 
@@ -121,6 +133,7 @@ func _tick_turrets(delta: float) -> void:
 			_turret_cd[i] = stats.interval
 			var up: Vector3 = (c.global_position - run.planet.global_position).normalized()
 			beams.fire(head.global_position, c.global_position + up * 0.9)
+			Sound.play("laser", -8.0)
 			c.take_hit(stats.damage)
 
 ## Roda a cabeça da torre (só à volta da vertical) para o canhão (-X do modelo) apontar.
