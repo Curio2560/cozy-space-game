@@ -1104,7 +1104,7 @@ func _build_ui() -> void:
 func _perf_log() -> void:
 	for i in 6:
 		await get_tree().create_timer(1.0).timeout
-		print("perf ", "condução " if driving else "a pé ", DebugMenu.stats_text())
+		print("perf ", "condução " if driving else ("mech " if piloting else "a pé "), DebugMenu.stats_text())
 
 func _update_touch_visibility() -> void:
 	if is_instance_valid(touch):
@@ -1201,5 +1201,9 @@ func _register_debug() -> void:
 	DebugMenu.add_button(self, "DBG_KILL_WAVE", func() -> void:
 		for c in defense.raiders.duplicate():
 			c.take_hit(9999.0))
+	DebugMenu.add_toggle(self, "DBG_INVINCIBLE", false, func(on: bool) -> void:
+		vitals.invincible = on
+		rover.invincible = on
+		mech.invincible = on)
 	DebugMenu.add_slider(self, "DBG_TIME_SPEED", 1.0, 30.0, 1.0, 1.0, func(v: float) -> void: cycle.speed = v)
 	DebugMenu.default_tab = DebugMenu.GENERAL

@@ -38,8 +38,11 @@ func tick(delta: float) -> void:
 	if before[0] != health or before[1] != o2:
 		changed.emit()
 
+## DBG: invencível (não perde vida).
+var invincible := false
+
 func damage(amount: float) -> void:
-	if down or amount <= 0.0:
+	if down or amount <= 0.0 or invincible:
 		return
 	_hurt(amount)
 	changed.emit()

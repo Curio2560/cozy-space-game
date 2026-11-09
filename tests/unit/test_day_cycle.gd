@@ -112,3 +112,9 @@ func test_cycle_runs_in_game_and_is_saved() -> void:
 	assert_eq(run.deliveries.session.pay_factor, DayCycle.NIGHT_PAY)
 	assert_true(run.save_state().has("cycle"))
 	assert_true(run.day_clock.visible)
+
+func test_invincible_toggle_blocks_damage() -> void:
+	var v := PlayerVitals.new()
+	v.invincible = true
+	v.damage(50.0)
+	assert_eq(v.health, PlayerVitals.MAX_HEALTH)

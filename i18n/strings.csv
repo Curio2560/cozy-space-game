@@ -267,3 +267,4 @@ MORNING_FARM,Farm,Quinta
 MORNING_FARM_FULL,All plots are growing.,Todos os talhões estão a crescer.
 MORNING_PLANT,Plant %s ×%d (%d ¢),Plantar %s ×%d (%d ¢)
 MORNING_START,Start the day,Começar o dia
+DBG_INVINCIBLE,Invincible,Invencível

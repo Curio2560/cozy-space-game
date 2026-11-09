@@ -234,8 +234,11 @@ func impact_to_damage(speed: float) -> float:
 	return clampf((speed - safe_impact - impact_bonus) * impact_damage, 0.0, max_impact_damage)
 
 ## Tira vida ao rover (embates, ácido, criaturas). A 0 emite `destroyed` (uma vez).
+## DBG: invencível.
+var invincible := false
+
 func take_damage(amount: float) -> void:
-	if not alive or amount <= 0.0:
+	if not alive or amount <= 0.0 or invincible:
 		return
 	health = maxf(health - amount * damage_factor, 0.0)
 	health_changed.emit(health, max_health)

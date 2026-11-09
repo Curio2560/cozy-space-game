@@ -92,8 +92,11 @@ func place_at(pos: Vector3, p_facing := Vector3.ZERO) -> void:
 func alive() -> bool:
 	return health > 0.0
 
+## DBG: invencível.
+var invincible := false
+
 func take_damage(dmg: float) -> void:
-	if not alive():
+	if not alive() or invincible:
 		return
 	health = maxf(health - dmg, 0.0)
 	health_changed.emit(health, MAX_HEALTH)
