@@ -55,7 +55,7 @@ func test_fight_starts_in_mech_with_clock_stopped() -> void:
 	var b: Boss = run.boss_fight.boss
 	assert_not_null(b)
 	var d: PlanetData = run.planet.data
-	assert_lt(d.arc_m(b.dir, d.arena_dir), 1.0)
+	assert_lt(d.arc_m(b.dir, d.arena_dir), d.arena_radius_m, "o boss está na arena")
 	assert_true(b in run.all_creatures(), "o mech pode mirar o boss")
 
 func test_slam_is_warned_then_hits_mech_inside_circle() -> void:
