@@ -286,3 +286,11 @@ TOAST_BOSS_PHASE_2,The boss calls for help!,O boss chama ajuda!
 TOAST_BOSS_PHASE_3,The boss is furious! Watch out for the big ring.,O boss está furioso! Cuidado com o anel grande.
 TOAST_BOSS_LOST,The mech broke down. The KeyCards stay: try again!,O mech avariou. Os KeyCards ficam: tenta outra vez!
 TOAST_BOSS_WON,You defeated the boss!,Venceste o boss!
+TOAST_BOSS_REWARD,+%d ¢ +%d data · planet core! The ship is waiting at the base.,+%d ¢ +%d dados · núcleo do planeta! A nave espera na base.
+HINT_SHIP,Action: board the ship,Ação: entrar na nave
+DEPART_TITLE,Leave this planet?,Partir deste planeta?
+DEPART_LEFT,"These stay behind: %s (worth %d ¢). Credits, data, crew and upgrades come with you.","Ficam no planeta: %s (valem %d ¢). Créditos, dados, tripulação e melhorias vão contigo."
+DEPART_NOTHING,"Nothing stays behind. Credits, data, crew and upgrades come with you.","Não fica nada para trás. Créditos, dados, tripulação e melhorias vão contigo."
+DEPART_SELL,Sell everything (+%d ¢) and leave,Vender tudo (+%d ¢) e partir
+DEPART_GO,Leave without selling,Partir sem vender
+DEPART_STAY,Stay,Ficar

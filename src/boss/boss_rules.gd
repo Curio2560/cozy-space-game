@@ -24,6 +24,10 @@ const SUMMON_EVERY := 14.0
 const SPEED := [2.2, 2.4, 3.4]
 const KEEP_DISTANCE := 3.5
 
+## Recompensa por vencer o boss do planeta `planet_index`.
+static func reward(planet_index: int) -> Dictionary:
+	return {Wallet.CREDITS: 600 + 300 * planet_index, Wallet.DATA: 12 + 6 * planet_index}
+
 ## Vida do boss no planeta `planet_index` (0 = o primeiro).
 static func health(planet_index: int) -> float:
 	return BASE_HEALTH * (1.0 + 0.35 * planet_index)

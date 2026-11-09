@@ -64,6 +64,7 @@ var morning_screen: MorningScreen
 var boss_fight: BossFight
 ## Índice do planeta na galáxia (0 = o primeiro); faz crescer o boss e as noites.
 var planet_index := 0
+var dock: ShipDock
 var morning_open := false
 var piloting := false
 var ambient: AmbientParticles
@@ -129,6 +130,11 @@ func _ready() -> void:
 	boss_fight.name = "BossFight"
 	add_child(boss_fight)
 	boss_fight.setup(self, _hud_layer)
+	boss_fight.won.connect(_on_boss_won)
+	dock = ShipDock.new()
+	dock.name = "ShipDock"
+	add_child(dock)
+	dock.setup(self, _hud_layer)
 	bars = StatusBars.new()
 	_hud_layer.add_child(bars)
 	bars.add_bar("rover", "BAR_ROVER", Color("ff9f5a"))
@@ -178,6 +184,7 @@ func _ready() -> void:
 	if not saved.is_empty():
 		var pl: Dictionary = saved.get("planet", {})
 		seed_value = int(pl.get("seed", seed_value))
+		planet_index = int(pl.get("index", 0))
 		biome = str(pl.get("biome", biome))
 	start(seed_value)
 	if not saved.is_empty():
@@ -249,6 +256,14 @@ func _ready() -> void:
 			c0.raid_target = func() -> Array: return []
 	if "damaged" in args: # edifício do slot 0 danificado (capturas da barra de vida)
 		outpost.state.damage(0, 70.0)
+	if "ship" in args: # boss vencido, nave na base (capturas)
+		boss_fight.beaten = true
+		dock.refresh()
+		var sp := dock.ship_position()
+		var u0 := (sp - planet.global_position).normalized()
+		player.place_at(sp + dock.ship.global_basis.z * 12.0 + u0 * 1.0)
+		player.facing = (sp - player.global_position - u0 * (sp - player.global_position).dot(u0)).normalized()
+		camera.set_target(player, player.facing)
 	if "boss" in args: # luta com o boss a decorrer (capturas)
 		await get_tree().create_timer(0.3).timeout
 		await boss_fight.start()
@@ -343,6 +358,8 @@ func buy_upgrade(line: String) -> bool:
 func apply_crew() -> void:
 	player.set_crew(crew.active)
 	mech.set_crew(crew.active)
+	if dock:
+		dock.refresh()
 	player.walk_factor = crew.walk_factor()
 	player.jump_factor = crew.jump_factor()
 	rover.drive_factor = crew.drive_factor()
@@ -359,7 +376,8 @@ func apply_upgrades() -> void:
 ## Estado do jogo para o save. Cada sistema acrescenta a sua secção.
 func save_state() -> Dictionary:
 	return {
-		"planet": {"seed": seed_value, "biome": biome},
+		"planet": {"seed": seed_value, "biome": biome, "index": planet_index},
+		"boss": {"beaten": boss_fight.beaten},
 		"wallet": wallet.to_dict(),
 		"deliveries": deliveries.session.to_dict(),
 		"outpost": outpost.state.to_dict(),
@@ -385,11 +403,22 @@ func apply_state(state: Dictionary) -> void:
 		tutorial.from_dict(state.tutorial)
 	if state.has("crew"):
 		crew.from_dict(state.crew)
+	boss_fight.beaten = bool(state.get("boss", {}).get("beaten", false))
+	dock.refresh()
 	if state.has("cycle"):
 		cycle.from_dict(state.cycle)
 		if cycle.is_night():
 			defense.resume_night(cycle.day, cycle.time - DayCycle.DAY_LEN)
 			_set_night_hostile(true)
+
+## Boss vencido: recompensa, núcleo do planeta (abre a partida) e a nave aparece na base.
+func _on_boss_won() -> void:
+	var r := BossRules.reward(planet_index)
+	for k in r:
+		wallet.add(k, int(r[k]))
+	deliveries.hud.toast(tr("TOAST_BOSS_REWARD") % [r[Wallet.CREDITS], r[Wallet.DATA]])
+	dock.refresh()
+	autosave()
 
 ## Ecrã da manhã: pára o relógio e o jogador até "Começar o dia".
 func open_morning(rep: Dictionary) -> void:
@@ -484,6 +513,8 @@ func start(s: int) -> void:
 		farm.start_planet()
 	if boss_fight:
 		boss_fight.reset()
+	if dock:
+		dock.refresh()
 	if defense:
 		defense.end_night()
 		if cycle.is_night():
@@ -915,7 +946,7 @@ func _physics_process(delta: float) -> void:
 		_hint.text = ""
 		return
 	_vehicle_btn.update(Input.is_action_pressed("vehicle"), delta)
-	if _vehicle_btn.consume() and not deliveries.board_open and not outpost.menu_open and not morning_open and not boss_fight.in_fight():
+	if _vehicle_btn.consume() and not deliveries.board_open and not outpost.menu_open and not morning_open and not boss_fight.in_fight() and not dock.dialog_open:
 		if driving:
 			exit_rover()
 		elif piloting:
@@ -933,6 +964,8 @@ func _physics_process(delta: float) -> void:
 		h = ""
 	elif boss_fight.hint() != "":
 		h = boss_fight.hint()
+	elif dock.hint() != "":
+		h = dock.hint()
 	elif piloting:
 		h = tr("HINT_EXIT_MECH")
 	elif can_enter_mech():
@@ -955,7 +988,7 @@ func _physics_process(delta: float) -> void:
 	var oh := outpost.hint()
 	if oh != "":
 		dh = oh # o terminal está mesmo ao lado: tem prioridade sobre o quadro
-	_hint.text = "" if deliveries.board_open or outpost.menu_open or morning_open else (dh if dh != "" and not in_vehicle() else (h if h != "" else dh))
+	_hint.text = "" if deliveries.board_open or outpost.menu_open or morning_open or dock.dialog_open else (dh if dh != "" and not in_vehicle() else (h if h != "" else dh))
 
 var _env: Environment
 var sky_planets: SkyPlanets
