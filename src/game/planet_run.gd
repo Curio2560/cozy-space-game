@@ -290,6 +290,10 @@ func _setup_tutorial() -> void:
 		["TIP_ACID", func() -> bool: return biome == "acido"],
 		["TIP_LAVA", func() -> bool: return biome == "lava"],
 		["TIP_POWER", func() -> bool: return outpost.state.power_factor() < 1.0],
+		["TIP_NIGHT", func() -> bool: return not cycle.is_night() and cycle.time_to_night() <= DayCycle.WARN_BEFORE],
+		["TIP_MECH", func() -> bool: return cycle.is_night() and not piloting],
+		["TIP_TURRET", func() -> bool: return cycle.day >= 2 and not cycle.is_night() and outpost.state.count("turret") == 0 and wallet.credits() >= 200],
+		["TIP_REPAIR", func() -> bool: return not cycle.is_night() and range(outpost.slot_total()).any(func(i: int) -> bool: return outpost.state.is_damaged(i))],
 	]
 	_hud_layer.add_child(tutorial)
 	tutorial.changed.connect(autosave)

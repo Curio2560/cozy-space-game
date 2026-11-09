@@ -76,13 +76,14 @@ const RAID_SPEED := 3.0
 const RAID_WINDUP := 0.7
 const RAID_COOLDOWN := 1.6
 
-func setup(p_id: String, p_planet: Planet, p_dir: Vector3, biome: String, seed_value: int) -> void:
+func setup(p_id: String, p_planet: Planet, p_dir: Vector3, biome: String, seed_value: int, p_raider := false) -> void:
+	raider = p_raider
 	id = p_id
 	planet = p_planet
 	dir = p_dir.normalized()
 	home = dir
 	_rng.seed = seed_value
-	model = CreatureCatalog.instantiate(id, biome)
+	model = CreatureCatalog.instantiate(id, biome, raider)
 	add_child(model)
 	_ap = CreatureCatalog.animation_player(model)
 	var fam := CreatureCatalog.family(id)

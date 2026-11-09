@@ -107,3 +107,20 @@ func test_killing_raiders_counts_and_morning_clears() -> void:
 	assert_false(run.defense.waves.active())
 	assert_eq(run.defense.raiders.size(), 0)
 	assert_true(run.creatures.is_empty() or not run.creatures[0].night_hostile)
+
+func _glow_alpha(root: Node) -> float:
+	for mi in root.find_children("*", "MeshInstance3D", true, false):
+		var m: Material = (mi as MeshInstance3D).get_surface_override_material(0)
+		if m and m.next_pass is ShaderMaterial:
+			var g = (m.next_pass as ShaderMaterial).get_shader_parameter("glow_color")
+			return (g as Color).a if g is Color else 0.0
+	return -1.0
+
+func test_only_night_creatures_have_glowing_outline() -> void:
+	var id: String = CreatureCatalog.ids()[0]
+	var day := CreatureCatalog.instantiate(id, "prado")
+	var night := CreatureCatalog.instantiate(id, "prado", true)
+	add_child_autofree(day)
+	add_child_autofree(night)
+	assert_eq(_glow_alpha(day), 0.0, "de dia sem brilho")
+	assert_gt(_glow_alpha(night), 0.5, "à noite o contorno brilha")

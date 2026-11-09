@@ -79,7 +79,12 @@ static func tint_for(biome: String) -> Color:
 
 ## Instancia a criatura `id` em cel-shading, com a altura certa, o tom do bioma e a animação
 ## de repouso. Devolve um Node3D com a origem nos pés (os voadores já vêm a pairar); frente = +Z.
-static func instantiate(id: String, biome := "prado") -> Node3D:
+## Tom das criaturas da noite: ligeiramente avermelhado (e materiais próprios, com o contorno
+## a brilhar, ver CelShading.glow_outline).
+const RAIDER_TINT := Color(1.0, 0.9, 0.9)
+const RAIDER_GLOW := Color(1.0, 0.32, 0.18, 0.9)
+
+static func instantiate(id: String, biome := "prado", raider := false) -> Node3D:
 	var root := Node3D.new()
 	root.name = id.replace("/", "_")
 	root.set_meta(&"creature_id", id)
@@ -87,7 +92,9 @@ static func instantiate(id: String, biome := "prado") -> Node3D:
 	root.add_child(model)
 	KitUtil.fit_height(model, height(id))
 	model.position.y += hover(id)
-	CelShading.apply(model, tint_for(biome))
+	CelShading.apply(model, tint_for(biome) * (RAIDER_TINT if raider else Color.WHITE))
+	if raider:
+		CelShading.glow_outline(model, RAIDER_GLOW)
 	var ap := animation_player(root)
 	if ap:
 		for role in LOOPED_ROLES:

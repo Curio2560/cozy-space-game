@@ -150,8 +150,7 @@ func _spawn_wave(count: int, hp: float) -> void:
 		var c := Creature.new()
 		c.name = "Raider%d" % _rng.randi()
 		run.add_child(c)
-		c.setup(ids[_rng.randi() % ids.size()], run.planet, dir, run.biome, _rng.randi())
-		c.raider = true
+		c.setup(ids[_rng.randi() % ids.size()], run.planet, dir, run.biome, _rng.randi(), true)
 		c.max_health = hp
 		c.health = hp
 		c.set_personality(Creature.Personality.AGGRESSIVE)

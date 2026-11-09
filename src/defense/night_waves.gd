@@ -15,7 +15,7 @@ const WAVE_AT := [6.0, 62.0, 118.0]
 ## Se a vaga anterior acabar antes, a seguinte chega depois desta pausa.
 const BREAK := 10.0
 const MAX_PER_WAVE := 12
-const BASE_HEALTH := 30.0
+const BASE_HEALTH := 40.0
 
 var night := 0 # 0 = sem noite em curso
 var wave := 0 # última vaga lançada (0 = nenhuma ainda)
