@@ -84,7 +84,7 @@ static func tint_for(biome: String) -> Color:
 const RAIDER_TINT := Color(1.0, 0.9, 0.9)
 const RAIDER_GLOW := Color(1.0, 0.32, 0.18, 0.9)
 
-static func instantiate(id: String, biome := "prado", raider := false) -> Node3D:
+static func instantiate(id: String, biome := "prado", raider := false, extra_tint := Color.WHITE) -> Node3D:
 	var root := Node3D.new()
 	root.name = id.replace("/", "_")
 	root.set_meta(&"creature_id", id)
@@ -92,7 +92,7 @@ static func instantiate(id: String, biome := "prado", raider := false) -> Node3D
 	root.add_child(model)
 	KitUtil.fit_height(model, height(id))
 	model.position.y += hover(id)
-	CelShading.apply(model, tint_for(biome) * (RAIDER_TINT if raider else Color.WHITE))
+	CelShading.apply(model, tint_for(biome) * (RAIDER_TINT if raider else Color.WHITE) * extra_tint)
 	if raider:
 		CelShading.glow_outline(model, RAIDER_GLOW)
 	var ap := animation_player(root)

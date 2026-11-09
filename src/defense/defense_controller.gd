@@ -93,7 +93,17 @@ func clear() -> void:
 			tw.tween_callback(c.queue_free)
 	raiders.clear()
 
+## Durante a luta com o boss: sem vagas (as criaturas da noite vão-se embora).
+var suspended := false
+
+func suspend(on: bool) -> void:
+	suspended = on
+	if on:
+		clear()
+
 func _physics_process(delta: float) -> void:
+	if suspended:
+		return
 	waves.tick(delta)
 	_tick_turrets(delta)
 

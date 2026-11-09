@@ -7,7 +7,7 @@ extends CanvasLayer
 
 signal force_touch_changed(on: bool)
 
-const TABS := ["DBG_TAB_GENERAL", "DBG_TAB_WORLD", "DBG_TAB_PLAYER", "DBG_TAB_ROVER", "DBG_TAB_CREATURES", "DBG_TAB_NIGHT", "DBG_TAB_BUILD"]
+const TABS := ["DBG_TAB_GENERAL", "DBG_TAB_WORLD", "DBG_TAB_PLAYER", "DBG_TAB_ROVER", "DBG_TAB_CREATURES", "DBG_TAB_NIGHT", "DBG_TAB_BOSS", "DBG_TAB_BUILD"]
 const GENERAL := "DBG_TAB_GENERAL"
 
 var enabled := OS.is_debug_build()

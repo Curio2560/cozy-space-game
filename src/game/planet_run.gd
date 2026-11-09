@@ -14,6 +14,7 @@ const CAM_WRECK := {"distance": 15.0, "pitch": -0.42, "focus_height": 2.0, "auto
 const CAM_FOOT := {"distance": 6.5, "pitch": -0.42, "focus_height": 1.2, "auto_return_delay": 1.6}
 const CAM_ROVER := {"distance": 9.5, "pitch": -0.36, "focus_height": 1.6, "auto_return_delay": 0.35}
 const CAM_MECH := {"distance": 11.5, "pitch": -0.4, "focus_height": 3.0, "auto_return_delay": 0.5}
+const CAM_BOSS := {"distance": 12.5, "pitch": -0.55, "focus_height": 3.0, "auto_return_delay": 0.5}
 const MECH_ENTER_DISTANCE := 5.5
 const MECH_PARK_M := 12.0 # o mech estaciona a esta distância do centro da base (na estrada da praça)
 
@@ -60,6 +61,9 @@ var day_clock: DayClock
 var defense: DefenseController
 var mech: Mech
 var morning_screen: MorningScreen
+var boss_fight: BossFight
+## Índice do planeta na galáxia (0 = o primeiro); faz crescer o boss e as noites.
+var planet_index := 0
 var morning_open := false
 var piloting := false
 var ambient: AmbientParticles
@@ -121,6 +125,10 @@ func _ready() -> void:
 	defense.name = "Defense"
 	add_child(defense)
 	defense.setup(self, _hud_layer)
+	boss_fight = BossFight.new()
+	boss_fight.name = "BossFight"
+	add_child(boss_fight)
+	boss_fight.setup(self, _hud_layer)
 	bars = StatusBars.new()
 	_hud_layer.add_child(bars)
 	bars.add_bar("rover", "BAR_ROVER", Color("ff9f5a"))
@@ -241,6 +249,10 @@ func _ready() -> void:
 			c0.raid_target = func() -> Array: return []
 	if "damaged" in args: # edifício do slot 0 danificado (capturas da barra de vida)
 		outpost.state.damage(0, 70.0)
+	if "boss" in args: # luta com o boss a decorrer (capturas)
+		await get_tree().create_timer(0.3).timeout
+		await boss_fight.start()
+		Input.action_press("jump")
 	if "mech" in args: # noite, dentro do mech, a disparar (capturas)
 		cycle.skip_to_night()
 		player.place_at(mech.global_position + mech.facing * 3.0 + mech.up() * 0.5)
@@ -470,6 +482,8 @@ func start(s: int) -> void:
 	apply_upgrades()
 	if farm:
 		farm.start_planet()
+	if boss_fight:
+		boss_fight.reset()
 	if defense:
 		defense.end_night()
 		if cycle.is_night():
@@ -521,6 +535,8 @@ func all_creatures() -> Array:
 	var out: Array = creatures.duplicate()
 	if defense:
 		out.append_array(defense.raiders)
+	if boss_fight:
+		out.append_array(boss_fight.fighters())
 	return out
 
 ## Uma criatura apanhou o jogador (ou o rover): empurra, tira vida e pode estragar ou roubar a encomenda.
@@ -697,6 +713,9 @@ func exit_mech() -> void:
 
 ## O mech ficou sem vida: o jogador sai (amanhã está reparado).
 func _on_mech_broken() -> void:
+	if boss_fight.in_fight():
+		boss_fight.on_mech_broken()
+		return
 	deliveries.hud.toast(tr("TOAST_MECH_BROKEN"))
 	if piloting:
 		exit_mech()
@@ -896,7 +915,7 @@ func _physics_process(delta: float) -> void:
 		_hint.text = ""
 		return
 	_vehicle_btn.update(Input.is_action_pressed("vehicle"), delta)
-	if _vehicle_btn.consume() and not deliveries.board_open and not outpost.menu_open and not morning_open:
+	if _vehicle_btn.consume() and not deliveries.board_open and not outpost.menu_open and not morning_open and not boss_fight.in_fight():
 		if driving:
 			exit_rover()
 		elif piloting:
@@ -910,7 +929,11 @@ func _physics_process(delta: float) -> void:
 		rover.throttle = m.y
 		rover.steer = m.x
 	var h := tr("HINT_EXIT_ROVER") if driving else (tr("HINT_ENTER_ROVER") if can_enter_rover() else "")
-	if piloting:
+	if boss_fight.in_fight():
+		h = ""
+	elif boss_fight.hint() != "":
+		h = boss_fight.hint()
+	elif piloting:
 		h = tr("HINT_EXIT_MECH")
 	elif can_enter_mech():
 		h = tr("HINT_ENTER_MECH")
@@ -921,7 +944,7 @@ func _physics_process(delta: float) -> void:
 	var ov := {}
 	if piloting:
 		ov["jump"] = "BTN_FIRE"
-	if piloting or can_enter_mech():
+	if (piloting or can_enter_mech()) and not boss_fight.in_fight():
 		ov["vehicle"] = "BTN_MECH"
 	if ov != touch.label_override:
 		touch.label_override = ov
@@ -1210,4 +1233,18 @@ func _register_debug() -> void:
 		rover.invincible = on
 		mech.invincible = on)
 	DebugMenu.add_slider(self, "DBG_TIME_SPEED", 1.0, 30.0, 1.0, 1.0, func(v: float) -> void: cycle.speed = v)
+	DebugMenu.default_tab = "DBG_TAB_BOSS"
+	DebugMenu.add_button(self, "DBG_GOTO_LAIR", func() -> void:
+		var d := planet.data
+		teleport(d.toward_point(d.lair_door, d.lair_dir, -2.0)))
+	DebugMenu.add_button(self, "DBG_KEYCARDS", func() -> void:
+		deliveries.session.keycards = DeliverySession.KEYCARDS_PER_PLANET
+		deliveries._update_keycards())
+	DebugMenu.add_button(self, "DBG_BOSS_START", boss_fight.start)
+	DebugMenu.add_button(self, "DBG_BOSS_LOW", func() -> void:
+		if is_instance_valid(boss_fight.boss):
+			boss_fight.boss.take_hit(boss_fight.boss.health - 40.0))
+	DebugMenu.add_button(self, "DBG_BOSS_WIN", func() -> void:
+		if is_instance_valid(boss_fight.boss):
+			boss_fight.boss.take_hit(1e9))
 	DebugMenu.default_tab = DebugMenu.GENERAL
