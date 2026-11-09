@@ -25,6 +25,18 @@ static func apply(root: Node, tint := Color.WHITE) -> int:
 			count += 1
 	return count
 
+## Contorno a brilhar em todos os materiais sob `root` (que já passaram por `apply`).
+## Os materiais são partilhados pela chave da paleta: usar um tom próprio em `apply` para não
+## mudar outros modelos com a mesma paleta.
+static func glow_outline(root: Node, color: Color, width := 0.07) -> void:
+	for mi in _mesh_instances(root):
+		for i in mi.mesh.get_surface_count():
+			var m := mi.get_surface_override_material(i)
+			if m and m.next_pass is ShaderMaterial:
+				var o := m.next_pass as ShaderMaterial
+				o.set_shader_parameter("glow_color", color)
+				o.set_shader_parameter("width", width)
+
 ## Material cel-shaded equivalente a `src` (partilhado entre modelos com a mesma paleta).
 ## `smooth_outline`: a malha foi preparada por `outline_ready_mesh` (normal suave na tangente).
 ## `extra_tint` multiplica a cor (p. ex. o tom do bioma nos modelos do kit).

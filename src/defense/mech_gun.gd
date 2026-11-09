@@ -12,7 +12,7 @@ const COOL_RATE := 32.0 # por segundo, sem disparar
 const COOL_DELAY := 0.25 # s depois do último tiro até começar a arrefecer
 const MAX_HEAT := 100.0
 const RESUME := 35.0
-const DAMAGE := 6.0
+const DAMAGE := 5.0
 const RANGE := 24.0
 
 var heat := 0.0

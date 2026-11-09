@@ -14,6 +14,8 @@ uniform float width : hint_range(0.0, 0.2) = 0.032; // metros, à escala do mund
 uniform float darkness : hint_range(0.0, 1.0) = 0.22;
 // true quando a malha foi preparada por CelShading.outline_ready_mesh (normal suave na tangente).
 uniform bool use_tangent_normals = false;
+// Contorno a brilhar (criaturas da noite): a mistura com esta cor vem do alfa (0 = normal).
+uniform vec4 glow_color : source_color = vec4(1.0, 0.35, 0.2, 0.0);
 
 void vertex() {
 	wf_world = wind_vertex(VERTEX, MODEL_MATRIX, TIME);
@@ -33,5 +35,5 @@ void fragment() {
 	if (use_vertex_color) {
 		c *= COLOR.rgb; // o Godot já entrega COLOR em linear
 	}
-	ALBEDO = c * darkness;
+	ALBEDO = mix(c * darkness, glow_color.rgb, glow_color.a);
 }

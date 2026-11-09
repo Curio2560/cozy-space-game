@@ -91,3 +91,10 @@ triângulos tiram. Fica para a F3.
 - Mech: um modelo com esqueleto (sempre na cena, estacionado de dia).
 - Tiros (mech e torres): 4 + 8 cilindros reaproveitados, sem alocações.
 - Barras de vida dos edifícios: desenho 2D no HUD, só para os danificados.
+
+### Depois do fecho: passo 2 do plano (09 nov 2026)
+
+Sem contorno nas pilhas de pedras pequenas, nas plantas pequenas do prado e nos arbustos do
+ácido (seed 7, a pé): prado 201 → 194 dc, 440k → 426k tri; ácido 254 → 235 dc, 497k → 475k tri;
+lava sem mudança à vista do posto. Ganho pequeno (3–5%): o grosso dos triângulos é a relva
+densa, que fica (o utilizador pediu mais relva).
