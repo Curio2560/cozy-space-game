@@ -294,3 +294,13 @@ DEPART_NOTHING,"Nothing stays behind. Credits, data, crew and upgrades come with
 DEPART_SELL,Sell everything (+%d ¢) and leave,Vender tudo (+%d ¢) e partir
 DEPART_GO,Leave without selling,Partir sem vender
 DEPART_STAY,Stay,Ficar
+DBG_GALAXY_MAP,Leave for the next planet,Partir para o planeta seguinte
+GALAXY_SKIP,Skip,Saltar
+GALAXY_TAKEOFF,Taking off…,A descolar…
+GALAXY_TRAVEL,On the way to: %s,A caminho de: %s
+GALAXY_CHOOSE,Choose the next planet,Escolhe o planeta seguinte
+GALAXY_LANDING,Landing…,A aterrar…
+TOAST_ARRIVED,Welcome to the %s planet! (planet %d),Bem-vindo ao planeta %s! (planeta %d)
+BIOME_PRADO,Meadow,Prado
+BIOME_ACIDO,Acid,Ácido
+BIOME_LAVA,Lava,Lava

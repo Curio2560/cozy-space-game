@@ -65,7 +65,8 @@ func start_night(n: int) -> void:
 	night_damage = 0.0
 	night_broken = 0
 	night_gain = {}
-	waves.start_night(n)
+	# Cada planeta conta como mais noites (dificuldade da galáxia).
+	waves.start_night(n + (run.galaxy.night_offset() if run.galaxy else 0))
 
 ## Retoma uma noite a meio (save carregado de noite): salta as vagas cujo tempo já passou.
 func resume_night(n: int, night_clock: float) -> void:

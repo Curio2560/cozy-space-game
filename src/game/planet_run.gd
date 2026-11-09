@@ -65,6 +65,9 @@ var boss_fight: BossFight
 ## Índice do planeta na galáxia (0 = o primeiro); faz crescer o boss e as noites.
 var planet_index := 0
 var dock: ShipDock
+var galaxy := Galaxy.new()
+var galaxy_map: GalaxyMap
+var traveling := false
 var morning_open := false
 var piloting := false
 var ambient: AmbientParticles
@@ -135,6 +138,14 @@ func _ready() -> void:
 	dock.name = "ShipDock"
 	add_child(dock)
 	dock.setup(self, _hud_layer)
+	dock.depart.connect(travel)
+	var map_layer := CanvasLayer.new()
+	map_layer.layer = 55
+	add_child(map_layer)
+	galaxy_map = GalaxyMap.new()
+	galaxy_map.name = "GalaxyMap"
+	map_layer.add_child(galaxy_map)
+	galaxy_map.finished.connect(arrive)
 	bars = StatusBars.new()
 	_hud_layer.add_child(bars)
 	bars.add_bar("rover", "BAR_ROVER", Color("ff9f5a"))
@@ -256,6 +267,11 @@ func _ready() -> void:
 			c0.raid_target = func() -> Array: return []
 	if "damaged" in args: # edifício do slot 0 danificado (capturas da barra de vida)
 		outpost.state.damage(0, 70.0)
+	if "galaxy" in args or "galaxy2" in args: # mapa da galáxia (capturas)
+		galaxy.index = 2 if "galaxy2" in args else 0
+		galaxy_map.begin(galaxy, "lava" if "galaxy2" in args else biome)
+		galaxy_map.t = 3.5
+		galaxy_map.set_process("galaxy2" in args)
 	if "ship" in args: # boss vencido, nave na base (capturas)
 		boss_fight.beaten = true
 		dock.refresh()
@@ -386,6 +402,7 @@ func save_state() -> Dictionary:
 		"upgrades": upgrades.to_dict(),
 		"crew": crew.to_dict(),
 		"cycle": cycle.to_dict(),
+		"galaxy": galaxy.to_dict(),
 	}
 
 ## Repõe as secções de um save (o planeta já foi gerado com a seed guardada).
@@ -403,6 +420,8 @@ func apply_state(state: Dictionary) -> void:
 		tutorial.from_dict(state.tutorial)
 	if state.has("crew"):
 		crew.from_dict(state.crew)
+	galaxy.from_dict(state.get("galaxy", {"index": planet_index}))
+	planet_index = galaxy.index
 	boss_fight.beaten = bool(state.get("boss", {}).get("beaten", false))
 	dock.refresh()
 	if state.has("cycle"):
@@ -410,6 +429,33 @@ func apply_state(state: Dictionary) -> void:
 		if cycle.is_night():
 			defense.resume_night(cycle.day, cycle.time - DayCycle.DAY_LEN)
 			_set_night_hostile(true)
+
+## Partir na nave: escurece e mostra a viagem no mapa da galáxia.
+func travel() -> void:
+	if traveling:
+		return
+	traveling = true
+	autosave()
+	await _fade(1.0)
+	galaxy_map.begin(galaxy, biome)
+
+## Chegada ao planeta escolhido: minério, cristal e colheitas ficaram para trás; créditos,
+## dados, tripulação e melhorias vêm. Posto novo, dia 1.
+func arrive(option: Dictionary) -> void:
+	galaxy.advance(option)
+	planet_index = galaxy.index
+	biome = str(option.biome)
+	for k in DepartDialog.LEFT_BEHIND:
+		var n := wallet.amount(k)
+		if n > 0:
+			wallet.spend({k: n})
+	cycle.from_dict({})
+	cycle.paused = false
+	start(int(option.seed))
+	deliveries.hud.toast(tr("TOAST_ARRIVED") % [tr("BIOME_" + biome.to_upper()), planet_index + 1])
+	traveling = false
+	autosave()
+	await _fade(0.0)
 
 ## Boss vencido: recompensa, núcleo do planeta (abre a partida) e a nave aparece na base.
 func _on_boss_won() -> void:
@@ -461,11 +507,13 @@ func new_game() -> void:
 	upgrades.from_dict({})
 	crew.from_dict({})
 	cycle.from_dict({})
+	galaxy.from_dict({"seed": randi() % 100000, "index": 0})
+	planet_index = 0
 	defense.end_night()
 	_set_night_hostile(false)
 	tutorial.restart()
 	biome = "prado"
-	start(randi() % 100000)
+	start(int(galaxy.first().seed))
 
 ## Gera o planeta `s` e põe o jogador junto ao posto avançado.
 func start(s: int) -> void:
@@ -1274,6 +1322,9 @@ func _register_debug() -> void:
 		deliveries.session.keycards = DeliverySession.KEYCARDS_PER_PLANET
 		deliveries._update_keycards())
 	DebugMenu.add_button(self, "DBG_BOSS_START", boss_fight.start)
+	DebugMenu.add_button(self, "DBG_GALAXY_MAP", func() -> void:
+		boss_fight.beaten = true
+		travel())
 	DebugMenu.add_button(self, "DBG_BOSS_LOW", func() -> void:
 		if is_instance_valid(boss_fight.boss):
 			boss_fight.boss.take_hit(boss_fight.boss.health - 40.0))
