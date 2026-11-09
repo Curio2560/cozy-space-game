@@ -226,7 +226,7 @@ TOAST_MORNING,Good morning! Day %d,Bom dia! Dia %d
 DBG_WAVE_NOW,Send a wave now,Mandar uma vaga já
 DBG_KILL_WAVE,Kill night creatures,Matar as criaturas da noite
 TOAST_WAVE,Wave %d/%d: %d creatures!,Vaga %d/%d: %d criaturas!
-TOAST_WAVE_CLEARED,Wave %d cleared!,Vaga %d vencida!
+TOAST_WAVE_CLEARED,Wave %d cleared! +%d ¢ +%d data,Vaga %d vencida! +%d ¢ +%d dados
 HUD_WAVE,Wave %d/%d · %d left,Vaga %d/%d · faltam %d
 BAR_MECH,Mech,Mech
 BAR_GUN_HEAT,Gun heat,Calor da arma
@@ -253,3 +253,17 @@ HINT_REPAIR_NO_ORE,Needs %d ore to repair,Precisa de %d minério para reparar
 TOAST_BUILDING_BROKEN,%s is off! Repair it with ore.,%s desligou-se! Repara com minério.
 TOAST_REPAIRED,Repaired (−%d ore),Reparado (−%d minério)
 OUTPOST_REPAIR_ALL,Repair all (%d ore),Reparar tudo (%d minério)
+DBG_MORNING_SCREEN,Morning screen,Ecrã da manhã
+MORNING_TITLE,Good morning! Day %d,Bom dia! Dia %d
+MORNING_WAVES,Waves cleared: %d/%d,Vagas vencidas: %d/%d
+MORNING_GAIN,+%d ¢ · +%d data,+%d ¢ · +%d dados
+MORNING_BROKEN,%d buildings are off — repair them with ore.,%d edifícios desligados — repara com minério.
+MORNING_DAMAGED,Some buildings were damaged.,Alguns edifícios ficaram danificados.
+MORNING_PERFECT,Perfect night! Bonus included.,Noite perfeita! Bónus incluído.
+MORNING_CREW,Today's crew member,Tripulante do dia
+MORNING_ORDERS,Today's orders,Encomendas do dia
+MORNING_ORDER_TAKEN,Order in progress: %s → %s,Encomenda em curso: %s → %s
+MORNING_FARM,Farm,Quinta
+MORNING_FARM_FULL,All plots are growing.,Todos os talhões estão a crescer.
+MORNING_PLANT,Plant %s ×%d (%d ¢),Plantar %s ×%d (%d ¢)
+MORNING_START,Start the day,Começar o dia

@@ -29,6 +29,14 @@ static func wave_size(n: int, w: int) -> int:
 	var base := 2 if n <= 1 else 3
 	return mini(base + (w - 1) + (n - 1), MAX_PER_WAVE)
 
+## Recompensa por vencer a vaga `w` da noite `n` (#42): créditos e dados de pesquisa.
+static func wave_reward(n: int, w: int) -> Dictionary:
+	return {Wallet.CREDITS: 30 + 15 * n + 10 * (w - 1), Wallet.DATA: 1 + (n - 1) / 2}
+
+## Bónus da noite perfeita (todas as vagas vencidas, nenhum edifício danificado).
+static func perfect_bonus(n: int) -> Dictionary:
+	return {Wallet.CREDITS: 60 + 20 * n, Wallet.DATA: 2}
+
 ## Vida de cada criatura na noite `n`.
 static func creature_health(n: int) -> float:
 	return BASE_HEALTH * (1.0 + 0.15 * (n - 1))

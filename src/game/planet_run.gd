@@ -59,6 +59,8 @@ var cycle := DayCycle.new()
 var day_clock: DayClock
 var defense: DefenseController
 var mech: Mech
+var morning_screen: MorningScreen
+var morning_open := false
 var piloting := false
 var ambient: AmbientParticles
 
@@ -159,7 +161,9 @@ func _ready() -> void:
 			exit_mech()
 		mech.repair_full()
 		_park_mech()
-		defense.end_night()
+		var rep := defense.finish_night()
+		if not rep.is_empty():
+			open_morning(rep)
 		_set_night_hostile(false)
 		autosave())
 	var saved := SaveGame.read() if SaveGame.active else {}
@@ -251,6 +255,8 @@ func _ready() -> void:
 		for i in defense.raiders.size():
 			var side := pd.cross(f).normalized()
 			defense.raiders[i].teleport_to((pd + f * ((10.0 + i * 2.0) / planet.data.radius) + side * ((i - 1) * 2.5 / planet.data.radius)).normalized())
+	if "morning" in args:
+		open_morning({"night": 2, "cleared": 3, "waves": 3, "damage": 0.0, "broken": 0, "credits": 225, "data": 4, "perfect": true})
 	if "dusk" in args:
 		cycle.from_dict({"day": 1, "time": DayCycle.DAY_LEN - 10.0})
 	if "perf" in args:
@@ -368,6 +374,25 @@ func apply_state(state: Dictionary) -> void:
 		if cycle.is_night():
 			defense.resume_night(cycle.day, cycle.time - DayCycle.DAY_LEN)
 			_set_night_hostile(true)
+
+## Ecrã da manhã: pára o relógio e o jogador até "Começar o dia".
+func open_morning(rep: Dictionary) -> void:
+	morning_open = true
+	cycle.paused = true
+	morning_screen.open(rep)
+	tutorial.visible = false
+	touch.visible = false
+	player.controllable = false
+
+func close_morning() -> void:
+	morning_open = false
+	morning_screen.visible = false
+	tutorial.visible = true
+	cycle.paused = false
+	_update_touch_visibility()
+	if not in_vehicle():
+		player.controllable = true
+	autosave()
 
 ## À noite as criaturas hostis do planeta atacam mesmo sem encomenda.
 func _set_night_hostile(on: bool) -> void:
@@ -867,7 +892,7 @@ func _physics_process(delta: float) -> void:
 		_hint.text = ""
 		return
 	_vehicle_btn.update(Input.is_action_pressed("vehicle"), delta)
-	if _vehicle_btn.consume() and not deliveries.board_open and not outpost.menu_open:
+	if _vehicle_btn.consume() and not deliveries.board_open and not outpost.menu_open and not morning_open:
 		if driving:
 			exit_rover()
 		elif piloting:
@@ -903,7 +928,7 @@ func _physics_process(delta: float) -> void:
 	var oh := outpost.hint()
 	if oh != "":
 		dh = oh # o terminal está mesmo ao lado: tem prioridade sobre o quadro
-	_hint.text = "" if deliveries.board_open or outpost.menu_open else (dh if dh != "" and not in_vehicle() else (h if h != "" else dh))
+	_hint.text = "" if deliveries.board_open or outpost.menu_open or morning_open else (dh if dh != "" and not in_vehicle() else (h if h != "" else dh))
 
 var _env: Environment
 var sky_planets: SkyPlanets
@@ -1050,6 +1075,12 @@ func _build_ui() -> void:
 		_tut_jumped = false
 		_tut_terminal = false)
 	pause_menu.quit_to_menu.connect(func() -> void: get_tree().change_scene_to_file("res://scenes/ui/boot.tscn"))
+	morning_screen = MorningScreen.new()
+	morning_screen.name = "MorningScreen"
+	morning_screen.run = self
+	morning_screen.visible = false
+	hud.add_child(morning_screen)
+	morning_screen.closed.connect(close_morning)
 	var fade_layer := CanvasLayer.new()
 	fade_layer.layer = 50
 	add_child(fade_layer)
@@ -1165,6 +1196,8 @@ func _register_debug() -> void:
 		if not defense.waves.active():
 			defense.start_night(cycle.day)
 		defense.waves.launch_next())
+	DebugMenu.add_button(self, "DBG_MORNING_SCREEN", func() -> void:
+		open_morning({"night": cycle.day, "cleared": 3, "waves": 3, "damage": 0.0, "broken": 0, "credits": 210, "data": 3, "perfect": true}))
 	DebugMenu.add_button(self, "DBG_KILL_WAVE", func() -> void:
 		for c in defense.raiders.duplicate():
 			c.take_hit(9999.0))

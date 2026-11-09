@@ -25,6 +25,8 @@ var building_alive: Callable = func(i: int) -> bool: return run.outpost.state.is
 ## Contas da noite (#42): dano aos edifícios e quantos ficaram desligados.
 var night_damage := 0.0
 var night_broken := 0
+## Ganho nesta noite (vagas vencidas + bónus): {recurso: n}.
+var night_gain := {}
 var _rng := RandomNumberGenerator.new()
 var beams: Beams
 var _turret_cd := {}
@@ -35,8 +37,7 @@ func setup(p_run: Node3D, hud_layer: CanvasLayer) -> void:
 	waves.spawn.connect(_spawn_wave)
 	waves.wave_started.connect(func(w: int, n: int) -> void:
 		run.deliveries.hud.toast(tr("TOAST_WAVE") % [w, NightWaves.WAVES, n]))
-	waves.wave_cleared.connect(func(w: int) -> void:
-		run.deliveries.hud.toast(tr("TOAST_WAVE_CLEARED") % w))
+	waves.wave_cleared.connect(_on_wave_cleared)
 	beams = Beams.new()
 	beams.name = "TurretBeams"
 	add_child(beams)
@@ -63,6 +64,7 @@ func start_night(n: int) -> void:
 	clear()
 	night_damage = 0.0
 	night_broken = 0
+	night_gain = {}
 	waves.start_night(n)
 
 ## Retoma uma noite a meio (save carregado de noite): salta as vagas cujo tempo já passou.
@@ -195,6 +197,32 @@ func _on_raid_hit(c: Creature, key: Variant) -> void:
 		if run.outpost.damage_building(key, BUILDING_DAMAGE):
 			night_broken += 1
 		building_hit.emit(key, BUILDING_DAMAGE)
+
+## Vaga vencida: paga já (créditos e dados) e soma às contas da noite.
+func _on_wave_cleared(w: int) -> void:
+	var r := NightWaves.wave_reward(waves.night, w)
+	_gain(r)
+	run.deliveries.hud.toast(tr("TOAST_WAVE_CLEARED") % [w, r[Wallet.CREDITS], r[Wallet.DATA]])
+
+func _gain(r: Dictionary) -> void:
+	for k in r:
+		run.wallet.add(k, int(r[k]))
+		night_gain[k] = int(night_gain.get(k, 0)) + int(r[k])
+
+## Fecha a noite (ao amanhecer): bónus da noite perfeita e o resumo para o ecrã da manhã.
+## {night, cleared, waves, damage, broken, credits, data, perfect}
+func finish_night() -> Dictionary:
+	var n := waves.night
+	if n <= 0:
+		return {}
+	var perfect := waves.all_cleared() and night_damage <= 0.0
+	if perfect:
+		_gain(NightWaves.perfect_bonus(n))
+	var rep := {"night": n, "cleared": waves.cleared, "waves": NightWaves.WAVES, "damage": night_damage,
+		"broken": night_broken, "credits": int(night_gain.get(Wallet.CREDITS, 0)),
+		"data": int(night_gain.get(Wallet.DATA, 0)), "perfect": perfect}
+	end_night()
+	return rep
 
 func _on_died(c: Creature) -> void:
 	raiders.erase(c)
