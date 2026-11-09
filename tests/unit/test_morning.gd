@@ -81,3 +81,12 @@ func test_morning_choices_crew_order_and_planting() -> void:
 	run.morning_screen.refresh()
 	run.close_morning()
 	assert_false(run.morning_open)
+
+func test_night_tips_registered() -> void:
+	var run: Node3D = await _run()
+	var keys: Array = run.tutorial.tips.map(func(t: Array) -> String: return t[0])
+	for k in ["TIP_NIGHT", "TIP_MECH", "TIP_TURRET", "TIP_REPAIR"]:
+		assert_has(keys, k)
+	run.cycle.skip_to_night()
+	var mech_tip: Array = run.tutorial.tips[keys.find("TIP_MECH")]
+	assert_true(mech_tip[1].call())

@@ -268,3 +268,7 @@ MORNING_FARM_FULL,All plots are growing.,Todos os talhões estão a crescer.
 MORNING_PLANT,Plant %s ×%d (%d ¢),Plantar %s ×%d (%d ¢)
 MORNING_START,Start the day,Começar o dia
 DBG_INVINCIBLE,Invincible,Invencível
+TIP_NIGHT,"Night is coming: creatures will attack the outpost. Head back to the base!","Vem aí a noite: as criaturas vão atacar o posto. Volta para a base!"
+TIP_MECH,"Night: board the mech on the plaza (Mech button). FIRE aims by itself; don't overheat the gun.","Noite: entra no mech na praça (botão Mech). DISPARAR aponta sozinho; não deixes a arma sobreaquecer."
+TIP_TURRET,"Build a laser turret in an empty slot: it shoots night creatures by itself.","Constrói uma torre laser num slot vazio: dispara sozinha nas criaturas da noite."
+TIP_REPAIR,"A building is damaged: stand next to it and press Action to repair it with ore.","Há um edifício danificado: vai lá e carrega em Ação para o reparar com minério."
