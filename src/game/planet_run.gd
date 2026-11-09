@@ -179,14 +179,18 @@ func _ready() -> void:
 	research.changed.connect(apply_research)
 	crew.leveled.connect(func(m: String, lv: int) -> void:
 		deliveries.hud.toast(tr("TOAST_CREW_LEVEL") % [tr("CREW_" + m.to_upper()), lv]))
-	cycle.dusk_warning.connect(func() -> void: deliveries.hud.toast(tr("TOAST_DUSK")))
+	cycle.dusk_warning.connect(func() -> void:
+		deliveries.hud.toast(tr("TOAST_DUSK"))
+		Sound.play("warn"))
 	cycle.night_started.connect(func(d: int) -> void:
 		deliveries.hud.toast(tr("TOAST_NIGHT"))
+		Sound.music("night")
 		defense.start_night(d)
 		_set_night_hostile(true)
 		autosave())
 	cycle.morning.connect(func(d: int) -> void:
 		deliveries.hud.toast(tr("TOAST_MORNING") % d)
+		Sound.music("day")
 		if piloting:
 			exit_mech()
 		mech.repair_full()
@@ -205,6 +209,7 @@ func _ready() -> void:
 	start(seed_value)
 	if not saved.is_empty():
 		apply_state(saved)
+	Sound.music("night" if cycle.is_night() else "day")
 	_register_debug()
 	builder.setup(self)
 	var args := OS.get_cmdline_user_args() # argumentos só para capturas de ecrã no PC
@@ -462,6 +467,7 @@ func travel() -> void:
 		return
 	traveling = true
 	autosave()
+	Sound.play("ship")
 	await _fade(1.0)
 	galaxy_map.begin(galaxy, biome)
 
@@ -597,6 +603,7 @@ func start(s: int) -> void:
 			defense.start_night(cycle.day)
 	apply_crew()
 	deliveries.session.order_delivered.connect(func(_o: DeliveryOrder, on_time: bool) -> void:
+		Sound.play("coin")
 		crew.on_delivery(on_time)
 		autosave())
 	autosave()
@@ -838,6 +845,7 @@ func _on_rover_destroyed() -> void:
 	respawning = true
 	explosion = RoverExplosion.new()
 	add_child(explosion)
+	Sound.play("boom")
 	explosion.start(rover.global_position, rover.planet_up(), planet.global_position, rover)
 	rover.wreck()
 	if driving:

@@ -97,6 +97,7 @@ func start() -> void:
 	if state != State.IDLE:
 		return
 	state = State.INTRO
+	Sound.music("night")
 	run.cycle.paused = true
 	run.defense.suspend(true)
 	run.deliveries.hud.toast(tr("TOAST_BOSS_AWAKE"))
@@ -131,10 +132,13 @@ func _spawn_boss() -> void:
 	boss.focus = func() -> Node3D: return run.mech
 	boss.target = func() -> Node3D: return run.mech
 	boss.slammed.connect(_on_slam)
+	boss.slammed.connect(func(_c: Vector3, _r: float, _d: float) -> void: Sound.play("slam"))
+	Sound.play("boss_roar")
 	boss.summon.connect(_on_summon)
 	boss.died.connect(func(_c: Creature) -> void: _win())
 	boss.phase_changed.connect(func(p: int) -> void:
-		run.deliveries.hud.toast(tr("TOAST_BOSS_PHASE_%d" % p)))
+		run.deliveries.hud.toast(tr("TOAST_BOSS_PHASE_%d" % p))
+		Sound.play("boss_roar", 0.0, 0.0))
 
 func _remove_boss() -> void:
 	if is_instance_valid(boss):
@@ -208,6 +212,7 @@ func _end() -> void:
 	run.mech.repair_full()
 	run._park_mech()
 	run.cycle.paused = false
+	Sound.music("night" if run.cycle.is_night() else "day")
 	run.defense.suspend(false)
 	state = State.IDLE
 	run.autosave()

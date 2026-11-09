@@ -32,6 +32,7 @@ textures/vram_compression/import_etc2_astc=true
 Settings="*res://src/core/settings.gd"
 InputHub="*res://src/input/input_hub.gd"
 DebugMenu="*res://src/debug/debug_menu.gd"
+Sound="*res://src/core/sound.gd"
 
 [internationalization]
 

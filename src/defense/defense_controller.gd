@@ -36,6 +36,7 @@ func setup(p_run: Node3D, hud_layer: CanvasLayer) -> void:
 	_rng.randomize()
 	waves.spawn.connect(_spawn_wave)
 	waves.wave_started.connect(func(w: int, n: int) -> void:
+		Sound.play("wave")
 		run.deliveries.hud.toast(tr("TOAST_WAVE") % [w, NightWaves.WAVES, n]))
 	waves.wave_cleared.connect(_on_wave_cleared)
 	beams = Beams.new()
@@ -132,6 +133,7 @@ func _tick_turrets(delta: float) -> void:
 			_turret_cd[i] = stats.interval
 			var up: Vector3 = (c.global_position - run.planet.global_position).normalized()
 			beams.fire(head.global_position, c.global_position + up * 0.9)
+			Sound.play("laser", -8.0)
 			c.take_hit(stats.damage)
 
 ## Roda a cabeça da torre (só à volta da vertical) para o canhão (-X do modelo) apontar.

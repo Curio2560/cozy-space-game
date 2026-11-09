@@ -43,6 +43,23 @@ func _ready() -> void:
 		tutorial_again.emit())
 	_item(col, "PAUSE_NEW_GAME", func() -> void: _confirm_new_game())
 	_item(col, "PAUSE_LANGUAGE", func() -> void: Settings.cycle_locale())
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 12)
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	col.add_child(row)
+	for kind in ["music", "sfx"]:
+		var b := Button.new()
+		b.custom_minimum_size = Vector2(184, 70)
+		b.add_theme_font_size_override("font_size", 26)
+		var label := func() -> void:
+			b.text = tr("PAUSE_VOL_" + kind.to_upper()) % int(round(Settings.get_volume(kind) * 100.0))
+		label.call()
+		b.pressed.connect(func() -> void:
+			var v := Settings.cycle_volume(kind)
+			Sound.set_volume("Music" if kind == "music" else "SFX", v)
+			label.call()
+			Sound.play("click"))
+		row.add_child(b)
 	_item(col, "PAUSE_EXIT", func() -> void:
 		close()
 		quit_to_menu.emit())

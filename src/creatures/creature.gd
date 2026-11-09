@@ -179,6 +179,7 @@ func take_hit(dmg: float) -> void:
 		tw.tween_callback(queue_free)
 	else:
 		_play("hit", true)
+	Sound.play("hit", -10.0, 0.15)
 
 ## Ataque da noite: segue o alvo dado por `raid_target` e golpeia quando chega perto.
 func _raid(delta: float) -> void:

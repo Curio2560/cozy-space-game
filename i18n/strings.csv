@@ -315,3 +315,5 @@ RES_LINE_TURRET_4_INFO,Laser turrets can be upgraded to level 4,As torres laser 
 RES_LINE_BUILDING_HP,Reinforced buildings,Edifícios reforçados
 RES_LINE_BUILDING_HP_INFO,+30% building health per level,+30% de vida dos edifícios por nível
 TOAST_RESEARCHED,Research done: %s,Pesquisa feita: %s
+PAUSE_VOL_MUSIC,Music %d%%,Música %d%%
+PAUSE_VOL_SFX,Sounds %d%%,Sons %d%%

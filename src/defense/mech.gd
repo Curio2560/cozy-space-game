@@ -158,6 +158,7 @@ func _fire_at(c: Creature) -> void:
 	if c == null:
 		return
 	c.take_hit(MechGun.DAMAGE * damage_factor)
+	Sound.play("mech_shot", -6.0)
 	_shoot_t = 0.25
 	_shot_i += 1
 	var from := visual.global_transform * (MUZZLE + Vector3((0.6 if _shot_i % 2 == 0 else -0.6), 0, 0))
