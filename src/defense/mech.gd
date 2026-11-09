@@ -28,6 +28,9 @@ var facing := Vector3.FORWARD
 var crew := ""
 var piloted := false
 var health := MAX_HEALTH
+## Pesquisa (#51): vida máxima e dano dos tiros.
+var max_health := MAX_HEALTH
+var damage_factor := 1.0
 var gun := MechGun.new()
 ## Devolve as criaturas que se podem atingir (Array de Creature).
 var targets: Callable
@@ -99,7 +102,7 @@ func take_damage(dmg: float) -> void:
 	if not alive() or invincible:
 		return
 	health = maxf(health - dmg, 0.0)
-	health_changed.emit(health, MAX_HEALTH)
+	health_changed.emit(health, max_health)
 	if health <= 0.0:
 		_play("Death", 0.1)
 		broken.emit()
@@ -107,9 +110,9 @@ func take_damage(dmg: float) -> void:
 		_play("HitRecieve_1", 0.05)
 
 func repair_full() -> void:
-	health = MAX_HEALTH
+	health = max_health
 	gun = MechGun.new()
-	health_changed.emit(health, MAX_HEALTH)
+	health_changed.emit(health, max_health)
 	_anim_name = ""
 	_play("Idle")
 
@@ -154,7 +157,7 @@ func _physics_process(delta: float) -> void:
 func _fire_at(c: Creature) -> void:
 	if c == null:
 		return
-	c.take_hit(MechGun.DAMAGE)
+	c.take_hit(MechGun.DAMAGE * damage_factor)
 	_shoot_t = 0.25
 	_shot_i += 1
 	var from := visual.global_transform * (MUZZLE + Vector3((0.6 if _shot_i % 2 == 0 else -0.6), 0, 0))

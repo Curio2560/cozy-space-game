@@ -304,3 +304,14 @@ TOAST_ARRIVED,Welcome to the %s planet! (planet %d),Bem-vindo ao planeta %s! (pl
 BIOME_PRADO,Meadow,Prado
 BIOME_ACIDO,Acid,Ácido
 BIOME_LAVA,Lava,Lava
+TERMINAL_TAB_RESEARCH,Research,Pesquisa
+RESEARCH_HEAD,"Mothership on the radio: research stays with you from planet to planet. You have %d data.","Nave-mãe por rádio: a pesquisa fica contigo de planeta para planeta. Tens %d dados."
+RES_LINE_MECH_DAMAGE,Mech cannons,Canhões do mech
+RES_LINE_MECH_DAMAGE_INFO,+20% damage per level,+20% de dano por nível
+RES_LINE_MECH_ARMOR,Mech armour,Blindagem do mech
+RES_LINE_MECH_ARMOR_INFO,+25% health per level,+25% de vida por nível
+RES_LINE_TURRET_4,Turret level 4,Torre nível 4
+RES_LINE_TURRET_4_INFO,Laser turrets can be upgraded to level 4,As torres laser podem subir ao nível 4
+RES_LINE_BUILDING_HP,Reinforced buildings,Edifícios reforçados
+RES_LINE_BUILDING_HP_INFO,+30% building health per level,+30% de vida dos edifícios por nível
+TOAST_RESEARCHED,Research done: %s,Pesquisa feita: %s

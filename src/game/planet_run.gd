@@ -49,6 +49,7 @@ var farm: FarmController
 var tutorial: Tutorial
 var upgrades := Upgrades.new()
 var crew := Crew.new()
+var research := Research.new()
 var _tut_walk := 0.0
 var _tut_last := Vector3.INF
 var _tut_jumped := false
@@ -153,7 +154,7 @@ func _ready() -> void:
 	bars.set_value("rover", rover.health, rover.max_health)
 	bars.add_bar("mech", "BAR_MECH", Color("9fd36b"))
 	mech.health_changed.connect(func(v: float, m: float) -> void: bars.set_value("mech", v, m))
-	bars.set_value("mech", mech.health, Mech.MAX_HEALTH)
+	bars.set_value("mech", mech.health, mech.max_health)
 	bars.add_bar("gun", "BAR_GUN_HEAT", Color("ffcf4a"))
 	bars.add_bar("health", "BAR_HEALTH", Color("ff6b8a"))
 	bars.add_bar("o2", "BAR_O2", Color("6fd6ff"))
@@ -172,6 +173,10 @@ func _ready() -> void:
 	crew_page.run = self
 	outpost.menu.add_page("TERMINAL_TAB_CREW", crew_page)
 	crew.changed.connect(apply_crew)
+	var res_page := ResearchPage.new()
+	res_page.run = self
+	outpost.menu.add_page("TERMINAL_TAB_RESEARCH", res_page)
+	research.changed.connect(apply_research)
 	crew.leveled.connect(func(m: String, lv: int) -> void:
 		deliveries.hud.toast(tr("TOAST_CREW_LEVEL") % [tr("CREW_" + m.to_upper()), lv]))
 	cycle.dusk_warning.connect(func() -> void: deliveries.hud.toast(tr("TOAST_DUSK")))
@@ -382,6 +387,24 @@ func apply_crew() -> void:
 	if farm:
 		farm.farm.growth_speed = crew.farm_speed()
 
+## Efeitos da pesquisa (ficam de planeta para planeta): mech, torres, vida dos edifícios.
+func apply_research() -> void:
+	var full := mech.health >= mech.max_health
+	mech.max_health = Mech.MAX_HEALTH * research.mech_health_factor()
+	if full:
+		mech.health = mech.max_health
+	mech.damage_factor = research.mech_damage_factor()
+	if outpost:
+		outpost.state.max_turret_level = research.max_turret_level()
+		outpost.state.set_hp_factor(research.building_hp_factor())
+
+func buy_research(line: String) -> bool:
+	if not research.buy(line, wallet):
+		return false
+	deliveries.hud.toast(tr("TOAST_RESEARCHED") % tr("RES_LINE_" + line.to_upper()))
+	autosave()
+	return true
+
 func apply_upgrades() -> void:
 	rover.upgrade_speed = upgrades.speed_factor()
 	rover.damage_factor = upgrades.shield_factor()
@@ -401,6 +424,7 @@ func save_state() -> Dictionary:
 		"tutorial": tutorial.to_dict(),
 		"upgrades": upgrades.to_dict(),
 		"crew": crew.to_dict(),
+		"research": research.to_dict(),
 		"cycle": cycle.to_dict(),
 		"galaxy": galaxy.to_dict(),
 	}
@@ -410,6 +434,8 @@ func apply_state(state: Dictionary) -> void:
 	wallet.from_dict(state.get("wallet", {}))
 	deliveries.session.from_dict(state.get("deliveries", {}))
 	deliveries._update_keycards()
+	if state.has("research"):
+		research.from_dict(state.research) # antes do posto: a vida guardada já tem o multiplicador
 	if state.has("upgrades"):
 		upgrades.from_dict(state.upgrades) # antes do posto: os slots extra vêm daqui
 	if state.has("outpost"):
@@ -506,6 +532,7 @@ func new_game() -> void:
 	wallet.from_dict({})
 	upgrades.from_dict({})
 	crew.from_dict({})
+	research.from_dict({})
 	cycle.from_dict({})
 	galaxy.from_dict({"seed": randi() % 100000, "index": 0})
 	planet_index = 0
@@ -557,6 +584,7 @@ func start(s: int) -> void:
 			outpost.state.add_slots()
 		outpost.rebuild()
 	apply_upgrades()
+	apply_research()
 	if farm:
 		farm.start_planet()
 	if boss_fight:
@@ -1020,7 +1048,7 @@ func _physics_process(delta: float) -> void:
 		h = tr("HINT_ENTER_MECH")
 	elif near_mech_by_day() and h == "":
 		h = tr("HINT_MECH_NIGHT_ONLY")
-	bars.show_bar("mech", piloting or (mech.health < Mech.MAX_HEALTH and cycle.is_night()))
+	bars.show_bar("mech", piloting or (mech.health < mech.max_health and cycle.is_night()))
 	bars.show_bar("gun", piloting)
 	var ov := {}
 	if piloting:
