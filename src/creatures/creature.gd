@@ -14,6 +14,9 @@ extends Node3D
 
 signal attacked(creature: Creature)
 signal dropped_crate(creature: Creature, at: Vector3)
+## Criaturas da noite (#38): golpe num alvo do ataque (`key` = "player" ou índice do slot).
+signal raid_hit(creature: Creature, key: Variant)
+signal died(creature: Creature)
 
 enum Mode { WANDER, CHASE, WINDUP, WATCH, FLEE, CARRY, KNOCKED, DODGE, RETURN }
 enum Personality { AGGRESSIVE, THIEF, CURIOUS, TIMID }
@@ -60,6 +63,18 @@ var _timer := 0.0
 var _anim_role := ""
 var _ap: AnimationPlayer
 var _speed_k := 1.0
+## À noite as hostis atacam mesmo sem encomenda (grill r2 Q15).
+var night_hostile := false
+## Criatura de uma vaga da noite: vai direta ao posto, ataca edifícios e o jogador perto.
+var raider := false
+## Devolve o alvo do ataque: [posição global, alcance do golpe em m, chave] ou [] se não houver.
+var raid_target: Callable
+var health := 30.0
+var max_health := 30.0
+var dead := false
+const RAID_SPEED := 3.0
+const RAID_WINDUP := 0.7
+const RAID_COOLDOWN := 1.6
 
 func setup(p_id: String, p_planet: Planet, p_dir: Vector3, biome: String, seed_value: int) -> void:
 	id = p_id
@@ -145,8 +160,69 @@ func drop() -> void:
 	_cooldown = COOLDOWN * 2.0
 	dropped_crate.emit(self, global_position + _up_global() * 0.4)
 
+## Leva dano (tiros do mech, torres). A 0 morre (uma vez só).
+func take_hit(dmg: float) -> void:
+	if dead:
+		return
+	health -= dmg
+	if health <= 0.0:
+		health = 0.0
+		dead = true
+		if carrying:
+			drop()
+		_play("death", true)
+		died.emit(self)
+		var tw := create_tween()
+		tw.tween_interval(0.9)
+		tw.tween_property(self, "scale", Vector3.ONE * 0.01, 0.35)
+		tw.tween_callback(queue_free)
+	else:
+		_play("hit", true)
+
+## Ataque da noite: segue o alvo dado por `raid_target` e golpeia quando chega perto.
+func _raid(delta: float) -> void:
+	if not raid_target.is_valid():
+		return
+	var tgt: Array = raid_target.call()
+	_cooldown = maxf(_cooldown - delta, 0.0)
+	if tgt.is_empty():
+		_wander(delta, planet.data.arc_m(dir, home))
+		_move(delta, 1.3 * _speed_k)
+		_update_anim()
+		return
+	var pos: Vector3 = tgt[0]
+	var reach: float = tgt[1]
+	var to_t := planet.to_local(pos).normalized()
+	var dist := planet.data.arc_m(dir, to_t)
+	if mode == Mode.WINDUP:
+		_steer_towards(to_t, delta, 10.0)
+		_timer -= delta
+		if _timer <= 0.0:
+			_cooldown = RAID_COOLDOWN
+			mode = Mode.CHASE
+			if dist < reach + 0.8:
+				raid_hit.emit(self, tgt[2])
+		_place()
+		return
+	mode = Mode.CHASE
+	_steer_towards(to_t, delta, 6.0)
+	if dist < reach:
+		if _cooldown <= 0.0:
+			mode = Mode.WINDUP
+			_timer = RAID_WINDUP
+			_play("attack", true)
+		_place()
+		return
+	_move(delta, RAID_SPEED * _speed_k)
+	_update_anim()
+
 func _physics_process(delta: float) -> void:
-	if planet == null or not target.is_valid():
+	if planet == null or dead:
+		return
+	if raider:
+		_raid(delta)
+		return
+	if not target.is_valid():
 		return
 	var t: Node3D = target.call()
 	if t == null:
@@ -244,7 +320,7 @@ func _target_has_crate() -> bool:
 
 ## Só as personalidades hostis, e só quando o alvo leva uma encomenda.
 func _hostile() -> bool:
-	return personality in [Personality.AGGRESSIVE, Personality.THIEF] and _target_has_crate()
+	return personality in [Personality.AGGRESSIVE, Personality.THIEF] and (_target_has_crate() or night_hostile)
 
 func _notice_range() -> float:
 	return NOTICE[personality]

@@ -83,3 +83,20 @@
 13. Tripulação: os 4 disponíveis já; troca no terminal; vantagem pequena que cresce com o nível; XP por entrega.
 14. Save automático (ao sair da app, a cada entrega e a cada construção); um só espaço; "Novo jogo" no menu.
 15. Dano e reparação de edifícios: F4.
+
+## Ronda 6 — F4: dia/noite e defesa (08 nov 2026) — todas as recomendadas
+
+1. Ordem: ciclo do dia → criaturas à noite → mech → torres → dano/reparação → ecrã da manhã.
+2. Dia de 7 min + noite de 3 min; aviso 30 s antes do anoitecer.
+3. A noite é obrigatória, mas perder uma noite só estraga edifícios (nunca se perde o jogo).
+4. As entregas continuam à noite; os colonos pagam +25%.
+5. À noite as criaturas atacam os edifícios do posto e o jogador que estiver perto.
+6. 3 vagas por noite, cada noite um pouco mais forte; HUD com a vaga e quantas criaturas faltam.
+7. O mech fica na base; à noite, Ação junto dele para entrar (como o rover).
+8. Controlos do mech: joystick para andar, mira automática no inimigo mais próximo, botão DISPARAR.
+9. Arma do mech: tiro rápido com aquecimento (para se disparar sem parar).
+10. Torres: 1 tipo (laser) com 3 níveis; gastam energia.
+11. Edifícios têm vida; a 0 ficam desligados (não produzem) até serem reparados com minério.
+12. Ecrã da manhã: resumo da noite (vagas, danos, créditos) + escolher tripulante + 3 encomendas do dia + plantar.
+13. Cada vaga vencida dá créditos e dados de pesquisa; noite perfeita (sem danos) dá bónus.
+14. DBG: saltar para a noite / manhã, acelerar o tempo, mandar uma vaga já, invencível.

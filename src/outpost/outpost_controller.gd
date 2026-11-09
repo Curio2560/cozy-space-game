@@ -13,6 +13,7 @@ var menu_open := false
 var _action := JumpBuffer.new()
 var state := Outpost.new()
 var slot_menu: SlotMenu
+var bars: BuildingBars
 var build_page: OutpostPage
 const SLOT_RADIUS := 3.6
 ## Visual de cada edifício: modelo do kit (altura em m) ou montagem do pack sci-fi.
@@ -21,9 +22,14 @@ const VISUALS := {
 	"lab": {"kit": "base/House_Cylinder", "h": 3.6},
 	"research": {"kit": "base/GeodesicDome", "h": 3.4},
 	"solar": {"kit": "base/SolarPanel_Ground", "h": 2.0},
+	"turret": {"parts": [{"m": "Props_Base", "p": Vector3(0, 0, 0), "r": 0}, {"m": "Column_Slim", "p": Vector3(0, 0.3, 0), "r": 0}]},
 	"storage": {"parts": [{"m": "Props_ContainerFull", "p": Vector3(-0.8, 0, 0), "r": 0}, {"m": "Props_CrateLong", "p": Vector3(1.1, 0, 0.9), "r": 90}, {"m": "Props_Crate", "p": Vector3(1.1, 0, -1.0), "r": 15}]},
 }
 var _slot_nodes: Array[Node3D] = []
+## Cabeças das torres (slot -> Node3D), rodadas pela defesa para apontar.
+var turret_heads := {}
+const TURRET_HEAD_H := 4.75
+const TURRET_HEAD_SCALE := 0.75
 var _labels: Array[Label3D] = []
 var _label_t := 0.0
 
@@ -45,6 +51,9 @@ func setup(p_run: Node3D, hud_layer: CanvasLayer) -> void:
 	slot_menu.visible = false
 	hud_layer.add_child(slot_menu)
 	slot_menu.closed.connect(close_menu)
+	bars = BuildingBars.new()
+	bars.controller = self
+	hud_layer.add_child(bars)
 
 ## Planeta novo: posto vazio (o posto recomeça em cada planeta) e slots desenhados.
 func start_planet() -> void:
@@ -67,6 +76,7 @@ func rebuild() -> void:
 			n.free() # já: os nós novos têm os mesmos nomes
 	_slot_nodes.clear()
 	_labels.clear()
+	turret_heads.clear()
 	var d: PlanetData = run.planet.data
 	for i in slot_total():
 		var holder := Node3D.new()
@@ -92,6 +102,13 @@ func rebuild() -> void:
 			else:
 				b = run.planet._place_building(v.parts, BuildingKit.BASE_PALETTE, dir, "B%d" % i, d.outpost_dir)
 			b.reparent(holder)
+			if kind == "turret":
+				var head := BuildingKit.build([{"m": "Props_Laser", "p": Vector3.ZERO, "r": 0}], BuildingKit.BASE_PALETTE, false)
+				head.name = "Head"
+				holder.add_child(head)
+				var hb: Basis = (run.planet.global_basis * SphereMath.basis_from_up(dir)).scaled(Vector3.ONE * TURRET_HEAD_SCALE)
+				head.global_transform = Transform3D(hb, run.planet.to_global(d.surface_point(dir) + dir * TURRET_HEAD_H))
+				turret_heads[i] = head
 		var l := Label3D.new()
 		l.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 		l.font_size = 48
@@ -99,7 +116,7 @@ func rebuild() -> void:
 		l.pixel_size = 0.01
 		l.no_depth_test = false
 		holder.add_child(l)
-		l.global_position = run.planet.to_global(d.surface_point(dir) + dir * 4.6)
+		l.global_position = run.planet.to_global(d.surface_point(dir) + dir * (6.4 if kind == "turret" else 4.6))
 		_labels.append(l)
 	_update_labels()
 
@@ -120,14 +137,18 @@ func _update_labels() -> void:
 		else:
 			var b: Dictionary = Outpost.BUILDINGS[s.kind]
 			var line := tr("BUILDING_" + s.kind.to_upper())
+			if s.kind == "turret":
+				line += " · " + tr("TURRET_LEVEL") % state.level(i)
 			if b.produces != "":
 				line += "\n%s %d/%d" % [tr("RES_" + str(b.produces).to_upper()), s.stored, state.capacity()]
+			if state.is_broken(i):
+				line += "\n" + tr("BUILDING_OFF")
 			l.text = line
-			l.modulate = Color("ffc857") if int(s.stored) >= state.capacity() else Color.WHITE
+			l.modulate = Color("ff6b6b") if state.is_broken(i) else (Color("ffc857") if int(s.stored) >= state.capacity() else Color.WHITE)
 
 ## Slot aberto mais perto do jogador (a pé), ou -1.
 func nearest_slot() -> int:
-	if run.driving or run.planet.data == null:
+	if run.in_vehicle() or run.planet.data == null:
 		return -1
 	var best := -1
 	var best_d := SLOT_RADIUS
@@ -139,6 +160,40 @@ func nearest_slot() -> int:
 			best_d = dist
 			best = i
 	return best
+
+## Dano de uma criatura ao edifício do slot `i`. Devolve true se o desligou.
+func damage_building(i: int, amount: float) -> bool:
+	if not state.damage(i, amount):
+		return false
+	run.deliveries.hud.toast(tr("TOAST_BUILDING_BROKEN") % tr("BUILDING_" + str(state.slots[i].kind).to_upper()))
+	_update_labels()
+	return true
+
+## Repara o slot `i` com o minério que houver.
+func repair(i: int) -> int:
+	var ore := state.repair(i, run.wallet)
+	if ore > 0:
+		run.deliveries.hud.toast(tr("TOAST_REPAIRED") % ore)
+		_update_labels()
+		run.autosave()
+	return ore
+
+func repair_all() -> int:
+	var ore := state.repair_all(run.wallet)
+	if ore > 0:
+		run.deliveries.hud.toast(tr("TOAST_REPAIRED") % ore)
+		_update_labels()
+		run.autosave()
+	return ore
+
+## Melhora a torre do slot `i` (paga, redesenha, guarda).
+func upgrade(i: int) -> bool:
+	if not state.upgrade(i, run.wallet):
+		return false
+	rebuild()
+	run.deliveries.hud.toast(tr("TOAST_TURRET_UP") % state.level(i))
+	run.autosave()
+	return true
 
 ## Constrói `kind` no slot `i` (paga, redesenha, guarda).
 func build(i: int, kind: String) -> bool:
@@ -189,7 +244,7 @@ func terminal_position() -> Vector3:
 	return base.global_transform * TERMINAL_LOCAL
 
 func near_terminal() -> bool:
-	return not run.driving and run.player.global_position.distance_to(terminal_position()) < TERMINAL_RADIUS
+	return not run.in_vehicle() and run.player.global_position.distance_to(terminal_position()) < TERMINAL_RADIUS
 
 func open_menu() -> void:
 	menu_open = true
@@ -205,7 +260,7 @@ func close_menu() -> void:
 	if run.farm:
 		run.farm.menu.visible = false
 	run._update_touch_visibility()
-	if not run.driving:
+	if not run.in_vehicle():
 		run.player.controllable = true
 
 func hint() -> String:
@@ -219,6 +274,11 @@ func hint() -> String:
 	var s: Dictionary = state.slots[i]
 	if s.kind == "":
 		return tr("HINT_SLOT_BUILD")
+	if state.is_damaged(i):
+		var need := state.repair_cost(i)
+		return tr("HINT_REPAIR") % need if run.wallet.amount(Wallet.ORE) > 0 else tr("HINT_REPAIR_NO_ORE") % need
+	if s.kind == "turret":
+		return tr("HINT_TURRET") % state.level(i)
 	if int(s.stored) > 0:
 		return tr("HINT_SLOT_COLLECT") % [s.stored, tr("RES_" + str(Outpost.BUILDINGS[s.kind].produces).to_upper())]
 	return ""
@@ -235,7 +295,9 @@ func _physics_process(delta: float) -> void:
 		else:
 			var i := nearest_slot()
 			if i >= 0:
-				if state.is_empty(i):
+				if state.is_damaged(i) and run.wallet.amount(Wallet.ORE) > 0:
+					repair(i)
+				elif state.is_empty(i) or state.slots[i].kind == "turret":
 					open_slot_menu(i)
 				else:
 					collect(i)

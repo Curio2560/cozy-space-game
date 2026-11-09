@@ -211,3 +211,60 @@ CREW_FERNANDOTHEFLAMINGO,Fernando (flamingo),Fernando (flamingo)
 CREW_FERNANDOTHEFLAMINGO_PERK,Agile: jumps higher and walks faster,Ágil: salta mais alto e anda mais depressa
 CREW_RAETHEREDPANDA,Rae (red panda),Rae (panda-vermelho)
 CREW_RAETHEREDPANDA_PERK,Driver: faster rover with better steering,Condutora: rover mais rápido e com melhor direção
+DBG_TAB_NIGHT,Night,Noite
+DBG_TO_NIGHT,Jump to night,Saltar para a noite
+DBG_TO_MORNING,Jump to morning,Saltar para a manhã
+DBG_TO_DUSK,Jump to dusk warning,Saltar para o aviso
+DBG_TIME_SPEED,Time speed,Velocidade do tempo
+CLOCK_DAY,Day %d · night in %s,Dia %d · anoitece em %s
+CLOCK_NIGHT,Night %d · morning in %s,Noite %d · amanhece em %s
+CLOCK_DAY_SHORT,Day,Dia
+CLOCK_NIGHT_SHORT,Night,Noite
+TOAST_DUSK,Night falls in 30 s — head back to the outpost!,Anoitece em 30 s — volta ao posto!
+TOAST_NIGHT,Night has fallen. Colonists pay +25%.,Anoiteceu. Os colonos pagam +25%.
+TOAST_MORNING,Good morning! Day %d,Bom dia! Dia %d
+DBG_WAVE_NOW,Send a wave now,Mandar uma vaga já
+DBG_KILL_WAVE,Kill night creatures,Matar as criaturas da noite
+TOAST_WAVE,Wave %d/%d: %d creatures!,Vaga %d/%d: %d criaturas!
+TOAST_WAVE_CLEARED,Wave %d cleared! +%d ¢ +%d data,Vaga %d vencida! +%d ¢ +%d dados
+HUD_WAVE,Wave %d/%d · %d left,Vaga %d/%d · faltam %d
+BAR_MECH,Mech,Mech
+BAR_GUN_HEAT,Gun heat,Calor da arma
+BTN_FIRE,FIRE,DISPARAR
+HINT_ENTER_MECH,Tap Mech to board,Toca em Mech para entrar
+HINT_EXIT_MECH,FIRE to shoot · Mech to get out,DISPARAR para atirar · Mech para sair
+HINT_MECH_NIGHT_ONLY,The mech only wakes up at night,O mech só acorda à noite
+TOAST_MECH_BROKEN,The mech broke down! It will be repaired by morning.,O mech avariou! De manhã está reparado.
+TOAST_GUN_HOT,Gun overheated!,Arma sobreaquecida!
+BTN_MECH,Mech,Mech
+BUILDING_TURRET,Laser turret,Torre laser
+BUILDING_TURRET_INFO,Shoots night creatures by itself. Uses 1 energy.,Dispara sozinha nas criaturas da noite. Gasta 1 de energia.
+TURRET_LEVEL,Level %d,Nível %d
+TURRET_STATS,%.0f damage/s · range %.0f m,%.0f de dano/s · alcance %.0f m
+TURRET_NEXT,Level %d (%s): %.0f damage/s · range %.0f m,Nível %d (%s): %.0f de dano/s · alcance %.0f m
+TURRET_UPGRADE,Upgrade,Melhorar
+TURRET_MAX,Max level,Nível máximo
+HINT_TURRET,Action: laser turret (level %d),Ação: torre laser (nível %d)
+TOAST_TURRET_UP,Turret upgraded to level %d!,Torre melhorada para o nível %d!
+BUILDING_OFF,OFF — needs repair,DESLIGADO — precisa de reparação
+BUILDING_HP,%d%% health,%d%% de vida
+HINT_REPAIR,Action: repair (%d ore),Ação: reparar (%d minério)
+HINT_REPAIR_NO_ORE,Needs %d ore to repair,Precisa de %d minério para reparar
+TOAST_BUILDING_BROKEN,%s is off! Repair it with ore.,%s desligou-se! Repara com minério.
+TOAST_REPAIRED,Repaired (−%d ore),Reparado (−%d minério)
+OUTPOST_REPAIR_ALL,Repair all (%d ore),Reparar tudo (%d minério)
+DBG_MORNING_SCREEN,Morning screen,Ecrã da manhã
+MORNING_TITLE,Good morning! Day %d,Bom dia! Dia %d
+MORNING_WAVES,Waves cleared: %d/%d,Vagas vencidas: %d/%d
+MORNING_GAIN,+%d ¢ · +%d data,+%d ¢ · +%d dados
+MORNING_BROKEN,%d buildings are off — repair them with ore.,%d edifícios desligados — repara com minério.
+MORNING_DAMAGED,Some buildings were damaged.,Alguns edifícios ficaram danificados.
+MORNING_PERFECT,Perfect night! Bonus included.,Noite perfeita! Bónus incluído.
+MORNING_CREW,Today's crew member,Tripulante do dia
+MORNING_ORDERS,Today's orders,Encomendas do dia
+MORNING_ORDER_TAKEN,Order in progress: %s → %s,Encomenda em curso: %s → %s
+MORNING_FARM,Farm,Quinta
+MORNING_FARM_FULL,All plots are growing.,Todos os talhões estão a crescer.
+MORNING_PLANT,Plant %s ×%d (%d ¢),Plantar %s ×%d (%d ¢)
+MORNING_START,Start the day,Começar o dia
+DBG_INVINCIBLE,Invincible,Invencível

@@ -70,3 +70,24 @@ O canto superior direito (builds debug) mostra `fps · draw calls · k tri`. O D
 com mais triângulos, é o mais lento). Abaixo do alvo de 60 fps, mas jogável; o plano acima
 continua válido, começando pelo passo 2 (contornos) e 3 (relva/plantas), que são os que mais
 triângulos tiram. Fica para a F3.
+
+## F4 — fecho (09 nov 2026, v0.4.0)
+
+### No PC (llvmpipe; só contam draw calls e triângulos), prado, seed 7, 1280×720
+
+| Situação | Draw calls | Triângulos |
+|---|---|---|
+| Dia, a pé | 201 | 440k |
+| Noite, a pé (luz e céu mudam, sem custo) | 201–209 | 440k |
+| Noite, no mech, com uma vaga perto | 257 | 473k |
+| Noite, torre laser no slot 0 e vaga | 243–245 | 474–481k |
+
+### O que a F4 acrescentou e quanto custa
+
+- Ciclo dia/noite: só muda cores e energia da luz e dois parâmetros do céu (sem custo de GPU).
+- Criaturas da noite: cada uma é um modelo com esqueleto (~6–8 draw calls); no máximo 12 por
+  vaga. É o maior custo da noite: se o telemóvel cair muito, limitar a 8 por vaga ou desligar
+  as animações das que estão longe.
+- Mech: um modelo com esqueleto (sempre na cena, estacionado de dia).
+- Tiros (mech e torres): 4 + 8 cilindros reaproveitados, sem alocações.
+- Barras de vida dos edifícios: desenho 2D no HUD, só para os danificados.

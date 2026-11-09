@@ -43,6 +43,12 @@ func open(i: int) -> void:
 func refresh() -> void:
 	for c in _list.get_children():
 		c.queue_free()
+	var st: Outpost = controller.state
+	if slot >= 0 and st.slots[slot].kind == "turret":
+		_title.text = "BUILDING_TURRET"
+		_turret_rows(st)
+		return
+	_title.text = "SLOT_MENU_TITLE"
 	for kind in Outpost.ORDER:
 		var b: Dictionary = Outpost.BUILDINGS[kind]
 		var row := HBoxContainer.new()
@@ -62,6 +68,32 @@ func refresh() -> void:
 				closed.emit())
 		row.add_child(btn)
 		_list.add_child(row)
+
+## Torre construída: nível, o que faz, e o botão para melhorar.
+func _turret_rows(st: Outpost) -> void:
+	var lv := st.level(slot)
+	var stats: Dictionary = Outpost.TURRET_LEVELS[lv - 1]
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 12)
+	var l := Label.new()
+	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	l.add_theme_font_size_override("font_size", 22)
+	l.text = "%s\n%s" % [tr("TURRET_LEVEL") % lv, tr("TURRET_STATS") % [stats.damage / stats.interval, stats.range]]
+	var cost := st.upgrade_cost(slot)
+	if not cost.is_empty():
+		var nxt: Dictionary = Outpost.TURRET_LEVELS[lv]
+		l.text += "\n" + tr("TURRET_NEXT") % [lv + 1, cost_text(cost), nxt.damage / nxt.interval, nxt.range]
+	row.add_child(l)
+	var btn := Button.new()
+	btn.text = "TURRET_UPGRADE" if not cost.is_empty() else "TURRET_MAX"
+	btn.custom_minimum_size = Vector2(190, 64)
+	btn.add_theme_font_size_override("font_size", 24)
+	btn.disabled = cost.is_empty() or not controller.run.wallet.can_afford(cost)
+	btn.pressed.connect(func() -> void:
+		if controller.upgrade(slot):
+			refresh())
+	row.add_child(btn)
+	_list.add_child(row)
 
 static func cost_text(cost: Dictionary) -> String:
 	var parts := []

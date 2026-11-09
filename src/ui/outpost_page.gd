@@ -6,6 +6,7 @@ extends VBoxContainer
 var controller: OutpostController
 var _energy: Label
 var _rows: VBoxContainer
+var _repair: Button
 
 func _ready() -> void:
 	add_theme_constant_override("separation", 10)
@@ -27,6 +28,13 @@ func _ready() -> void:
 		controller.collect_all()
 		refresh())
 	add_child(all)
+	_repair = Button.new()
+	_repair.custom_minimum_size = Vector2(0, 60)
+	_repair.add_theme_font_size_override("font_size", 24)
+	_repair.pressed.connect(func() -> void:
+		controller.repair_all()
+		refresh())
+	add_child(_repair)
 
 func refresh() -> void:
 	var st := controller.state
@@ -44,4 +52,13 @@ func refresh() -> void:
 			l.text = "%d. %s" % [i + 1, tr("BUILDING_" + s.kind.to_upper())]
 			if b.produces != "":
 				l.text += "  ·  %s %d/%d" % [tr("RES_" + str(b.produces).to_upper()), s.stored, st.capacity()]
+			if st.is_broken(i):
+				l.text += "  ·  " + tr("BUILDING_OFF")
+				l.add_theme_color_override("font_color", Color("d9434f"))
+			elif st.is_damaged(i):
+				l.text += "  ·  " + tr("BUILDING_HP") % int(round(100.0 * st.hp(i) / st.max_hp(i)))
 		_rows.add_child(l)
+	var need := st.repair_cost_all()
+	_repair.visible = need > 0
+	_repair.text = tr("OUTPOST_REPAIR_ALL") % need
+	_repair.disabled = controller.run.wallet.amount(Wallet.ORE) <= 0

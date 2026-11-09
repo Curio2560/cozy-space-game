@@ -21,6 +21,8 @@ var _stick_finger := -1
 var _look_finger := -1
 var _button_fingers := {} # finger -> ação
 var _font: Font
+## Troca o texto de um botão (ação -> chave de tradução), p. ex. saltar → DISPARAR no mech.
+var label_override := {}
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -148,7 +150,7 @@ func _draw() -> void:
 		draw_circle(at, r, COLOR_BTN_DOWN if pressed else COLOR_BTN)
 		draw_arc(at, r, 0, TAU, 48, CozyTheme.INK, 4.0, true)
 		center = at
-		var label := tr(b[1])
+		var label := tr(label_override.get(b[0], b[1]))
 		var fs := maxi(int(r * 0.42), 8)
 		var w := _font.get_string_size(label, HORIZONTAL_ALIGNMENT_CENTER, -1, fs).x
 		draw_string(_font, center + Vector2(-w * 0.5, fs * 0.35), label, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, CozyTheme.INK)

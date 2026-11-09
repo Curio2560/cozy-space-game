@@ -183,6 +183,8 @@ func tick(delta: float) -> void:
 ## Solavanco do rover (força como em Rover.bumped): estraga as encomendas frágeis.
 ## Multiplicador da perda de valor em embates (melhoria de carga do rover).
 var cargo_factor := 1.0
+## Multiplicador do pagamento na hora da entrega (à noite os colonos pagam mais, #37).
+var pay_factor := 1.0
 
 func bump_active(strength: float) -> void:
 	if carrying() and active.kind == "fragile":
@@ -225,7 +227,7 @@ func deliver() -> int:
 		return 0
 	var o := active
 	var on_time := not o.is_late()
-	o.paid = maxi(1, int(round(payment(o.base_pay, o.time_limit, o.elapsed) * o.value_factor * o.freshness)))
+	o.paid = maxi(1, int(round(payment(o.base_pay, o.time_limit, o.elapsed) * o.value_factor * o.freshness * pay_factor)))
 	o.state = DeliveryOrder.State.DELIVERED
 	wallet.add(Wallet.CREDITS, o.paid)
 	since_important += 1
