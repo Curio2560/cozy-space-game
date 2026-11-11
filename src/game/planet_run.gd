@@ -398,6 +398,9 @@ func apply_research() -> void:
 	if full:
 		mech.health = mech.max_health
 	mech.damage_factor = research.mech_damage_factor()
+	heat.heat_factor = research.heat_factor()
+	if farm:
+		farm.farm.yield_bonus = research.crop_bonus()
 	if outpost:
 		outpost.state.max_turret_level = research.max_turret_level()
 		outpost.state.set_hp_factor(research.building_hp_factor())
@@ -589,9 +592,9 @@ func start(s: int) -> void:
 			outpost.state.add_slots()
 		outpost.rebuild()
 	apply_upgrades()
-	apply_research()
 	if farm:
 		farm.start_planet()
+	apply_research()
 	if boss_fight:
 		boss_fight.reset()
 	if dock:
@@ -903,7 +906,7 @@ func o2_drain_here() -> float:
 	var bd: Dictionary = PlanetGenerator.BIOMES[biome]
 	var base := float(bd.get("o2_drain", 0.0))
 	var near_k := float(bd.get("rivers", {}).get("o2_near", 1.0))
-	return AcidHazard.o2_drain(planet.data, planet.to_local(player.global_position), base, near_k) * crew.o2_factor() + extra_o2_drain
+	return AcidHazard.o2_drain(planet.data, planet.to_local(player.global_position), base, near_k) * crew.o2_factor() * research.o2_factor() + extra_o2_drain
 
 ## Calor do rover nos biomas com "rover_heat" (lava): aquece a andar e junto às fissuras,
 ## arrefece parado e à sombra; sobreaquecido fica lento.

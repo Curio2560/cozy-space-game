@@ -13,7 +13,9 @@ const CROP_FAST := "crop_fast"
 const CROP_MID := "crop_mid"
 const CROP_SLOW := "crop_slow"
 const CROP_KINDS := [CROP_FAST, CROP_MID, CROP_SLOW]
-const KINDS := [CREDITS, ORE, CRYSTAL, DATA, CROP_FAST, CROP_MID, CROP_SLOW]
+## Peças (fábrica de peças, F6): não se vendem e passam de planeta para planeta.
+const PARTS := "parts"
+const KINDS := [CREDITS, ORE, CRYSTAL, DATA, CROP_FAST, CROP_MID, CROP_SLOW, PARTS]
 
 func crops_total() -> int:
 	var n := 0

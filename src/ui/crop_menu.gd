@@ -44,7 +44,7 @@ func open(i: int) -> void:
 		var l := Label.new()
 		l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		l.add_theme_font_size_override("font_size", 24)
-		l.text = tr("CROP_INFO") % [tr("CROP_" + crop.to_upper()), DeliveryHud.format_time(float(c.time) / controller.farm.growth_speed), int(c.seed), Farm.YIELD, Market.price(c.resource)]
+		l.text = tr("CROP_INFO") % [tr("CROP_" + crop.to_upper()), DeliveryHud.format_time(float(c.time) / controller.farm.growth_speed), int(c.seed), Farm.YIELD + controller.farm.yield_bonus, Market.price(c.resource)]
 		row.add_child(l)
 		var b := Button.new()
 		b.text = "CROP_PLANT"
