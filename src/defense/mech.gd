@@ -17,6 +17,10 @@ const MODELS := {
 const HEIGHT := 3.4
 const MAX_HEALTH := 160.0
 const MUZZLE := Vector3(0.0, 2.3, 1.0) # no espaço do modelo, mais ou menos os canhões
+## Velocidade (m/s) a que os pés da animação Walk acompanham o chão, com HEIGHT = 3.4 m
+## (medido: os pés recuam ~3,8 m em meio ciclo de 0,83 s). A Run não serve: é para ~14 m/s e
+## levanta os pés 2 m (os pés escorregavam e o mech parecia patinar).
+const WALK_ANIM_SPEED := 9.2
 
 @export var walk_speed := 5.2
 @export var accel := 22.0
@@ -39,7 +43,7 @@ var aim: Creature
 var _model: Node3D
 var _anim: AnimationPlayer
 var _anim_name := ""
-var beams: Beams
+var projectiles: Projectiles
 var _shot_i := 0
 var _shoot_t := 0.0
 
@@ -57,10 +61,11 @@ func _ready() -> void:
 	visual = Node3D.new()
 	visual.name = "Visual"
 	add_child(visual)
-	beams = Beams.new()
-	beams.name = "Beams"
-	add_child(beams)
-	beams.setup(4, Color("ffe27a"))
+	projectiles = Projectiles.new()
+	projectiles.name = "Projectiles"
+	add_child(projectiles)
+	projectiles.setup(16, Color("ffe27a"))
+	projectiles.hit.connect(func(_c: Creature, _at: Vector3) -> void: Sound.play("hit", -10.0, 0.15))
 
 func set_crew(member: String) -> void:
 	if member == crew or not MODELS.has(member):
@@ -157,12 +162,11 @@ func _physics_process(delta: float) -> void:
 func _fire_at(c: Creature) -> void:
 	if c == null:
 		return
-	c.take_hit(MechGun.DAMAGE * damage_factor)
-	Sound.play("mech_shot", -6.0)
 	_shoot_t = 0.25
 	_shot_i += 1
 	var from := visual.global_transform * (MUZZLE + Vector3((0.6 if _shot_i % 2 == 0 else -0.6), 0, 0))
-	beams.fire(from, c.global_position + up() * 0.9)
+	projectiles.fire(from, c, MechGun.DAMAGE * damage_factor)
+	Sound.play("mech_shot", -6.0)
 
 func _turn_visual() -> void:
 	var local := global_basis.inverse() * facing
@@ -191,12 +195,13 @@ func _update_anim(speed: float) -> void:
 		return
 	if _shoot_t > 0.0 and speed < 0.6:
 		_play("Shoot_Small", 0.08)
-	elif speed > walk_speed * 0.6:
-		_play("Run")
 	elif speed > 0.4:
 		_play("Walk")
+		_anim.speed_scale = clampf(speed / WALK_ANIM_SPEED, 0.25, 1.5)
 	else:
 		_play("Idle")
+	if _anim and _anim_name != "Walk":
+		_anim.speed_scale = 1.0
 
 func _play(a: String, blend := 0.15) -> void:
 	if _anim == null or a == _anim_name or not _anim.has_animation(a):

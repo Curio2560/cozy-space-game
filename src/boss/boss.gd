@@ -29,6 +29,9 @@ func setup_boss(biome: String, planet_index: int, p_planet: Planet, at: Vector3)
 	_marker = _make_marker()
 	add_child(_marker)
 
+func hit_radius() -> float:
+	return 3.2
+
 ## Fração de vida (0..1).
 func health_frac() -> float:
 	return health / max_health if max_health > 0.0 else 0.0
