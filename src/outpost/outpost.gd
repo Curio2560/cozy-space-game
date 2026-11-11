@@ -24,8 +24,14 @@ const BUILDINGS := {
 	"solar": {"cost": {Wallet.CREDITS: 80}, "produces": "", "period": 0.0, "consumes": {}, "energy": 3},
 	"storage": {"cost": {Wallet.CREDITS: 150}, "produces": "", "period": 0.0, "consumes": {}, "energy": -1},
 	"turret": {"cost": {Wallet.CREDITS: 200}, "produces": "", "period": 0.0, "consumes": {}, "energy": -1},
+	"factory": {"cost": {Wallet.CREDITS: 350, Wallet.CRYSTAL: 3}, "produces": Wallet.PARTS, "period": 45.0, "consumes": {Wallet.ORE: 2, Wallet.CRYSTAL: 1}, "energy": -1},
 }
-const ORDER := ["miner", "lab", "research", "solar", "storage", "turret"]
+const ORDER := ["miner", "lab", "research", "solar", "storage", "turret", "factory"]
+## Edifícios que precisam de pesquisa (a cena tira-os daqui quando são desbloqueados).
+var locked := {"factory": true}
+
+func is_locked(kind: String) -> bool:
+	return bool(locked.get(kind, false))
 
 ## Torre laser (#40): estatísticas por nível (1..3). Sem energia que chegue dispara a metade.
 const TURRET_LEVELS := [
@@ -90,7 +96,7 @@ func capacity() -> int:
 
 ## Constrói `kind` no slot `i` se estiver vazio e houver dinheiro. Atómico.
 func build(i: int, kind: String, wallet: Wallet) -> bool:
-	if i < 0 or i >= slot_count or not is_empty(i) or not BUILDINGS.has(kind):
+	if i < 0 or i >= slot_count or not is_empty(i) or not BUILDINGS.has(kind) or is_locked(kind):
 		return false
 	if not wallet.spend(BUILDINGS[kind].cost):
 		return false

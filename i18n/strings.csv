@@ -337,3 +337,6 @@ RES_LINE_HEAT_SHIELD,Heat shield,Escudo térmico
 RES_LINE_HEAT_SHIELD_INFO,The rover heats up 30% slower,O rover aquece 30% mais devagar
 RES_LINE_COLD_SUIT,Thermal suit,Fato térmico
 RES_LINE_COLD_SUIT_INFO,Cold hurts half as much on foot,O frio tira metade da vida a pé
+BUILDING_FACTORY,Parts factory,Fábrica de peças
+BUILDING_FACTORY_INFO,"Every 45 s turns 2 ore + 1 crystal into 1 part. Uses 1 energy.","A cada 45 s transforma 2 minério + 1 cristal em 1 peça. Gasta 1 de energia."
+SLOT_NEEDS_RESEARCH,Needs research (terminal → Research),Precisa de pesquisa (terminal → Pesquisa)

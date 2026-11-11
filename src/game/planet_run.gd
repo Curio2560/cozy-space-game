@@ -404,6 +404,7 @@ func apply_research() -> void:
 	if outpost:
 		outpost.state.max_turret_level = research.max_turret_level()
 		outpost.state.set_hp_factor(research.building_hp_factor())
+		outpost.state.locked["factory"] = not research.factory_unlocked()
 
 func buy_research(line: String) -> bool:
 	if not research.buy(line, wallet):

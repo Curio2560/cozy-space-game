@@ -22,6 +22,7 @@ const VISUALS := {
 	"lab": {"kit": "base/House_Cylinder", "h": 3.6},
 	"research": {"kit": "base/GeodesicDome", "h": 3.4},
 	"solar": {"kit": "base/SolarPanel_Ground", "h": 2.0},
+	"factory": {"kit": "base/Building_L", "h": 3.4},
 	"turret": {"parts": [{"m": "Props_Base", "p": Vector3(0, 0, 0), "r": 0}, {"m": "Column_Slim", "p": Vector3(0, 0.3, 0), "r": 0}]},
 	"storage": {"parts": [{"m": "Props_ContainerFull", "p": Vector3(-0.8, 0, 0), "r": 0}, {"m": "Props_CrateLong", "p": Vector3(1.1, 0, 0.9), "r": 90}, {"m": "Props_Crate", "p": Vector3(1.1, 0, -1.0), "r": 15}]},
 }
