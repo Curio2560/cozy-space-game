@@ -229,13 +229,11 @@ TOAST_WAVE,Wave %d/%d: %d creatures!,Vaga %d/%d: %d criaturas!
 TOAST_WAVE_CLEARED,Wave %d cleared! +%d ¢ +%d data,Vaga %d vencida! +%d ¢ +%d dados
 HUD_WAVE,Wave %d/%d · %d left,Vaga %d/%d · faltam %d
 BAR_MECH,Mech,Mech
-BAR_GUN_HEAT,Gun heat,Calor da arma
 BTN_FIRE,FIRE,DISPARAR
 HINT_ENTER_MECH,Tap Mech to board,Toca em Mech para entrar
 HINT_EXIT_MECH,FIRE to shoot · Mech to get out,DISPARAR para atirar · Mech para sair
 HINT_MECH_NIGHT_ONLY,The mech only wakes up at night,O mech só acorda à noite
 TOAST_MECH_BROKEN,The mech broke down! It will be repaired by morning.,O mech avariou! De manhã está reparado.
-TOAST_GUN_HOT,Gun overheated!,Arma sobreaquecida!
 BTN_MECH,Mech,Mech
 BUILDING_TURRET,Laser turret,Torre laser
 BUILDING_TURRET_INFO,Shoots night creatures by itself. Uses 1 energy.,Dispara sozinha nas criaturas da noite. Gasta 1 de energia.
@@ -269,7 +267,7 @@ MORNING_PLANT,Plant %s ×%d (%d ¢),Plantar %s ×%d (%d ¢)
 MORNING_START,Start the day,Começar o dia
 DBG_INVINCIBLE,Invincible,Invencível
 TIP_NIGHT,"Night is coming: creatures will attack the outpost. Head back to the base!","Vem aí a noite: as criaturas vão atacar o posto. Volta para a base!"
-TIP_MECH,"Night: board the mech on the plaza (Mech button). FIRE aims by itself; don't overheat the gun.","Noite: entra no mech na praça (botão Mech). DISPARAR aponta sozinho; não deixes a arma sobreaquecer."
+TIP_MECH,"Night: board the mech on the plaza (Mech button). Hold FIRE: it aims by itself and never runs out.","Noite: entra no mech na praça (botão Mech). Carrega em DISPARAR: aponta sozinho e nunca fica sem munições."
 TIP_TURRET,"Build a laser turret in an empty slot: it shoots night creatures by itself.","Constrói uma torre laser num slot vazio: dispara sozinha nas criaturas da noite."
 TIP_REPAIR,"A building is damaged: stand next to it and press Action to repair it with ore.","Há um edifício danificado: vai lá e carrega em Ação para o reparar com minério."
 DBG_TAB_BOSS,Boss,Boss

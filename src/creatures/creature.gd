@@ -161,6 +161,10 @@ func drop() -> void:
 	_cooldown = COOLDOWN * 2.0
 	dropped_crate.emit(self, global_position + _up_global() * 0.4)
 
+## Raio (m) em que um projétil acerta.
+func hit_radius() -> float:
+	return 1.3
+
 ## Leva dano (tiros do mech, torres). A 0 morre (uma vez só).
 func take_hit(dmg: float) -> void:
 	if dead:

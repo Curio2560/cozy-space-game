@@ -1,38 +1,19 @@
 extends GutTest
-## Mech (#39): arma com aquecimento, mira no mais perto, entrar/sair à noite, tiros matam.
+## Mech (#39): arma sem limite, projéteis, mira no mais perto, entrar/sair à noite, tiros matam.
 
-func test_gun_fires_at_rate_and_overheats() -> void:
+func test_gun_fires_at_rate_forever() -> void:
+	# Munições infinitas: 30 s a disparar sem parar e nunca bloqueia.
 	var g := MechGun.new()
 	var shots := 0
-	for i in 60: # 1 s a disparar
+	for i in 60 * 30:
 		shots += g.tick(1.0 / 60.0, true)
-	assert_almost_eq(shots, int(1.0 / MechGun.INTERVAL), 2)
-	assert_false(g.locked, "1 s de tiro ainda não sobreaquece")
-	assert_gt(g.heat, 0.0)
-	watch_signals(g)
-	for i in 600:
-		g.tick(1.0 / 60.0, true)
-		if g.locked:
-			break
-	assert_true(g.locked, "disparar sem parar sobreaquece")
-	assert_signal_emitted(g, "overheated")
-	assert_eq(g.tick(0.2, true), 0, "bloqueada não dispara")
+	assert_almost_eq(float(shots) / 30.0, 1.0 / MechGun.INTERVAL, 1.0, "cadência constante")
+	assert_eq(g.tick(MechGun.INTERVAL, true), 1, "continua a disparar")
 
-func test_gun_cools_and_unlocks() -> void:
-	var g := MechGun.new()
-	g.heat = MechGun.MAX_HEAT
-	g.locked = true
-	watch_signals(g)
-	for i in 240:
-		g.tick(1.0 / 60.0, false)
-	assert_false(g.locked)
-	assert_signal_emitted(g, "cooled")
-	assert_lt(g.heat, MechGun.RESUME)
-
-func test_gun_does_not_fire_or_heat_without_target() -> void:
+func test_gun_does_not_fire_without_target_or_trigger() -> void:
 	var g := MechGun.new()
 	assert_eq(g.tick(0.5, true, false), 0)
-	assert_eq(g.heat, 0.0)
+	assert_eq(g.tick(0.5, false, true), 0)
 
 func test_nearest_in_range() -> void:
 	var ps := [Vector3(30, 0, 0), Vector3(5, 0, 0), Vector3(0, 3, 0)]
@@ -72,9 +53,12 @@ func test_mech_only_at_night_and_shoots_raiders() -> void:
 	assert_eq(m.find_target(), c)
 	var hp := c.health
 	Input.action_press("jump")
-	await wait_physics_frames(30)
+	await wait_physics_frames(1)
+	assert_gt(m.projectiles.active_count(), 0, "sai um projétil")
+	assert_eq(c.health, hp, "o projétil ainda não chegou: não é instantâneo")
+	await wait_physics_frames(40)
 	Input.action_release("jump")
-	assert_true(c.dead or c.health < hp, "os tiros acertam")
+	assert_true(c.dead or c.health < hp, "os projéteis acertam")
 	run.exit_mech()
 	assert_false(run.piloting)
 	assert_true(run.player.visible)

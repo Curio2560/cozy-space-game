@@ -155,7 +155,6 @@ func _ready() -> void:
 	bars.add_bar("mech", "BAR_MECH", Color("9fd36b"))
 	mech.health_changed.connect(func(v: float, m: float) -> void: bars.set_value("mech", v, m))
 	bars.set_value("mech", mech.health, mech.max_health)
-	bars.add_bar("gun", "BAR_GUN_HEAT", Color("ffcf4a"))
 	bars.add_bar("health", "BAR_HEALTH", Color("ff6b8a"))
 	bars.add_bar("o2", "BAR_O2", Color("6fd6ff"))
 	bars.add_bar("heat", "BAR_HEAT", Color("ff5a2a"))
@@ -1057,7 +1056,6 @@ func _physics_process(delta: float) -> void:
 	elif near_mech_by_day() and h == "":
 		h = tr("HINT_MECH_NIGHT_ONLY")
 	bars.show_bar("mech", piloting or (mech.health < mech.max_health and cycle.is_night()))
-	bars.show_bar("gun", piloting)
 	var ov := {}
 	if piloting:
 		ov["jump"] = "BTN_FIRE"
@@ -1066,8 +1064,6 @@ func _physics_process(delta: float) -> void:
 	if ov != touch.label_override:
 		touch.label_override = ov
 		touch.queue_redraw()
-	if piloting:
-		bars.set_value("gun", mech.gun.heat, MechGun.MAX_HEAT)
 	var dh := deliveries.hint()
 	var oh := outpost.hint()
 	if oh != "":
