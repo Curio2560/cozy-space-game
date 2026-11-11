@@ -22,6 +22,8 @@ const SLOW_SPEED := 2.0 # m/s: abaixo disto conta como parado
 const OVERHEAT_SPEED := 0.4 # fração da velocidade máxima sobreaquecido
 
 var heat := 0.0
+## Escudo térmico (pesquisa): multiplica só o aquecimento.
+var heat_factor := 1.0
 var hot := false # sobreaquecido
 
 ## `speed01` = velocidade / velocidade máxima (0..1); `fissure_clearance` em m (INF = longe).
@@ -38,6 +40,8 @@ func tick(delta: float, speed_m_s: float, speed01: float, fissure_clearance: flo
 		rate += AIR_HEAT - DRIVE_COOL
 	if in_shade:
 		rate -= SHADE_COOL
+	if rate > 0.0:
+		rate *= heat_factor
 	heat = clampf(heat + rate * delta, 0.0, MAX)
 	if not hot and heat >= MAX:
 		hot = true

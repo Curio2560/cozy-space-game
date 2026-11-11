@@ -122,3 +122,28 @@ mudar quando responder ao grill corrige-se depois.
 15. Só para a frente (save guarda o planeta atual e o progresso da galáxia).
 16. Sons CC0 (tiros, golpes, boss, nave) + música calma de dia e outra de noite.
 17. DBG: ir ao covil, dar 3 KeyCards, boss com pouca vida, vencer o boss, abrir o mapa, saltar de planeta.
+
+## Ronda 8 — pendentes (09 nov 2026) — PROVISÓRIAS
+O utilizador pediu para seguir para a F6 sem responder: seguem-se as recomendadas, exceto
+juntar os PRs (só com pedido explícito). A corrigir quando responder.
+
+2. Performance da luta: menos árvores e plantas à volta do covil e da arena (raio ~40 m).
+3. Relva: opção no menu baixa / média / alta (alta por omissão).
+4. Som: manter os sintetizados até serem ouvidos.
+6–13. Decisões da F5: manter como estão.
+14. Pesquisa: acrescentar O₂ de reserva no rover e colheitas maiores.
+15. Mechs ajudantes: na F6.
+16. A seguir: F6 (fábrica e conteúdo).
+
+## F6 — fábrica e conteúdo (11 nov 2026) — âmbito provisório (sem grill)
+Da visão inicial ("F6+: lab, centro de pesquisa e árvore tecnológica; mais biomas, criaturas e
+bosses; polimento") e das rondas 1–2 (fábrica sem tapetes; mechs ajudantes por pesquisa):
+
+1. Performance: clareira à volta do covil/arena + qualidade da relva no menu.
+2. Árvore tecnológica: 3 ramos (Defesa, Base, Exploração) com pré-requisitos.
+3. Fábrica: edifício novo "Fábrica de peças" (2 minério + 1 cristal → 1 peça); peças pagam
+   as pesquisas avançadas e os ajudantes.
+4. Mechs ajudantes: desbloqueados por pesquisa; de dia regam e colhem a quinta, à noite
+   disparam como torres móveis perto do posto.
+5. Bioma novo: Gelo (rover escorrega; a pé o frio tira vida devagar longe do posto e do rover).
+6. Fecho: release v0.6.0.

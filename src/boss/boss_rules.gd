@@ -3,7 +3,7 @@ extends RefCounted
 ## Regras do boss (puras, F5 #47): vida por planeta, fases pela vida, golpes e tempos.
 
 ## Monstro de cada bioma (um grande do pack); o resto escolhe pelo índice do planeta.
-const MODELS := {"prado": "big/MushroomKing", "acido": "big/BlueDemon", "lava": "big/Demon"}
+const MODELS := {"prado": "big/MushroomKing", "acido": "big/BlueDemon", "lava": "big/Demon", "gelo": "big/Yeti"}
 const FALLBACK := ["big/Yeti", "big/Dino", "big/Orc_Skull", "big/Cactoro"]
 const SCALE := 3.0
 const BASE_HEALTH := 900.0

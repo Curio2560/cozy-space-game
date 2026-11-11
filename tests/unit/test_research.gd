@@ -56,3 +56,51 @@ func test_effects_in_game_and_kept_across_planets() -> void:
 	assert_almost_eq(run.outpost.state.hp_factor, 1.3, 0.01, "o posto novo também tem")
 	var saved: Dictionary = run.save_state()
 	assert_eq(int(saved.research.mech_armor), 1)
+
+func test_tree_prerequisites() -> void:
+	var r := Research.new()
+	var w := Wallet.new()
+	w.add(Wallet.DATA, 500)
+	w.add(Wallet.PARTS, 20)
+	assert_false(r.unlocked("helpers"))
+	assert_eq(r.missing("helpers"), {"factory": 1})
+	assert_false(r.buy("helpers", w), "bloqueado sem a fábrica")
+	assert_eq(w.amount(Wallet.DATA), 500)
+	assert_true(r.buy("factory", w))
+	assert_true(r.unlocked("helpers"))
+	assert_true(r.buy("helpers", w))
+	assert_eq(w.amount(Wallet.PARTS), 15, "os ajudantes custam peças")
+	for line in Research.ORDER:
+		assert_true(Research.BRANCHES.has(r.branch(line)), line)
+
+func test_effects_o2_heat_crops() -> void:
+	var r := Research.new()
+	var w := Wallet.new()
+	w.add(Wallet.DATA, 500)
+	r.buy("rover_o2", w)
+	r.buy("heat_shield", w)
+	r.buy("crop_yield", w)
+	assert_almost_eq(r.o2_factor(), 0.8, 0.001)
+	assert_lt(r.heat_factor(), 1.0)
+	assert_eq(r.crop_bonus(), 1)
+	var f := Farm.new()
+	f.yield_bonus = r.crop_bonus()
+	f.plots[0] = {"crop": "fast", "t": 9999.0}
+	var w2 := Wallet.new()
+	assert_eq(f.harvest(0, w2), Farm.YIELD + 1)
+	var h := RoverHeat.new()
+	h.tick(1.0, 10.0, 1.0, 99.0, false)
+	var plain := h.heat
+	var h2 := RoverHeat.new()
+	h2.heat_factor = r.heat_factor()
+	h2.tick(1.0, 10.0, 1.0, 99.0, false)
+	assert_lt(h2.heat, plain)
+
+func test_parts_are_kept_and_not_sold() -> void:
+	var w := Wallet.new()
+	w.add(Wallet.PARTS, 3)
+	assert_false(Market.can_sell(Wallet.PARTS))
+	assert_false(Wallet.PARTS in DepartDialog.LEFT_BEHIND, "as peças vão na nave")
+	var w2 := Wallet.new()
+	w2.from_dict(JSON.parse_string(JSON.stringify(w.to_dict())))
+	assert_eq(w2.amount(Wallet.PARTS), 3)

@@ -50,6 +50,7 @@ var tutorial: Tutorial
 var upgrades := Upgrades.new()
 var crew := Crew.new()
 var research := Research.new()
+var helpers: HelperSquad
 var _tut_walk := 0.0
 var _tut_last := Vector3.INF
 var _tut_jumped := false
@@ -175,6 +176,13 @@ func _ready() -> void:
 	var res_page := ResearchPage.new()
 	res_page.run = self
 	outpost.menu.add_page("TERMINAL_TAB_RESEARCH", res_page)
+	helpers = HelperSquad.new()
+	helpers.name = "Helpers"
+	add_child(helpers)
+	helpers.setup(self)
+	var help_page := HelpersPage.new()
+	help_page.run = self
+	outpost.menu.add_page("TERMINAL_TAB_HELPERS", help_page)
 	research.changed.connect(apply_research)
 	crew.leveled.connect(func(m: String, lv: int) -> void:
 		deliveries.hud.toast(tr("TOAST_CREW_LEVEL") % [tr("CREW_" + m.to_upper()), lv]))
@@ -341,6 +349,7 @@ func _setup_tutorial() -> void:
 		["TIP_CROP_ORDER", func() -> bool: return deliveries.board_open and deliveries.session.offers.any(func(o: DeliveryOrder) -> bool: return o.crop != "")],
 		["TIP_ACID", func() -> bool: return biome == "acido"],
 		["TIP_LAVA", func() -> bool: return biome == "lava"],
+		["TIP_ICE", func() -> bool: return biome == "gelo"],
 		["TIP_POWER", func() -> bool: return outpost.state.power_factor() < 1.0],
 		["TIP_NIGHT", func() -> bool: return not cycle.is_night() and cycle.time_to_night() <= DayCycle.WARN_BEFORE],
 		["TIP_MECH", func() -> bool: return cycle.is_night() and not piloting],
@@ -391,6 +400,14 @@ func apply_crew() -> void:
 	if farm:
 		farm.farm.growth_speed = crew.farm_speed()
 
+## Constrói um mech ajudante (terminal → Ajudantes).
+func build_helper() -> bool:
+	if not helpers.build():
+		return false
+	deliveries.hud.toast(tr("TOAST_HELPER_BUILT") % [helpers.count, HelperSquad.MAX])
+	autosave()
+	return true
+
 ## Efeitos da pesquisa (ficam de planeta para planeta): mech, torres, vida dos edifícios.
 func apply_research() -> void:
 	var full := mech.health >= mech.max_health
@@ -398,9 +415,13 @@ func apply_research() -> void:
 	if full:
 		mech.health = mech.max_health
 	mech.damage_factor = research.mech_damage_factor()
+	heat.heat_factor = research.heat_factor()
+	if farm:
+		farm.farm.yield_bonus = research.crop_bonus()
 	if outpost:
 		outpost.state.max_turret_level = research.max_turret_level()
 		outpost.state.set_hp_factor(research.building_hp_factor())
+		outpost.state.locked["factory"] = not research.factory_unlocked()
 
 func buy_research(line: String) -> bool:
 	if not research.buy(line, wallet):
@@ -429,6 +450,7 @@ func save_state() -> Dictionary:
 		"upgrades": upgrades.to_dict(),
 		"crew": crew.to_dict(),
 		"research": research.to_dict(),
+		"helpers": helpers.to_dict(),
 		"cycle": cycle.to_dict(),
 		"galaxy": galaxy.to_dict(),
 	}
@@ -440,6 +462,9 @@ func apply_state(state: Dictionary) -> void:
 	deliveries._update_keycards()
 	if state.has("research"):
 		research.from_dict(state.research) # antes do posto: a vida guardada já tem o multiplicador
+	if state.has("helpers"):
+		helpers.from_dict(state.helpers)
+		helpers.respawn()
 	if state.has("upgrades"):
 		upgrades.from_dict(state.upgrades) # antes do posto: os slots extra vêm daqui
 	if state.has("outpost"):
@@ -538,6 +563,7 @@ func new_game() -> void:
 	upgrades.from_dict({})
 	crew.from_dict({})
 	research.from_dict({})
+	helpers.from_dict({})
 	cycle.from_dict({})
 	galaxy.from_dict({"seed": randi() % 100000, "index": 0})
 	planet_index = 0
@@ -568,6 +594,7 @@ func start(s: int) -> void:
 	player.planet_center = planet.global_position
 	camera.planet_center = planet.global_position
 	rover.planet_center = planet.global_position
+	rover.grip_factor = float(PlanetGenerator.BIOMES[biome].get("rover_grip", 1.0))
 	mech.planet_center = planet.global_position
 	rover.ground_radius = func(pos: Vector3) -> float:
 		return planet.data.surface_point(planet.to_local(pos)).length()
@@ -589,9 +616,11 @@ func start(s: int) -> void:
 			outpost.state.add_slots()
 		outpost.rebuild()
 	apply_upgrades()
-	apply_research()
 	if farm:
 		farm.start_planet()
+	apply_research()
+	if helpers:
+		helpers.respawn()
 	if boss_fight:
 		boss_fight.reset()
 	if dock:
@@ -903,7 +932,7 @@ func o2_drain_here() -> float:
 	var bd: Dictionary = PlanetGenerator.BIOMES[biome]
 	var base := float(bd.get("o2_drain", 0.0))
 	var near_k := float(bd.get("rivers", {}).get("o2_near", 1.0))
-	return AcidHazard.o2_drain(planet.data, planet.to_local(player.global_position), base, near_k) * crew.o2_factor() + extra_o2_drain
+	return AcidHazard.o2_drain(planet.data, planet.to_local(player.global_position), base, near_k) * crew.o2_factor() * research.o2_factor() + extra_o2_drain
 
 ## Calor do rover nos biomas com "rover_heat" (lava): aquece a andar e junto às fissuras,
 ## arrefece parado e à sombra; sobreaquecido fica lento.
@@ -941,12 +970,27 @@ func _apply_hazards(delta: float) -> void:
 			rover.take_damage(rr * delta)
 	if in_vehicle():
 		return
+	vitals.damage(cold_rate() * delta)
 	var here := planet.to_local(player.global_position)
 	vitals.damage(AcidHazard.foot_damage_rate(d, here) * crew.acid_factor() * delta)
 	if bubbles:
 		var got := bubbles.collect(here)
 		if got > 0.0:
 			vitals.add_o2(got)
+
+## Gelo: vida/s que o frio tira a pé (0 perto do posto ou do rover, metade com o fato térmico).
+const WARM_BASE_M := 28.0
+const WARM_ROVER_M := 6.0
+func cold_rate() -> float:
+	var cold := float(PlanetGenerator.BIOMES[biome].get("cold", 0.0))
+	if cold <= 0.0 or in_vehicle():
+		return 0.0
+	var here := planet.to_local(player.global_position).normalized()
+	if planet.data.arc_m(here, planet.data.outpost_dir) < WARM_BASE_M:
+		return 0.0
+	if player.global_position.distance_to(rover.global_position) < WARM_ROVER_M:
+		return 0.0
+	return cold * research.cold_factor()
 
 ## Gasto extra definido pelos perigos ou pelo DBG.
 var extra_o2_drain := 0.0
@@ -1170,6 +1214,9 @@ func _build_ui() -> void:
 	touch = TouchControls.new()
 	hud.add_child(touch)
 	_update_touch_visibility()
+	Settings.grass_changed.connect(func(f: float) -> void:
+		if planet:
+			planet.set_grass_factor(f))
 	DebugMenu.force_touch_changed.connect(func(_on: bool) -> void: _update_touch_visibility())
 	if "touch" in OS.get_cmdline_user_args():
 		DebugMenu.force_touch = true

@@ -62,7 +62,11 @@ func refresh() -> void:
 		btn.text = "SLOT_BUILD"
 		btn.custom_minimum_size = Vector2(190, 64)
 		btn.add_theme_font_size_override("font_size", 24)
-		btn.disabled = not controller.run.wallet.can_afford(b.cost)
+		var locked := st.is_locked(kind)
+		if locked:
+			l.text += "\n" + tr("SLOT_NEEDS_RESEARCH")
+			l.add_theme_color_override("font_color", Color(CozyTheme.INK, 0.55))
+		btn.disabled = locked or not controller.run.wallet.can_afford(b.cost)
 		btn.pressed.connect(func() -> void:
 			if controller.build(slot, kind):
 				closed.emit())

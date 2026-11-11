@@ -303,7 +303,7 @@ BIOME_PRADO,Meadow,Prado
 BIOME_ACIDO,Acid,Ácido
 BIOME_LAVA,Lava,Lava
 TERMINAL_TAB_RESEARCH,Research,Pesquisa
-RESEARCH_HEAD,"Mothership on the radio: research stays with you from planet to planet. You have %d data.","Nave-mãe por rádio: a pesquisa fica contigo de planeta para planeta. Tens %d dados."
+RESEARCH_HEAD,"Mothership on the radio: research stays with you from planet to planet. You have %d data and %d parts.","Nave-mãe por rádio: a pesquisa fica contigo de planeta para planeta. Tens %d dados e %d peças."
 RES_LINE_MECH_DAMAGE,Mech cannons,Canhões do mech
 RES_LINE_MECH_DAMAGE_INFO,+20% damage per level,+20% de dano por nível
 RES_LINE_MECH_ARMOR,Mech armour,Blindagem do mech
@@ -316,3 +316,34 @@ TOAST_RESEARCHED,Research done: %s,Pesquisa feita: %s
 PAUSE_VOL_MUSIC,Music %d%%,Música %d%%
 PAUSE_VOL_SFX,Sounds %d%%,Sons %d%%
 DBG_NEXT_PLANET,Jump to the next planet,Saltar para o planeta seguinte
+PAUSE_GRASS,Grass: %s,Relva: %s
+GRASS_HIGH,high,alta
+GRASS_MID,medium,média
+GRASS_LOW,low,baixa
+RES_PARTS,Parts,Peças
+RES_BRANCH_DEFENSE,Defence,Defesa
+RES_BRANCH_BASE,Base,Base
+RES_BRANCH_EXPLORE,Exploration,Exploração
+RES_NEEDS,Needs: %s,Precisa de: %s
+RES_LINE_CROP_YIELD,Bigger harvests,Colheitas maiores
+RES_LINE_CROP_YIELD_INFO,+1 crop per harvest per level,+1 colheita por talhão por nível
+RES_LINE_FACTORY,Parts factory,Fábrica de peças
+RES_LINE_FACTORY_INFO,Unlocks the parts factory building,Desbloqueia o edifício fábrica de peças
+RES_LINE_HELPERS,Helper mechs,Mechs ajudantes
+RES_LINE_HELPERS_INFO,Small mechs that farm by day and defend at night,Mechs pequenos que tratam da quinta de dia e defendem à noite
+RES_LINE_ROVER_O2,O₂ reserve,Reserva de O₂
+RES_LINE_ROVER_O2_INFO,−20% oxygen used on foot per level,−20% de oxigénio gasto a pé por nível
+RES_LINE_HEAT_SHIELD,Heat shield,Escudo térmico
+RES_LINE_HEAT_SHIELD_INFO,The rover heats up 30% slower,O rover aquece 30% mais devagar
+RES_LINE_COLD_SUIT,Thermal suit,Fato térmico
+RES_LINE_COLD_SUIT_INFO,Cold hurts half as much on foot,O frio tira metade da vida a pé
+BUILDING_FACTORY,Parts factory,Fábrica de peças
+BUILDING_FACTORY_INFO,"Every 45 s turns 2 ore + 1 crystal into 1 part. Uses 1 energy.","A cada 45 s transforma 2 minério + 1 cristal em 1 peça. Gasta 1 de energia."
+SLOT_NEEDS_RESEARCH,Needs research (terminal → Research),Precisa de pesquisa (terminal → Pesquisa)
+TERMINAL_TAB_HELPERS,Helpers,Ajudantes
+HELPERS_LOCKED,"Helper mechs need research: terminal → Research → Base → Helper mechs.","Os mechs ajudantes precisam de pesquisa: terminal → Pesquisa → Base → Mechs ajudantes."
+HELPERS_INFO,"Helpers: %d/%d. By day they harvest ready plots and water growing ones; at night they guard the outpost.","Ajudantes: %d/%d. De dia colhem os talhões prontos e regam os que crescem; à noite guardam o posto."
+HELPERS_BUILD,Build a helper (%s),Construir um ajudante (%s)
+TOAST_HELPER_BUILT,New helper mech! (%d/%d),Novo mech ajudante! (%d/%d)
+BIOME_GELO,Ice,Gelo
+TIP_ICE,"Ice planet: the rover slides on bends. On foot the cold hurts away from the outpost and the rover (Research → Thermal suit).","Planeta de gelo: o rover escorrega nas curvas. A pé o frio tira vida longe do posto e do rover (Pesquisa → Fato térmico)."

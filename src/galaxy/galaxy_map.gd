@@ -9,7 +9,7 @@ signal finished(option: Dictionary)
 const TAKEOFF := 2.0
 const TRAVEL := 4.0
 const LANDING := 2.0
-const BIOME_COLORS := {"prado": Color("7fd66b"), "acido": Color("b8f25a"), "lava": Color("ff7a45")}
+const BIOME_COLORS := {"prado": Color("7fd66b"), "acido": Color("b8f25a"), "lava": Color("ff7a45"), "gelo": Color("bfe6ff")}
 
 var galaxy: Galaxy
 var current_biome := "prado"

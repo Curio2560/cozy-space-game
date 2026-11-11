@@ -19,6 +19,8 @@ const ORDER := ["fast", "mid", "slow"]
 var plots: Array[Dictionary] = []
 ## Multiplicador da velocidade de crescimento (vantagem da Barbara, #35).
 var growth_speed := 1.0
+## Unidades a mais por colheita (pesquisa "colheitas maiores").
+var yield_bonus := 0
 
 func _init() -> void:
 	for i in PLOTS:
@@ -56,10 +58,20 @@ func plant(i: int, crop: String, wallet: Wallet) -> bool:
 func harvest(i: int, wallet: Wallet) -> int:
 	if state(i) != "ready":
 		return 0
-	wallet.add(CROPS[plots[i].crop].resource, YIELD)
+	var n := YIELD + yield_bonus
+	wallet.add(CROPS[plots[i].crop].resource, n)
 	plots[i] = {"crop": "", "t": 0.0}
 	changed.emit()
-	return YIELD
+	return n
+
+## Rega (ajudantes): o talhão `i` avança `seconds` de crescimento.
+func water(i: int, seconds: float) -> void:
+	if state(i) != "growing":
+		return
+	var before := state(i)
+	plots[i].t = float(plots[i].t) + seconds
+	if state(i) != before:
+		changed.emit()
 
 func tick(delta: float) -> void:
 	var any := false
