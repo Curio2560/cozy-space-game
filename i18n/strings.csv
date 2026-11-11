@@ -340,3 +340,8 @@ RES_LINE_COLD_SUIT_INFO,Cold hurts half as much on foot,O frio tira metade da vi
 BUILDING_FACTORY,Parts factory,Fábrica de peças
 BUILDING_FACTORY_INFO,"Every 45 s turns 2 ore + 1 crystal into 1 part. Uses 1 energy.","A cada 45 s transforma 2 minério + 1 cristal em 1 peça. Gasta 1 de energia."
 SLOT_NEEDS_RESEARCH,Needs research (terminal → Research),Precisa de pesquisa (terminal → Pesquisa)
+TERMINAL_TAB_HELPERS,Helpers,Ajudantes
+HELPERS_LOCKED,"Helper mechs need research: terminal → Research → Base → Helper mechs.","Os mechs ajudantes precisam de pesquisa: terminal → Pesquisa → Base → Mechs ajudantes."
+HELPERS_INFO,"Helpers: %d/%d. By day they harvest ready plots and water growing ones; at night they guard the outpost.","Ajudantes: %d/%d. De dia colhem os talhões prontos e regam os que crescem; à noite guardam o posto."
+HELPERS_BUILD,Build a helper (%s),Construir um ajudante (%s)
+TOAST_HELPER_BUILT,New helper mech! (%d/%d),Novo mech ajudante! (%d/%d)

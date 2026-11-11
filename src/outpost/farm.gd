@@ -64,6 +64,15 @@ func harvest(i: int, wallet: Wallet) -> int:
 	changed.emit()
 	return n
 
+## Rega (ajudantes): o talhão `i` avança `seconds` de crescimento.
+func water(i: int, seconds: float) -> void:
+	if state(i) != "growing":
+		return
+	var before := state(i)
+	plots[i].t = float(plots[i].t) + seconds
+	if state(i) != before:
+		changed.emit()
+
 func tick(delta: float) -> void:
 	var any := false
 	for i in PLOTS:

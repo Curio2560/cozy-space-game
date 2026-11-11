@@ -50,6 +50,7 @@ var tutorial: Tutorial
 var upgrades := Upgrades.new()
 var crew := Crew.new()
 var research := Research.new()
+var helpers: HelperSquad
 var _tut_walk := 0.0
 var _tut_last := Vector3.INF
 var _tut_jumped := false
@@ -175,6 +176,13 @@ func _ready() -> void:
 	var res_page := ResearchPage.new()
 	res_page.run = self
 	outpost.menu.add_page("TERMINAL_TAB_RESEARCH", res_page)
+	helpers = HelperSquad.new()
+	helpers.name = "Helpers"
+	add_child(helpers)
+	helpers.setup(self)
+	var help_page := HelpersPage.new()
+	help_page.run = self
+	outpost.menu.add_page("TERMINAL_TAB_HELPERS", help_page)
 	research.changed.connect(apply_research)
 	crew.leveled.connect(func(m: String, lv: int) -> void:
 		deliveries.hud.toast(tr("TOAST_CREW_LEVEL") % [tr("CREW_" + m.to_upper()), lv]))
@@ -391,6 +399,14 @@ func apply_crew() -> void:
 	if farm:
 		farm.farm.growth_speed = crew.farm_speed()
 
+## Constrói um mech ajudante (terminal → Ajudantes).
+func build_helper() -> bool:
+	if not helpers.build():
+		return false
+	deliveries.hud.toast(tr("TOAST_HELPER_BUILT") % [helpers.count, HelperSquad.MAX])
+	autosave()
+	return true
+
 ## Efeitos da pesquisa (ficam de planeta para planeta): mech, torres, vida dos edifícios.
 func apply_research() -> void:
 	var full := mech.health >= mech.max_health
@@ -433,6 +449,7 @@ func save_state() -> Dictionary:
 		"upgrades": upgrades.to_dict(),
 		"crew": crew.to_dict(),
 		"research": research.to_dict(),
+		"helpers": helpers.to_dict(),
 		"cycle": cycle.to_dict(),
 		"galaxy": galaxy.to_dict(),
 	}
@@ -444,6 +461,9 @@ func apply_state(state: Dictionary) -> void:
 	deliveries._update_keycards()
 	if state.has("research"):
 		research.from_dict(state.research) # antes do posto: a vida guardada já tem o multiplicador
+	if state.has("helpers"):
+		helpers.from_dict(state.helpers)
+		helpers.respawn()
 	if state.has("upgrades"):
 		upgrades.from_dict(state.upgrades) # antes do posto: os slots extra vêm daqui
 	if state.has("outpost"):
@@ -542,6 +562,7 @@ func new_game() -> void:
 	upgrades.from_dict({})
 	crew.from_dict({})
 	research.from_dict({})
+	helpers.from_dict({})
 	cycle.from_dict({})
 	galaxy.from_dict({"seed": randi() % 100000, "index": 0})
 	planet_index = 0
@@ -596,6 +617,8 @@ func start(s: int) -> void:
 	if farm:
 		farm.start_planet()
 	apply_research()
+	if helpers:
+		helpers.respawn()
 	if boss_fight:
 		boss_fight.reset()
 	if dock:
