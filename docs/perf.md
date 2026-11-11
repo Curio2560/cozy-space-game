@@ -136,3 +136,8 @@ Luta com o boss, seed 7:
 
 Menu de pausa → Relva: alta (100%), média (65%) ou baixa (35% dos tufos). Muda na hora
 (`MultiMesh.visible_instance_count`), sem regenerar o planeta; guardado nas definições.
+
+## F6 — fecho (11 nov 2026, v0.6.0)
+
+Gelo, seed 7: a pé 182 dc · 383k tri; luta com o boss 212 dc · 300k tri (o bioma mais leve).
+Ajudantes: até 3 modelos com esqueleto + 8 projéteis reaproveitados.
