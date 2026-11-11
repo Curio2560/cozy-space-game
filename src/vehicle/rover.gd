@@ -35,6 +35,8 @@ var impact_bonus := 0.0
 @export var spring_damp := 260.0 # pouco amortecimento = mais saltitão
 @export var rest_length := 0.35
 @export var grip := 9.0
+## Aderência do bioma (gelo < 1: escorrega). Multiplica `grip`.
+var grip_factor := 1.0
 @export var air_align := 1.6 # baixo: no ar dá para dar cambalhotas
 @export var spin_damp := 0.6 # amortecimento da rotação (baixo = capota mais)
 @export var max_health := 100.0
@@ -159,10 +161,10 @@ func _physics_process(delta: float) -> void:
 			apply_force(r_up * maxf(spring, 0.0), offset)
 			# Aderência lateral: anula a velocidade de lado em cada roda.
 			var side_v := point_vel.dot(right)
-			apply_force(-right * side_v * grip * mass / _anchors.size(), offset)
+			apply_force(-right * side_v * grip * grip_factor * mass / _anchors.size(), offset)
 			if not driven:
 				var long_v := point_vel.dot(fwd)
-				apply_force(-fwd * long_v * grip * 0.5 * mass / _anchors.size(), offset)
+				apply_force(-fwd * long_v * grip * grip_factor * 0.5 * mass / _anchors.size(), offset)
 		_update_wheel_visual(i, dist - RAY_LIFT)
 
 	var on_ground := grounded_wheels >= 2

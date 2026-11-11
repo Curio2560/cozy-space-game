@@ -135,6 +135,42 @@ const BIOMES := {
 			{"kinds": ["mdvl/mdvl_nature_grass_01"], "count": 500, "size": [0.25, 0.5], "clear": 0.22, "outline": false, "cluster": 0.55},
 		],
 	},
+	"gelo": {
+		"dirt": 60,
+		"ground": Color("dbe9f5"),
+		"turf": {"density": 0.4, "size": [0.25, 0.45]},
+		"ground_grass": 0.15,
+		"creatures": 18,
+		"sky": {"bg": Color("10203a"), "ambient": Color("c8dcf2"), "sun": Color("eef6ff"),
+			"nebula_a": Color("2a5a8a"), "nebula_b": Color("9fe0ff"),
+			"planets": [
+				{"tex": "planeta_ciano", "dir": Vector3(-0.4, 0.6, -0.69), "size": 16.0, "fps": 0.8},
+				{"tex": "planeta_rosa", "dir": Vector3(0.7, 0.3, 0.65), "size": 4.0, "fps": 1.5},
+			]},
+		"kit_tint": Color("cfe4ff"),
+		# Gelo (F6 #60): o rover escorrega; a pé o frio tira vida longe do posto e do rover.
+		"rover_grip": 0.35,
+		"cold": 1.5,
+		"height_amp": 2.4,
+		"noise_freq": 0.04,
+		"palette": {
+			"Green": Color("9fb8c8"), "DarkGreen": Color("6f8ea4"), "Leaves": Color("e8f2fa"),
+			"Wood": Color("5a4a48"), "LightWood": Color("8a7470"), "White": Color("f4f8fc"),
+			"Black": Color("1a2230"), "Orange": Color("9fd8ff"), "LightOrange": Color("c8ecff"),
+			"Berry": Color("6fb8ff"), "Pink": Color("b8d0ff"), "Snow": Color("ffffff"),
+			"Grass": Color("b8ccd8"), "Rock": Color("a8b8c8"), "Road": Color("8a98a8"),
+		},
+		"props": [
+			{"kinds": ["nature/BirchTree_Snow_1", "nature/BirchTree_Snow_2", "nature/BirchTree_Snow_3", "nature/BirchTree_Snow_4", "nature/BirchTree_Snow_5", "nature/CommonTree_Dead_Snow_1", "nature/CommonTree_Dead_Snow_2", "nature/BirchTree_Dead_Snow_1", "nature/BirchTree_Dead_Snow_2"],
+				"count": 320, "size": [3.0, 5.0], "clear": 2.0, "outline": true, "collider": 0.06, "cluster": 0.55},
+			{"kinds": ["nature/Bush_Snow_1", "nature/Bush_Snow_2"],
+				"count": 260, "size": [0.7, 1.3], "clear": 1.0, "outline": false, "cluster": 0.4},
+			{"kinds": ["rocks/SM_Rocks_01", "rocks/SM_Rocks_02", "rocks/SM_Rocks_03", "rocks/SM_Rocks_04", "rocks/SM_Rocks_05", "rocks/SM_Rocks_06", "rocks/SM_Rocks_07", "rocks/SM_Rocks_08", "rocks/SM_Rocks_09", "rocks/SM_Rocks_10", "rocks/SM_Rocks_11"], "count": 35, "size": [2.2, 4.5], "clear": 2.2, "outline": true, "collider": 0.4, "cluster": 0.3},
+			{"kinds": ["rocks/SM_Rocks_01", "rocks/SM_Rocks_02", "rocks/SM_Rocks_03", "rocks/SM_Rocks_04", "rocks/SM_Rocks_05", "rocks/SM_Rocks_06", "rocks/SM_Rocks_07", "rocks/SM_Rocks_08", "rocks/SM_Rocks_09", "rocks/SM_Rocks_10", "rocks/SM_Rocks_11"], "count": 100, "size": [0.6, 1.8], "clear": 1.0, "outline": true},
+			{"kinds": ["rocks/SM_Rocks_01", "rocks/SM_Rocks_02", "rocks/SM_Rocks_03", "rocks/SM_Rocks_04", "rocks/SM_Rocks_05", "rocks/SM_Rocks_06", "rocks/SM_Rocks_07", "rocks/SM_Rocks_08", "rocks/SM_Rocks_09", "rocks/SM_Rocks_10", "rocks/SM_Rocks_11"], "count": 220, "size": [0.25, 1.1], "clear": 0.45, "outline": false, "pile": [3, 7], "pile_radius": 2.6},
+			{"kinds": ["mdvl/mdvl_nature_grass_01"], "count": 200, "size": [0.25, 0.5], "clear": 0.22, "outline": false, "cluster": 0.5},
+		],
+	},
 }
 
 static func generate(p_seed: int, biome := "prado", radius := DEFAULT_RADIUS) -> PlanetData:

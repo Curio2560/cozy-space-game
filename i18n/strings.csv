@@ -345,3 +345,5 @@ HELPERS_LOCKED,"Helper mechs need research: terminal → Research → Base → H
 HELPERS_INFO,"Helpers: %d/%d. By day they harvest ready plots and water growing ones; at night they guard the outpost.","Ajudantes: %d/%d. De dia colhem os talhões prontos e regam os que crescem; à noite guardam o posto."
 HELPERS_BUILD,Build a helper (%s),Construir um ajudante (%s)
 TOAST_HELPER_BUILT,New helper mech! (%d/%d),Novo mech ajudante! (%d/%d)
+BIOME_GELO,Ice,Gelo
+TIP_ICE,"Ice planet: the rover slides on bends. On foot the cold hurts away from the outpost and the rover (Research → Thermal suit).","Planeta de gelo: o rover escorrega nas curvas. A pé o frio tira vida longe do posto e do rover (Pesquisa → Fato térmico)."

@@ -349,6 +349,7 @@ func _setup_tutorial() -> void:
 		["TIP_CROP_ORDER", func() -> bool: return deliveries.board_open and deliveries.session.offers.any(func(o: DeliveryOrder) -> bool: return o.crop != "")],
 		["TIP_ACID", func() -> bool: return biome == "acido"],
 		["TIP_LAVA", func() -> bool: return biome == "lava"],
+		["TIP_ICE", func() -> bool: return biome == "gelo"],
 		["TIP_POWER", func() -> bool: return outpost.state.power_factor() < 1.0],
 		["TIP_NIGHT", func() -> bool: return not cycle.is_night() and cycle.time_to_night() <= DayCycle.WARN_BEFORE],
 		["TIP_MECH", func() -> bool: return cycle.is_night() and not piloting],
@@ -593,6 +594,7 @@ func start(s: int) -> void:
 	player.planet_center = planet.global_position
 	camera.planet_center = planet.global_position
 	rover.planet_center = planet.global_position
+	rover.grip_factor = float(PlanetGenerator.BIOMES[biome].get("rover_grip", 1.0))
 	mech.planet_center = planet.global_position
 	rover.ground_radius = func(pos: Vector3) -> float:
 		return planet.data.surface_point(planet.to_local(pos)).length()
@@ -968,12 +970,27 @@ func _apply_hazards(delta: float) -> void:
 			rover.take_damage(rr * delta)
 	if in_vehicle():
 		return
+	vitals.damage(cold_rate() * delta)
 	var here := planet.to_local(player.global_position)
 	vitals.damage(AcidHazard.foot_damage_rate(d, here) * crew.acid_factor() * delta)
 	if bubbles:
 		var got := bubbles.collect(here)
 		if got > 0.0:
 			vitals.add_o2(got)
+
+## Gelo: vida/s que o frio tira a pé (0 perto do posto ou do rover, metade com o fato térmico).
+const WARM_BASE_M := 28.0
+const WARM_ROVER_M := 6.0
+func cold_rate() -> float:
+	var cold := float(PlanetGenerator.BIOMES[biome].get("cold", 0.0))
+	if cold <= 0.0 or in_vehicle():
+		return 0.0
+	var here := planet.to_local(player.global_position).normalized()
+	if planet.data.arc_m(here, planet.data.outpost_dir) < WARM_BASE_M:
+		return 0.0
+	if player.global_position.distance_to(rover.global_position) < WARM_ROVER_M:
+		return 0.0
+	return cold * research.cold_factor()
 
 ## Gasto extra definido pelos perigos ou pelo DBG.
 var extra_o2_drain := 0.0

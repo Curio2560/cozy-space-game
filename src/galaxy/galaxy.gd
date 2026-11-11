@@ -17,7 +17,7 @@ func next_options() -> Array:
 		return [{"biome": FIXED[i], "seed": planet_seed(i, 0)}]
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash(seed_value * 977 + i * 31)
-	var biomes: Array = FIXED.duplicate()
+	var biomes: Array = PlanetGenerator.BIOMES.keys() # depois do caminho fixo entram todos (gelo incluído)
 	var a: String = biomes[rng.randi() % biomes.size()]
 	biomes.erase(a)
 	var b: String = biomes[rng.randi() % biomes.size()]

@@ -7,6 +7,7 @@ const STYLES := {
 	"prado": {"color": Color(1.0, 0.95, 0.6, 0.85), "size": 0.06, "rise": 0.15, "drift": 0.35, "amount": 70, "glow": false},
 	"acido": {"color": Color(0.7, 1.0, 0.35, 0.7), "size": 0.12, "rise": 0.6, "drift": 0.1, "amount": 50, "glow": true},
 	"lava": {"color": Color(1.0, 0.55, 0.15, 0.95), "size": 0.07, "rise": 1.2, "drift": 0.5, "amount": 80, "glow": true},
+	"gelo": {"color": Color(1.0, 1.0, 1.0, 0.9), "size": 0.06, "rise": -0.5, "drift": 0.4, "amount": 90, "glow": false},
 }
 const BOX := Vector3(16.0, 5.0, 16.0)
 

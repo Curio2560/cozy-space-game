@@ -75,7 +75,7 @@ static func anim(creature: Node, role: String) -> String:
 
 ## Tom das criaturas em cada bioma.
 static func tint_for(biome: String) -> Color:
-	return {"prado": Color.WHITE, "acido": Color("d8ffc8"), "lava": Color("ffd0bc")}.get(biome, Color.WHITE)
+	return {"prado": Color.WHITE, "acido": Color("d8ffc8"), "lava": Color("ffd0bc"), "gelo": Color("d8ecff")}.get(biome, Color.WHITE)
 
 ## Instancia a criatura `id` em cel-shading, com a altura certa, o tom do bioma e a animação
 ## de repouso. Devolve um Node3D com a origem nos pés (os voadores já vêm a pairar); frente = +Z.
