@@ -364,6 +364,7 @@ static var _grass_mat: ShaderMaterial
 
 ## Relva procedimental em MultiMesh por região (entra no culling por hemisfério).
 func _build_turf() -> void:
+	_turf.clear()
 	_turf_count = data.turf_dirs.size()
 	if _turf_count == 0:
 		return
@@ -395,11 +396,39 @@ func _build_turf() -> void:
 		var mmi := MultiMeshInstance3D.new()
 		mmi.name = "Turf"
 		mmi.multimesh = mm
+		mm.visible_instance_count = turf_visible_count(mm.instance_count, _grass_setting())
+		_turf.append(mm)
 		mmi.material_override = _grass_mat
 		# Relva densa só perto da câmara; mais longe vê-se a relva pintada no chão.
 		mmi.visibility_range_end = TURF_VISIBLE_M + 20.0 # a região mede ~20 m
 		mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		_regions[r].add_child(mmi)
+
+## Tufos de relva desenhados (qualidade da relva no menu): os primeiros N de cada região.
+## As instâncias estão em ordem aleatória, por isso cortar no fim tira por igual em todo o lado.
+var _turf: Array[MultiMesh] = []
+
+## Fator da relva das definições (1 se não houver o autoload, p. ex. em ferramentas -s).
+static func _grass_setting() -> float:
+	var ml := Engine.get_main_loop() as SceneTree
+	var st := ml.root.get_node_or_null("Settings") if ml else null
+	return float(st.call("grass_factor")) if st else 1.0
+
+static func turf_visible_count(total: int, factor: float) -> int:
+	return clampi(int(round(total * factor)), 0, total)
+
+func set_grass_factor(f: float) -> void:
+	for mm in _turf:
+		if is_instance_valid(mm):
+			mm.visible_instance_count = turf_visible_count(mm.instance_count, f)
+
+## Quantos tufos estão a ser desenhados (testes).
+func turf_visible_total() -> int:
+	var n := 0
+	for mm in _turf:
+		if is_instance_valid(mm):
+			n += mm.visible_instance_count if mm.visible_instance_count >= 0 else mm.instance_count
+	return n
 
 func visible_region_count() -> int:
 	return _regions.filter(func(r: Node3D) -> bool: return r.visible).size()

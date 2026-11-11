@@ -33,6 +33,25 @@ func set_locale(loc: String, save := true) -> void:
 		_cfg.save(PATH)
 	locale_changed.emit(loc)
 
+## Qualidade da relva: "low", "mid" ou "high" (alta por omissão).
+const GRASS := {"low": 0.35, "mid": 0.65, "high": 1.0}
+const GRASS_ORDER := ["high", "mid", "low"]
+signal grass_changed(factor: float)
+
+func grass() -> String:
+	var g := str(_cfg.get_value("video", "grass", "high"))
+	return g if GRASS.has(g) else "high"
+
+func grass_factor() -> float:
+	return GRASS[grass()]
+
+func cycle_grass() -> String:
+	var g: String = GRASS_ORDER[(GRASS_ORDER.find(grass()) + 1) % GRASS_ORDER.size()]
+	_cfg.set_value("video", "grass", g)
+	_cfg.save(PATH)
+	grass_changed.emit(GRASS[g])
+	return g
+
 ## Volume (0..1) de "music" ou "sfx".
 func get_volume(kind: String) -> float:
 	return clampf(float(_cfg.get_value("audio", kind, 0.8)), 0.0, 1.0)

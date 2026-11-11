@@ -122,3 +122,17 @@ região) e passo 4 (LODs das árvores grandes), começando pela floresta à volt
 - Boss: um modelo com esqueleto ×3 + um disco de aviso; invocações (3 criaturas) na fase 2+.
 - Mapa da galáxia: desenho 2D por cima (o mundo 3D continua por baixo, escurecido).
 - Som: WAV mono 22 kHz (~5 MB no total), 10 leitores de efeitos + 2 de música.
+
+## F6 #56 (11 nov 2026): clareira no covil e qualidade da relva
+
+Decoração rala a menos de 40 m do covil e da arena (25%, volta ao normal até 55 m).
+Luta com o boss, seed 7:
+
+| Bioma | Antes | Depois |
+|---|---|---|
+| Prado | 358 dc · 717k tri | 292 dc · 525k tri |
+| Ácido | 343 dc · 637k tri | 281 dc · 515k tri |
+| Lava | 351 dc · 538k tri | 275 dc · 360k tri |
+
+Menu de pausa → Relva: alta (100%), média (65%) ou baixa (35% dos tufos). Muda na hora
+(`MultiMesh.visible_instance_count`), sem regenerar o planeta; guardado nas definições.

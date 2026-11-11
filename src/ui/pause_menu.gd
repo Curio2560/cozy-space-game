@@ -22,12 +22,12 @@ func _ready() -> void:
 	add_child(panel)
 	var col := VBoxContainer.new()
 	col.alignment = BoxContainer.ALIGNMENT_CENTER
-	col.add_theme_constant_override("separation", 16)
+	col.add_theme_constant_override("separation", 12)
 	panel.add_child(col)
 	var title := Label.new()
 	title.text = "PAUSE_TITLE"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 64)
+	title.add_theme_font_size_override("font_size", 52)
 	title.add_theme_color_override("font_color", CozyTheme.PEACH)
 	title.add_theme_color_override("font_outline_color", CozyTheme.INK)
 	title.add_theme_constant_override("outline_size", 12)
@@ -43,13 +43,20 @@ func _ready() -> void:
 		tutorial_again.emit())
 	_item(col, "PAUSE_NEW_GAME", func() -> void: _confirm_new_game())
 	_item(col, "PAUSE_LANGUAGE", func() -> void: Settings.cycle_locale())
+	var grass_btn := _item(col, "", func() -> void: pass)
+	var grass_label := func() -> void:
+		grass_btn.text = tr("PAUSE_GRASS") % tr("GRASS_" + Settings.grass().to_upper())
+	grass_label.call()
+	grass_btn.pressed.connect(func() -> void:
+		Settings.cycle_grass()
+		grass_label.call())
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 12)
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	col.add_child(row)
 	for kind in ["music", "sfx"]:
 		var b := Button.new()
-		b.custom_minimum_size = Vector2(184, 70)
+		b.custom_minimum_size = Vector2(184, 58)
 		b.add_theme_font_size_override("font_size", 26)
 		var label := func() -> void:
 			b.text = tr("PAUSE_VOL_" + kind.to_upper()) % int(round(Settings.get_volume(kind) * 100.0))
@@ -85,8 +92,8 @@ func _confirm_new_game() -> void:
 func _item(col: VBoxContainer, key: String, action: Callable) -> Button:
 	var b := Button.new()
 	b.text = key
-	b.custom_minimum_size = Vector2(380, 70)
-	b.add_theme_font_size_override("font_size", 34)
+	b.custom_minimum_size = Vector2(380, 58)
+	b.add_theme_font_size_override("font_size", 30)
 	b.pressed.connect(action)
 	col.add_child(b)
 	return b

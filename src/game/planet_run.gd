@@ -1170,6 +1170,9 @@ func _build_ui() -> void:
 	touch = TouchControls.new()
 	hud.add_child(touch)
 	_update_touch_visibility()
+	Settings.grass_changed.connect(func(f: float) -> void:
+		if planet:
+			planet.set_grass_factor(f))
 	DebugMenu.force_touch_changed.connect(func(_on: bool) -> void: _update_touch_visibility())
 	if "touch" in OS.get_cmdline_user_args():
 		DebugMenu.force_touch = true

@@ -316,3 +316,7 @@ TOAST_RESEARCHED,Research done: %s,Pesquisa feita: %s
 PAUSE_VOL_MUSIC,Music %d%%,Música %d%%
 PAUSE_VOL_SFX,Sounds %d%%,Sons %d%%
 DBG_NEXT_PLANET,Jump to the next planet,Saltar para o planeta seguinte
+PAUSE_GRASS,Grass: %s,Relva: %s
+GRASS_HIGH,high,alta
+GRASS_MID,medium,média
+GRASS_LOW,low,baixa

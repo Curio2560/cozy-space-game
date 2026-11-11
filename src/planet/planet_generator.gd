@@ -10,6 +10,11 @@ const LAIR_CLEAR_M := 10.0
 ## Arena do boss (#46): clareira plana ao lado do covil, do lado oposto ao posto avançado.
 const ARENA_OFFSET_M := 18.0
 const ARENA_CLEAR_M := 15.0
+## À volta do covil e da arena a decoração é rala (a câmara da luta vê tudo de cima):
+## até SPARSE_M fica SPARSE_KEEP do normal, e volta ao normal até SPARSE_FADE_M.
+const SPARSE_M := 40.0
+const SPARSE_FADE_M := 55.0
+const SPARSE_KEEP := 0.25
 const MAX_SLOPE_DEG := 28.0
 
 ## Biomas: lista de tipos de decoração (repetir um tipo em `kinds` aumenta o seu peso).
@@ -717,6 +722,8 @@ static func _place_props(d: PlanetData, b: Dictionary, rng: RandomNumberGenerato
 				continue
 			if d.slope_deg(c) > MAX_SLOPE_DEG:
 				continue
+			if rng.randf() > sparse_keep(d, c):
+				continue
 			if cluster > 0.0:
 				# Manchas: aceitar mais onde o ruído é alto; nas clareiras quase nada.
 				var n := patches.get_noise_3dv(c * d.radius)
@@ -735,6 +742,13 @@ static func _place_props(d: PlanetData, b: Dictionary, rng: RandomNumberGenerato
 			})
 			grid.add(c, clear)
 			placed += 1
+
+## Fração da decoração que fica em `dir` (rala à volta do covil e da arena).
+static func sparse_keep(d: PlanetData, dir: Vector3) -> float:
+	var m := d.arc_m(dir, d.lair_dir)
+	if d.arena_dir != Vector3.ZERO:
+		m = minf(m, d.arc_m(dir, d.arena_dir))
+	return lerpf(SPARSE_KEEP, 1.0, smoothstep(SPARSE_M, SPARSE_FADE_M, m))
 
 ## Candidatos em montes: para cada centro, várias direções a menos de pile_radius metros.
 static func _pile_candidates(centers: Array[Vector3], group: Dictionary, wanted: int, radius: float, rng: RandomNumberGenerator) -> Array[Vector3]:
