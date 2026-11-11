@@ -17,6 +17,10 @@ const MODELS := {
 const HEIGHT := 3.4
 const MAX_HEALTH := 160.0
 const MUZZLE := Vector3(0.0, 2.3, 1.0) # no espaço do modelo, mais ou menos os canhões
+## Velocidade (m/s) a que os pés da animação Walk acompanham o chão, com HEIGHT = 3.4 m
+## (medido: os pés recuam ~3,8 m em meio ciclo de 0,83 s). A Run não serve: é para ~14 m/s e
+## levanta os pés 2 m (os pés escorregavam e o mech parecia patinar).
+const WALK_ANIM_SPEED := 9.2
 
 @export var walk_speed := 5.2
 @export var accel := 22.0
@@ -191,12 +195,13 @@ func _update_anim(speed: float) -> void:
 		return
 	if _shoot_t > 0.0 and speed < 0.6:
 		_play("Shoot_Small", 0.08)
-	elif speed > walk_speed * 0.6:
-		_play("Run")
 	elif speed > 0.4:
 		_play("Walk")
+		_anim.speed_scale = clampf(speed / WALK_ANIM_SPEED, 0.25, 1.5)
 	else:
 		_play("Idle")
+	if _anim and _anim_name != "Walk":
+		_anim.speed_scale = 1.0
 
 func _play(a: String, blend := 0.15) -> void:
 	if _anim == null or a == _anim_name or not _anim.has_animation(a):

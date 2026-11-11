@@ -90,3 +90,20 @@ func test_broken_mech_ejects_and_morning_repairs() -> void:
 	assert_false(run.can_enter_mech())
 	run.cycle.skip_to_morning()
 	assert_eq(run.mech.health, Mech.MAX_HEALTH)
+
+func test_walk_animation_matches_ground_speed() -> void:
+	# Os pés não podem escorregar: a cadência da animação acompanha a velocidade real.
+	var run: Node3D = await _run()
+	run.cycle.skip_to_night()
+	_go_to_mech(run)
+	await wait_physics_frames(2)
+	run.enter_mech()
+	Input.action_press("move_forward", 1.0)
+	await wait_physics_frames(60)
+	var m: Mech = run.mech
+	var u := m.up()
+	var spd := (m.velocity - u * m.velocity.dot(u)).length()
+	Input.action_release("move_forward")
+	assert_eq(m._anim_name, "Walk", "anda com a animação de andar (a Run é para ~14 m/s)")
+	var feet: float = Mech.WALK_ANIM_SPEED * m._anim.speed_scale
+	assert_almost_eq(feet / spd, 1.0, 0.15, "pés a acompanhar o chão")
